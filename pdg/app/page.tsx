@@ -446,7 +446,7 @@ export default function Page() {
             {/* 3. Current Player Input Screen */}
             <div id="screen-input" className="screen">
                 <h2 className="title-text" id="turn-title" style={{ fontSize: '60px' }}>PLAYER 1'S TURN 🦄</h2>
-                <h3 className="subtitle" id="input-topic-reminder" style={{ marginBottom: '20px', color: '#FFF', WebkitTextStroke: '1px var(--dark)', fontSize: '20px' }}>Topic: ...</h3>
+                <h3 className="subtitle" id="input-topic-reminder" style={{ marginBottom: '20px', color: '#FFF', WebkitTextStroke: '1px black', fontSize: '20px' }}>Topic: ...</h3>
                 
                 <div className="typing-arena">
                     <textarea id="argument-input" className="text-input" placeholder="Type your spectacular argument here..."></textarea>
