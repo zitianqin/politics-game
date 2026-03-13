@@ -1,0 +1,58 @@
+import { ScreenId } from "../lib/gameConstants";
+
+interface ScreenLobbyProps {
+  screen: ScreenId;
+  startGame: () => void;
+}
+
+export default function ScreenLobby({ screen, startGame }: ScreenLobbyProps) {
+  return (
+    <div
+      id="screen-lobby"
+      className={`screen ${screen === "lobby" ? "active" : ""}`}
+    >
+      <h1 className="title-text bouncing">
+        ELECTION
+        <br />
+        SHOWDOWN
+      </h1>
+
+      <div className="character-select">
+        <div
+          className="char-card"
+          style={{
+            borderColor: "var(--p1)",
+            boxShadow: "8px 8px 0px var(--p1)",
+          }}
+        >
+          <div className="avatar-preview">🦄</div>
+          <h3 style={{ color: "var(--p1-dark)" }}>PLAYER 1</h3>
+        </div>
+        <h1
+          style={{
+            color: "var(--accent)",
+            alignSelf: "center",
+            WebkitTextStroke: "3px var(--dark)",
+            textShadow: "4px 4px 0 var(--dark)",
+          }}
+        >
+          VS
+        </h1>
+        <div
+          className="char-card"
+          style={{
+            borderColor: "var(--p2)",
+            boxShadow: "8px 8px 0px var(--p2)",
+          }}
+        >
+          <div className="avatar-preview">🦖</div>
+          <h3 style={{ color: "var(--p2-dark)" }}>PLAYER 2</h3>
+        </div>
+      </div>
+
+      <button className="btn green-color" onClick={startGame}>
+        START GAME!
+      </button>
+    </div>
+  );
+}
