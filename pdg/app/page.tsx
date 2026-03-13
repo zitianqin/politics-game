@@ -111,7 +111,12 @@ export default function Page() {
             }
             
             switchScreen('screen-input');
-            if (input) input.focus();
+            // Delay focus to avoid fighting with the screen's CSS transition.
+            // preventScroll stops the browser from scrolling the textarea into view
+            // while the screen is still animating in from translateY(100vh).
+            requestAnimationFrame(() => {
+                if (input) input.focus({ preventScroll: true });
+            });
             
             // Start Timer
             timeLeft = TURN_TIME;
