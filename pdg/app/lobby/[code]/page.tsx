@@ -67,10 +67,10 @@ export default function LobbyPage({
       }
     });
 
-socket.on("player:joined", (data: { playerCount: number }) => {
-  console.log("Received player:joined in lobby. Count:", data.playerCount);
-  setPlayerCount(data.playerCount);
-});
+    socket.on("player:joined", (data: { playerCount: number }) => {
+      console.log("Received player:joined in lobby. Count:", data.playerCount);
+      setPlayerCount(data.playerCount);
+    });
 
     socket.on("game:started", () => {
       console.log("Received game:started in lobby");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ScreenId, TOTAL_ROUNDS, JUDGING_JOKES } from "../lib/gameConstants";
+import { ScreenId, JUDGING_JOKES } from "../lib/gameConstants";
 import { getSocket } from "../lib/socket";
 
 export interface TranscriptEntry {
@@ -416,27 +416,14 @@ socket.on("game:result", handleRoundResults);
   // Judging & scoring are now handled server-side
 
   const startNextRound = useCallback(() => {
-<<<<<<< HEAD
-    if (currentRound >= TOTAL_ROUNDS) {
-      setScreen("winner");
-    } else {
-      const socket = getSocket();
-      const gameCode =
-        gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
-      if (gameCode) {
-        socket.emit("round:advance", { code: gameCode });
-      }
-    }
-  }, [currentRound, gameCodeFromUrl]);
-=======
     // Always signal server to advance. Server will decide if it's new round or completion.
     const socket = getSocket();
-    const gameCode = sessionStorage.getItem("gameCode");
+    const gameCode =
+      gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
     if (gameCode) {
       socket.emit("round:advance", { code: gameCode });
     }
-  }, []);
->>>>>>> origin/main
+  }, [gameCodeFromUrl]);
 
   const resetGame = useCallback(() => {
     const socket = getSocket();
