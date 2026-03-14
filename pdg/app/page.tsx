@@ -70,7 +70,6 @@ export default function Page() {
               textTransform: "uppercase",
               color: "var(--accent)",
               textShadow: "4px 4px 0 var(--dark)",
-              marginBottom: "20px",
             }}
           >
             ENTER CODE
