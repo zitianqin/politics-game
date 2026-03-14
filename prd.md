@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-A real-time, browser-based 1v1 party game in which two players compete to win a fictional Australian election by out-debating each other in front of 21 AI-simulated voters. Players connect from separate devices, are assigned procedurally generated candidate profiles, and debate two randomised policy topics under live time pressure. The game is inspired by the visual energy of Jackbox Party Pack — bright, bold, and fun for ordinary people with no political expertise required.
+A real-time, browser-based 1v1 party game in which two players compete to win a fictional Australian election by out-debating each other in front of 5 AI-simulated voters. Players connect from separate devices, are assigned procedurally generated candidate profiles, and debate two randomised policy topics under live time pressure. The game is inspired by the visual energy of Jackbox Party Pack — bright, bold, and fun for ordinary people with no political expertise required.
 
 ---
 
@@ -20,7 +20,7 @@ A real-time, browser-based 1v1 party game in which two players compete to win a 
 - Use real speech (microphone) captured via Groq Whisper transcription as the primary input.
 - Use Gemini (Gemini 3.1 Flash) as the voter-simulation engine, with Perplexity API as fallback.
 - Keep debate topics accessible to Australian laypeople — no specialist knowledge required.
-- Maintain fair starting conditions: without a debate, the 21 AI voters would split ~50/50 between the two candidates.
+- Maintain fair starting conditions: without a debate, the 5 AI voters would split ~50/50 between the two candidates.
 
 ### Non-Goals
 
@@ -38,7 +38,7 @@ A real-time, browser-based 1v1 party game in which two players compete to win a 
 | 1   | Player | Create a new game and share a 6-character alphanumeric code         | My friend can join from another device                 |
 | 2   | Player | Join a game by entering a code                                      | I don't need an account                                |
 | 3   | Player | See my candidate's full biography before the debate starts          | I can roleplay convincingly                            |
-| 4   | Player | See all 21 voter profiles before the debate                         | I can tailor my arguments                              |
+| 4   | Player | See all 5 voter profiles before the debate                         | I can tailor my arguments                              |
 | 5   | Player | Speak into my microphone during my turn                             | My speech is captured and transcribed                  |
 | 6   | Player | Press an "Objection!" button to interrupt my opponent               | I can challenge a bad point if I have enough time left |
 | 7   | Player | Watch a live timer showing my remaining speaking time               | I know when I'm about to run out                       |
@@ -62,7 +62,7 @@ A real-time, browser-based 1v1 party game in which two players compete to win a 
 │  Both players see:                                              │
 │    • Their own candidate bio                                    │
 │    • Their opponent's candidate bio                             │
-│    • All 21 voter profiles (names, age, occupation, values)     │
+│    • All 5 voter profiles (names, age, occupation, values)     │
 └────────────────────────┬────────────────────────────────────────┘
                          │
           ┌──────────────▼──────────────┐
@@ -94,7 +94,7 @@ A real-time, browser-based 1v1 party game in which two players compete to win a 
 ┌────────────────────────▼────────────────────────────────────────┐
 │  RESULTS                                                        │
 │  Final LLM response (all rounds) determines winner             │
-│  21 AI voters each cast a vote in character                     │
+│  5 AI voters each cast a vote in character                     │
 │  Animated vote reveal, winner declared                          │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -168,7 +168,7 @@ Profiles are generated at session start and held in the server-side game state o
 
 ## 7. Voter Profiles
 
-There is a **static predefined pool of 67 voter profiles**. At the start of each game, **21 are randomly selected** from this pool. The pool is balanced so that any random draw of 21 will produce a roughly even split between candidates in the absence of a debate. Voters are all Australian (may include immigrants or first-generation Australians).
+There is a **static predefined pool of 67 voter profiles**. At the start of each game, **5 are randomly selected** from this pool. The pool is balanced so that any random draw of 5 will produce a roughly even split between candidates in the absence of a debate. Voters are all Australian (may include immigrants or first-generation Australians).
 
 ### Voter Profile Fields
 
@@ -308,7 +308,7 @@ _Lean:_ Progressive (loosely) | _Concerns:_ Climate, housing, cost of living | _
 
 ---
 
-**21. Franco Moretti, 66, Barossa Valley SA**
+**5. Franco Moretti, 66, Barossa Valley SA**
 Italian-Australian winemaker whose family has been in the Barossa for three generations. Proud of his heritage, proud of his wine, and proud of South Australia. Deeply conservative on economic issues but surprisingly progressive on multiculturalism. Votes with his gut.
 _Lean:_ Centre-right | _Concerns:_ Agriculture, exports, water, small business | _Reasoning:_ Emotional | _Susceptible to:_ National pride, economic confidence, regional respect
 
@@ -548,7 +548,7 @@ _Lean:_ Swinging (drifting from Labor) | _Concerns:_ Cost of living, community c
 
 ---
 
-**61. Grace Muir, 21, Perth WA**
+**61. Grace Muir, 5, Perth WA**
 Nursing student in her second year at Curtin University. Working two casual jobs to pay rent. Voted for the first time last election and felt like it mattered. Tired, stressed, and wants a candidate who will make her life less hard. Not ideological — just practical.
 _Lean:_ Swinging | _Concerns:_ Cost of living, healthcare, student support | _Reasoning:_ Emotional | _Susceptible to:_ Practical cost-of-living relief, healthcare investment
 
@@ -590,7 +590,7 @@ _Lean:_ Progressive | _Concerns:_ Indigenous rights, housing, social work fundin
 
 ---
 
-Voter profiles are shown to both players during the Character Reveal phase. The 21 randomly selected for a given game are displayed in full; the remaining 46 are not shown.
+Voter profiles are shown to both players during the Character Reveal phase. The 5 randomly selected for a given game are displayed in full; the remaining 46 are not shown.
 
 ---
 
@@ -626,7 +626,7 @@ Topics are randomly selected from a predefined pool at the start of each game. E
 18. Should first home buyers receive a $50,000 government grant?
 19. Should Australia increase defence spending significantly?
 20. Should Australia extend its social media age ban from under-16s to under-18s?
-21. Should water usage rights be restructured to prioritise environmental flows?
+5. Should water usage rights be restructured to prioritise environmental flows?
 22. Should Australia fast-track nuclear energy?
 23. Should religious exemptions in anti-discrimination law be removed?
 24. Should Australia introduce a wealth tax on billionaires?
@@ -655,24 +655,24 @@ Each call is a single prompt containing:
 
 - All transcripts so far (labelled by round, speaker, with objection markers and timestamps)
 - Both candidate bios
-- All 21 voter profiles in full
+- All 5 voter profiles in full
 - The debate topics covered so far
 - An instruction to return a single JSON object with an entry for each voter
 
 ### 9.4 Prompt Instruction
 
-> "Below are the profiles of 21 Australian voters and the transcript(s) of a political debate between two candidates so far. For each voter, imagine you are that specific person — with their background, biases, values, and reasoning style. Decide which candidate they would currently vote for based on everything debated so far.
+> "Below are the profiles of 5 Australian voters and the transcript(s) of a political debate between two candidates so far. For each voter, imagine you are that specific person — with their background, biases, values, and reasoning style. Decide which candidate they would currently vote for based on everything debated so far.
 >
 > **Important:** Not every voter will make a rational, policy-based decision. Many real people vote on gut feel, emotion, personal impressions, or tribal loyalty rather than logical argument. A retiree might vote for whoever seems kinder even if their policy is weaker. A young voter might be swayed by a candidate's confidence or energy rather than what they actually said. Someone who feels talked down to might vote against a candidate purely out of spite. A voter with strong tribal loyalty may not be moveable at all regardless of argument quality. For each voter, stay true to their specific background, personality, and susceptibility as described — do not default to rational policy analysis for everyone. Some voters should absolutely be swayed by emotional appeals, populist rhetoric, personal attacks, or charisma over substance, if that fits who they are.
 >
 > Return ONLY a valid JSON object in this exact format, with no additional text:
-> `{ "voter_1": { "name": "...", "vote": "Candidate A" | "Candidate B", "reason": "1–2 sentences in that voter's own voice" }, "voter_2": { ... }, ... "voter_21": { ... } }`"
+> `{ "voter_1": { "name": "...", "vote": "Candidate A" | "Candidate B", "reason": "1–2 sentences in that voter's own voice" }, "voter_2": { ... }, ... "voter_5": { ... } }`"
 
 ### 9.5 Vote Tallying
 
 - The JSON response is parsed on the backend and the results are broadcast to both clients via Socket.io.
 - After Round 1, interim standings are surfaced to players as a brief "where things stand" screen before Round 2 begins.
-- After Round 2, the final JSON is the authoritative result. All 21 voters must cast a vote — with an odd number of voters a tie is impossible, so there is always a definitive winner.
+- After Round 2, the final JSON is the authoritative result. All 5 voters must cast a vote — with an odd number of voters a tie is impossible, so there is always a definitive winner.
 
 ### 9.5 Debate Moderator
 
@@ -700,7 +700,7 @@ Each call is a single prompt containing:
 
 - `GameCodeInput` — Enter/display 6-char alphanumeric game code
 - `CandidateCard` — Displays full candidate bio
-- `VoterGrid` — 21 voter profile cards (scrollable)
+- `VoterGrid` — 5 voter profile cards (scrollable)
 - `TopicBanner` — Animates in the round topic + 10 s countdown
 - `DebateArena` — Live floor indicator, objection button, timers, live transcript feed
 - `TimerBar` — Per-player countdown bar with colour states
@@ -717,7 +717,7 @@ Each call is a single prompt containing:
 | GET    | `/api/game/:code`       | Returns full game state                                  |
 | POST   | `/api/game/:code/start` | Host triggers game start, generates profiles             |
 | POST   | `/api/transcribe`       | Receives audio chunk, returns Whisper transcript segment |
-| POST   | `/api/vote`             | Triggers AI voter simulation, returns all 21 votes       |
+| POST   | `/api/vote`             | Triggers AI voter simulation, returns all 5 votes       |
 
 **Socket.io Events**
 
@@ -838,7 +838,7 @@ This game is explicitly Jackbox-themed in its visual identity. The aesthetic, pa
 | --- | ------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | 1   | Should the "where things stand" interim standings screen between rounds show individual voter reasons, or just the tally count? | Product     |
 | 2   | Should the objection gavel/buzzer sound be different depending on which player objects?                                         | Design      |
-| 3   | Should the random 21 voter selection be seeded per game code (reproducible) or fully random each session?                       | Engineering |
+| 3   | Should the random 5 voter selection be seeded per game code (reproducible) or fully random each session?                       | Engineering |
 
 ---
 
