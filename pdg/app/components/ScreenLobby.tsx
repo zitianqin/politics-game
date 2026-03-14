@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ScreenId } from "../lib/gameConstants";
 
 interface ScreenLobbyProps {
@@ -16,6 +17,14 @@ export default function ScreenLobby({
   startGame,
 }: ScreenLobbyProps) {
   const bothPlayersConnected = playersConnected === 2;
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = async () => {
+    if (!gameCode) return;
+    await navigator.clipboard.writeText(gameCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <div
@@ -42,7 +51,7 @@ export default function ScreenLobby({
           Share this code with your opponent to join!
         </div>
         <div
-          className="text-xl sm:text-2xl font-black tracking-[8px] sm:tracking-[12px] uppercase text-center px-6 py-5 sm:py-6 rounded-2xl w-full max-w-xs sm:max-w-sm"
+          className="relative text-xl sm:text-2xl font-black tracking-[8px] sm:tracking-[12px] uppercase text-left px-6 py-5 sm:py-6 rounded-2xl w-full max-w-xs sm:max-w-sm"
           style={{
             border: "6px solid var(--dark)",
             backgroundColor: "white",
@@ -51,11 +60,57 @@ export default function ScreenLobby({
           }}
         >
           {gameCode || "??????"}
+          <button
+            onClick={copyCode}
+            title="Copy code"
+            className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center transition-all duration-100 active:translate-x-[3px] active:translate-y-[calc(-50%+3px)] active:shadow-none"
+            style={{
+              background: copied ? "var(--green)" : "#FFD700",
+              border: `2.5px solid ${copied ? "#15803d" : "var(--dark)"}`,
+              borderRadius: "10px",
+              boxShadow: copied
+                ? "3px 3px 0px #15803d"
+                : "3px 3px 0px var(--dark)",
+              cursor: "pointer",
+              padding: "6px 10px",
+              color: copied ? "#14532d" : "var(--dark)",
+            }}
+          >
+            {copied ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
 
       <div className="flex flex-row justify-center items-center gap-4 sm:gap-6 mb-8 w-full flex-wrap">
-
         <div
           className="player-badge flex flex-col justify-center items-center rounded-2xl p-4 w-36 h-44 sm:w-64 sm:h-48"
           style={{
@@ -77,7 +132,7 @@ export default function ScreenLobby({
               🦄
             </div>
             <div className="apply-font text-base sm:text-xl leading-tight text-center">
-              PLAYER 1{isHost && <span className="text-sm">(YOU)</span> }
+              PLAYER 1{isHost && <span className="text-sm">(YOU)</span>}
             </div>
           </div>
           <div
@@ -89,7 +144,10 @@ export default function ScreenLobby({
               color: "var(--dark)",
             }}
           >
-            <div className="w-2.5 h-2.5 rounded-full opacity-60" style={{ backgroundColor: "var(--dark)" }} />
+            <div
+              className="w-2.5 h-2.5 rounded-full opacity-60"
+              style={{ backgroundColor: "var(--dark)" }}
+            />
             <span>{playersConnected >= 1 ? "READY" : "WAITING"}</span>
           </div>
         </div>
@@ -128,7 +186,13 @@ export default function ScreenLobby({
               🦖
             </div>
             <div className="apply-font text-base sm:text-xl leading-tight text-center">
-              PLAYER 2{!isHost && <><br /><span className="text-sm">(YOU)</span></>}
+              PLAYER 2
+              {!isHost && (
+                <>
+                  <br />
+                  <span className="text-sm">(YOU)</span>
+                </>
+              )}
             </div>
           </div>
           <div
@@ -140,7 +204,10 @@ export default function ScreenLobby({
               color: "var(--dark)",
             }}
           >
-            <div className="w-2.5 h-2.5 rounded-full opacity-60" style={{ backgroundColor: "var(--dark)" }} />
+            <div
+              className="w-2.5 h-2.5 rounded-full opacity-60"
+              style={{ backgroundColor: "var(--dark)" }}
+            />
             <span>{playersConnected >= 2 ? "READY" : "WAITING"}</span>
           </div>
         </div>
