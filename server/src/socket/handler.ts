@@ -5,6 +5,7 @@ import {
   findGameBySocketId,
   clearPlayerSocketId,
   setGameStatus,
+  prepareRevealData,
 } from "../state/gameState";
 import { startReconnectTimer, cancelReconnectTimer } from "./reconnect";
 import {
@@ -85,6 +86,14 @@ export function registerSocketHandlers(io: Server): void {
 
       if (game.status !== "lobby") {
         socket.emit("error", { message: "Game already started" });
+        return;
+      }
+
+      const prepared = prepareRevealData(code);
+      if (!prepared) {
+        socket.emit("error", {
+          message: "Failed to generate reveal profiles",
+        });
         return;
       }
 

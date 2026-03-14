@@ -2,12 +2,13 @@ import { v4 as uuidv4 } from "uuid";
 import { VoterProfile } from "../data/voterData";
 import { selectVoters } from "../lib/selectVoters";
 import { getRandomTopics } from "../lib/topicPool";
+import { CandidateProfile, getRandomCandidates } from "../lib/candidatePool";
 
 export interface Player {
   id: string;
   slot: 1 | 2;
   socketId: string | null;
-  candidate: Record<string, unknown> | null;
+  candidate: CandidateProfile | null;
 }
 
 export interface TranscriptEntry {
@@ -69,10 +70,10 @@ export function createGame(hostId: string): GameSession {
     hostId,
     createdAt: new Date(),
     players: [{ id: hostId, slot: 1, socketId: null, candidate: null }],
-    voters: selectVoters(),
+    voters: [],
     rounds: [],
     timerState: null,
-    topics: getRandomTopics(2),
+    topics: [],
     currentRound: 0,
     debatePhase: "idle",
   };
@@ -188,4 +189,22 @@ export function reconnectPlayer(
   if (!player) return { error: "Player not in this game" };
 
   return { game, player };
+}
+
+export function prepareRevealData(code: string): boolean {
+  const game = games.get(code.toUpperCase());
+  if (!game || game.players.length !== 2) return false;
+
+  game.voters = selectVoters();
+  game.topics = getRandomTopics(2);
+
+  const candidates = getRandomCandidates(2);
+  game.players[0].candidate = candidates[0] ?? null;
+  game.players[1].candidate = candidates[1] ?? null;
+
+  return (
+    game.players.every((player) => player.candidate !== null) &&
+    game.voters.length > 0 &&
+    game.topics.length === 2
+  );
 }
