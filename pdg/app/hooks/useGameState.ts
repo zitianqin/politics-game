@@ -52,6 +52,8 @@ export function useGameState() {
   // Reveal State
   const [p1RoundScore, setP1RoundScore] = useState(0);
   const [p2RoundScore, setP2RoundScore] = useState(0);
+  const [currentBarsHeight, setCurrentBarsHeight] = useState({ p1: 0, p2: 0 });
+  const [isNextBtnVisible, setIsNextBtnVisible] = useState(false);
   const [judgingJoke, setJudgingJoke] = useState(JUDGING_JOKES[0]);
 
   // Internal tracking
@@ -297,17 +299,29 @@ export function useGameState() {
 
   const showRevealScreen = useCallback(() => {
     // Simple mock scoring for now
-    const p1Score = currentP1ArgRef.current.length * 3 + Math.floor(Math.random() * 300);
-    const p2Score = currentP2ArgRef.current.length * 3 + Math.floor(Math.random() * 300);
+    const p1Score =
+      currentP1ArgRef.current.length * 3 + Math.floor(Math.random() * 300);
+    const p2Score =
+      currentP2ArgRef.current.length * 3 + Math.floor(Math.random() * 300);
 
     setP1RoundScore(p1Score);
     setP2RoundScore(p2Score);
     setScreen("reveal");
+    setIsNextBtnVisible(false);
 
+    // Animate bars
     setTimeout(() => {
+      setCurrentBarsHeight((prev) => ({
+        p1: prev.p1 + p1Score / 5, // scaled for display
+        p2: prev.p2 + p2Score / 5,
+      }));
       setP1TotalVotes((prev) => prev + p1Score);
       setP2TotalVotes((prev) => prev + p2Score);
-    }, 1000);
+    }, 500);
+
+    setTimeout(() => {
+      setIsNextBtnVisible(true);
+    }, 3000);
   }, []);
 
   const startNextRound = useCallback(() => {
@@ -352,6 +366,8 @@ export function useGameState() {
     p2TotalVotes,
     p1RoundScore,
     p2RoundScore,
+    currentBarsHeight,
+    isNextBtnVisible,
 
     // Debate state (server-driven)
     currentTopic,

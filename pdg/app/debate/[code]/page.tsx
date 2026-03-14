@@ -4,6 +4,8 @@ import HUD from "@/app/components/HUD";
 import ScreenTopic from "@/app/components/ScreenTopic";
 import ScreenDebate from "@/app/components/ScreenDebate";
 import ScreenJudging from "@/app/components/ScreenJudging";
+import ScreenReveal from "@/app/components/ScreenReveal";
+import ScreenWinner from "@/app/components/ScreenWinner";
 import { useGameState } from "@/app/hooks/useGameState";
 import { use, useEffect } from "react";
 import { getSocket } from "@/app/lib/socket";
@@ -28,6 +30,13 @@ export default function DebatePage({
     judgingJoke,
     showObjectionVFX,
     objectionBy,
+    p1RoundScore,
+    p2RoundScore,
+    p1TotalVotes,
+    p2TotalVotes,
+    currentBarsHeight,
+    isNextBtnVisible,
+    winnerLabel,
     addTranscriptEntry,
     handleObjection,
     handleYield,
@@ -35,6 +44,7 @@ export default function DebatePage({
     setMediaStream,
     startMeetVoters,
     startNextRound,
+    resetGame,
   } = useGameState();
 
   // Connect socket and signal reveal done on mount
@@ -95,6 +105,28 @@ export default function DebatePage({
 
       {screen === "judging" && (
         <ScreenJudging screen={screen} judgingJoke={judgingJoke} />
+      )}
+
+      {screen === "reveal" && (
+        <ScreenReveal
+          screen={screen}
+          p1Earned={p1RoundScore}
+          p2Earned={p2RoundScore}
+          currentBarsHeight={currentBarsHeight}
+          isNextBtnVisible={isNextBtnVisible}
+          currentRound={currentRound}
+          startNextRound={startNextRound}
+        />
+      )}
+
+      {screen === "winner" && (
+        <ScreenWinner
+          screen={screen}
+          winnerLabel={winnerLabel}
+          p1TotalVotes={p1TotalVotes}
+          p2TotalVotes={p2TotalVotes}
+          resetGame={resetGame}
+        />
       )}
     </>
   );
