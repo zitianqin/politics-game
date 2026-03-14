@@ -55,7 +55,7 @@ export function startTimer(
     io.to(roomCode).emit("timer:update", {
       p1remaining: Math.round(timerState.p1Remaining / 1000),
       p2remaining: Math.round(timerState.p2Remaining / 1000),
-      activePlayer: timerState.activeFloor
+      activePlayer: timerState.activeFloor,
     });
 
     // Check for time exhaustion
@@ -135,7 +135,7 @@ export function handleObjection(
   io.to(roomCode).emit("timer:update", {
     p1remaining: Math.round(timerState.p1Remaining / 1000),
     p2remaining: Math.round(timerState.p2Remaining / 1000),
-    activePlayer: timerState.activeFloor
+    activePlayer: timerState.activeFloor,
   });
 
   onFloorChange(byPlayer, "objection");

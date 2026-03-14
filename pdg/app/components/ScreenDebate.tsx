@@ -60,7 +60,7 @@ export default function ScreenDebate({
       // Play gavel SFX
       try {
         const audio = new Audio(
-          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=",
+          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="
         );
         audio.volume = 0.5;
         audio.play().catch(() => {});
@@ -469,8 +469,8 @@ export default function ScreenDebate({
               isCurrentPlayerActive && !isRecording
                 ? "8px 8px 0 var(--dark)"
                 : isCurrentPlayerActive && isRecording
-                  ? "8px 8px 0 var(--p2)"
-                  : "none",
+                ? "8px 8px 0 var(--p2)"
+                : "none",
             transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
             opacity: isCurrentPlayerActive ? 1 : 0.5,
             letterSpacing: "1px",
