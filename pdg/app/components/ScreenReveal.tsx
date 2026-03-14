@@ -1,4 +1,4 @@
-import { ScreenId } from "../lib/gameConstants";
+import { ScreenId, TOTAL_ROUNDS } from "../lib/gameConstants";
 
 interface ScreenRevealProps {
   screen: ScreenId;
@@ -98,7 +98,7 @@ export default function ScreenReveal({
           transition: "opacity 0.5s",
         }}
       >
-        {currentRound >= 3 ? "SEE FINAL RESULTS!" : "NEXT ROUND"}
+        {currentRound >= TOTAL_ROUNDS ? "SEE FINAL RESULTS!" : "NEXT ROUND"}
       </button>
     </div>
   );

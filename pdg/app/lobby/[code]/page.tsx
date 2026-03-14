@@ -44,6 +44,7 @@ export default function LobbyPage({
     socket.connect();
 
     const joinRoom = () => {
+      console.log("Emitting game:join and game:getState for", code);
       socket.emit("game:join", { code, playerId });
       socket.emit("game:getState", { code });
       const savedName = sessionStorage.getItem("playerName");
@@ -52,13 +53,8 @@ export default function LobbyPage({
       }
     };
 
-    if (socket.connected) {
-      joinRoom();
-    } else {
-      socket.on("connect", joinRoom);
-    }
-
     socket.on("game:state", (data: { gameState: any }) => {
+      console.log("Received game:state in lobby:", data.gameState?.players?.length);
       if (data.gameState) {
         setPlayerCount(data.gameState.players.length);
         const myId = sessionStorage.getItem("playerId");
@@ -71,28 +67,13 @@ export default function LobbyPage({
       }
     });
 
-    socket.on(
-      "player:joined",
-      (data: { playerCount: number; displayName?: string; playerId?: string }) => {
-        setPlayerCount(data.playerCount);
-        const myId = sessionStorage.getItem("playerId");
-        if (data.playerId !== myId && data.displayName) {
-          setOpponentName(data.displayName);
-        }
-      }
-    );
-
-    socket.on(
-      "player:nameChanged",
-      (data: { playerId: string; slot: number; displayName: string | null }) => {
-        const myId = sessionStorage.getItem("playerId");
-        if (data.playerId !== myId) {
-          setOpponentName(data.displayName ?? "");
-        }
-      }
-    );
+socket.on("player:joined", (data: { playerCount: number }) => {
+  console.log("Received player:joined in lobby. Count:", data.playerCount);
+  setPlayerCount(data.playerCount);
+});
 
     socket.on("game:started", () => {
+      console.log("Received game:started in lobby");
       router.push(`/reveal/${code}`);
     });
 
@@ -113,6 +94,12 @@ export default function LobbyPage({
       setIsStarting(false);
       console.error("Socket error:", data.message);
     });
+
+    if (socket.connected) {
+      joinRoom();
+    } else {
+      socket.on("connect", joinRoom);
+    }
 
     return () => {
       socket.off("connect");

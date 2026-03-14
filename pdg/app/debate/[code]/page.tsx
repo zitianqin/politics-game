@@ -40,7 +40,6 @@ export default function DebatePage({
     p1Name,
     p2Name,
     winnerLabel,
-    addTranscriptEntry,
     handleObjection,
     handleYield,
     setIsRecording,
@@ -61,9 +60,12 @@ export default function DebatePage({
         socket.emit("game:join", { code, playerId });
       }
     }
-  }, [code]); // Removed startMeetVoters from dependencies and call
+  }, [code]);
 
   const router = useRouter();
+
+
+  // Redirect to lobby if screen is lobby
   useEffect(() => {
     if (isHydrated && screen === "lobby") {
       router.push(`/lobby/${code}`);
@@ -108,7 +110,6 @@ export default function DebatePage({
           objectionBy={objectionBy}
           onObjection={() => handleObjection(currentPlayer)}
           onYield={handleYield}
-          onSubmitSpeech={(text) => addTranscriptEntry(currentPlayer, text)}
           setIsRecording={setIsRecording}
           setMediaStream={setMediaStream}
         />

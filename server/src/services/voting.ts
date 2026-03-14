@@ -66,20 +66,44 @@ function formatCandidate(player: Player, label: string): string {
   }
 
   const fields: [string, string][] = [
-    ["Name", String(c.name ?? "")],
+    ["Name", String((c as any).fullName ?? (c as any).name ?? "")],
     ["Age", String(c.age ?? "")],
-    ["Party", String(c.party ?? "")],
+    ["Party", String((c as any).partyName ?? (c as any).party ?? "")],
     ["Electorate", String(c.electorate ?? "")],
     ["Profession", String(c.profession ?? "")],
     ["Background", String(c.background ?? "")],
     [
-      "Policy Positions",
-      Array.isArray(c.policies)
-        ? (c.policies as string[]).join("; ")
-        : String(c.policies ?? ""),
+      "Key Past Actions",
+      (() => {
+        const keyActions = (c as any).keyPastActions;
+        if (!keyActions) return "";
+        const positives = Array.isArray(keyActions.positive)
+          ? keyActions.positive.join("; ")
+          : "";
+        const controversial = String(keyActions.controversial ?? "");
+        return [positives, controversial].filter(Boolean).join("; ");
+      })(),
     ],
-    ["Personal Values", String(c.values ?? "")],
-    ["Flaws", String(c.flaws ?? "")],
+    [
+      "Policy Positions",
+      Array.isArray((c as any).policyPositions)
+        ? ((c as any).policyPositions as string[]).join("; ")
+        : Array.isArray((c as any).policies)
+          ? ((c as any).policies as string[]).join("; ")
+          : String((c as any).policies ?? ""),
+    ],
+    [
+      "Personal Values",
+      Array.isArray((c as any).personalValues)
+        ? ((c as any).personalValues as string[]).join(", ")
+        : String((c as any).values ?? ""),
+    ],
+    [
+      "Flaws",
+      Array.isArray((c as any).flaws)
+        ? ((c as any).flaws as string[]).join("; ")
+        : String((c as any).flaws ?? ""),
+    ],
   ];
 
   const lines = [`${label}:`];

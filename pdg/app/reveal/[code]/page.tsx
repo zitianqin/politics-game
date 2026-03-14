@@ -7,6 +7,28 @@ import { votersData } from "../../lib/voterData";
 import PixelPortrait from "../../components/PixelPortrait";
 import { getSocket } from "../../lib/socket";
 
+interface CandidateProfile {
+  fullName: string;
+  age: number;
+  partyName: string;
+  electorate: string;
+  background: string;
+  profession: string;
+  keyPastActions: {
+    positive: [string, string];
+    controversial: string;
+  };
+  policyPositions: [string, string, string];
+  personalValues: [string, string, string];
+  flaws: [string];
+}
+
+interface GamePlayer {
+  id: string;
+  slot: 1 | 2;
+  candidate: CandidateProfile | null;
+}
+
 export default function RevealPage({
   params,
 }: {
@@ -16,9 +38,28 @@ export default function RevealPage({
   const router = useRouter();
   const [countdown, setCountdown] = useState(15);
   const [mounted, setMounted] = useState(false);
-   const [selectedVoters, setSelectedVoters] = useState<typeof votersData>([]);
+  const [selectedVoters, setSelectedVoters] = useState<typeof votersData>([]);
+  const [myCandidate, setMyCandidate] = useState<CandidateProfile | null>(null);
+  const [opponentCandidate, setOpponentCandidate] =
+    useState<CandidateProfile | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [otherReadyCount, setOtherReadyCount] = useState(0);
+
+  const applyCandidatesFromPlayers = (players: GamePlayer[]) => {
+    const playerId = sessionStorage.getItem("playerId");
+    const meById = players.find((p) => p.id === playerId);
+    const meBySlot = playerId
+      ? undefined
+      : players.find((p) => p.slot === (sessionStorage.getItem("isHost") === "true" ? 1 : 2));
+    const me = meById ?? meBySlot;
+
+    const opponentById = playerId ? players.find((p) => p.id !== playerId) : undefined;
+    const opponentBySlot = me?.slot ? players.find((p) => p.slot !== me.slot) : undefined;
+    const opponent = opponentById ?? opponentBySlot;
+
+    setMyCandidate(me?.candidate ?? null);
+    setOpponentCandidate(opponent?.candidate ?? null);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -32,6 +73,14 @@ export default function RevealPage({
           setSelectedVoters(
             [...votersData].sort(() => Math.random() - 0.5).slice(0, 5),
           );
+        }
+
+        const playerId = sessionStorage.getItem("playerId");
+        const players: GamePlayer[] = Array.isArray(data.players)
+          ? (data.players as GamePlayer[])
+          : [];
+        if (playerId && players.length > 0) {
+          applyCandidatesFromPlayers(players);
         }
       })
       .catch((err) => {
@@ -67,9 +116,17 @@ export default function RevealPage({
       setOtherReadyCount(data.readyCount);
     };
 
+    const onGameState = (data: { gameState: { players?: GamePlayer[] } }) => {
+      const players = data.gameState?.players;
+      if (Array.isArray(players) && players.length > 0) {
+        applyCandidatesFromPlayers(players);
+      }
+    };
+
     socket.on("reveal:timer", onRevealTimer);
     socket.on("reveal:end", onRevealEnd);
     socket.on("reveal:ready", onRevealReady);
+    socket.on("game:state", onGameState);
 
     // Initial sync if refreshing mid-reveal
     socket.on("game:reconnected", (data: { gameState: any }) => {
@@ -83,12 +140,19 @@ export default function RevealPage({
           setIsReady(true);
         }
       }
+
+      if (Array.isArray(data.gameState?.players)) {
+        applyCandidatesFromPlayers(data.gameState.players as GamePlayer[]);
+      }
     });
+
+    socket.emit("game:getState", { code });
 
     return () => {
       socket.off("reveal:timer", onRevealTimer);
       socket.off("reveal:end", onRevealEnd);
       socket.off("reveal:ready", onRevealReady);
+      socket.off("game:state", onGameState);
       socket.off("game:reconnected");
     };
   }, [code, router]);
@@ -126,6 +190,97 @@ export default function RevealPage({
             {isReady ? `WAITING... (${otherReadyCount}/2)` : "READY!"}
           </button>
         </div>
+      </motion.div>
+
+      <motion.h2
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", bounce: 0.4 }}
+        className="text-5xl text-white font-['Titan_One'] drop-shadow-[4px_4px_0_rgba(0,0,0,1)] mb-6"
+      >
+        CANDIDATE BRIEFING
+      </motion.h2>
+
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10"
+      >
+        {[myCandidate, opponentCandidate].map((candidate, idx) => (
+          <div
+            key={idx}
+            className="mt-4 bg-white rounded-xl border-4 border-black p-5 shadow-[4px_4px_0_0_#000]"
+          >
+            <div
+              className={`-mx-5 -mt-5 mb-4 px-5 py-3 border-b-4 border-black ${idx === 0 ? "bg-[#0AA0FF]" : "bg-[#E31B23]"}`}
+            >
+              <h3 className="font-['Titan_One'] text-2xl text-white drop-shadow-[2px_2px_0_#000]">
+                {idx === 0 ? "YOUR CANDIDATE" : "OPPONENT CANDIDATE"}
+              </h3>
+            </div>
+
+            {candidate ? (
+              <div className="space-y-3 text-sm text-black font-['Nunito']">
+                <div>
+                  <p className="font-['Titan_One'] text-2xl leading-tight">
+                    {candidate.fullName}
+                  </p>
+                  <p className="font-bold text-gray-700">
+                    {candidate.age} • {candidate.profession} • {candidate.electorate}
+                  </p>
+                  <p className="inline-block mt-1 bg-black text-white px-2 py-1 rounded text-xs font-black uppercase">
+                    {candidate.partyName}
+                  </p>
+                </div>
+
+                <p className="text-gray-800">{candidate.background}</p>
+
+                <div>
+                  <p className="font-black text-gray-600 text-xs mb-1">
+                    KEY PAST ACTIONS
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>{candidate.keyPastActions.positive[0]}</li>
+                    <li>{candidate.keyPastActions.positive[1]}</li>
+                    <li className="text-[#B00020]">
+                      {candidate.keyPastActions.controversial}
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-black text-gray-600 text-xs mb-1">
+                    POLICY POSITIONS
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {candidate.policyPositions.map((policy, policyIdx) => (
+                      <li key={policyIdx}>{policy}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {candidate.personalValues.map((value, valueIdx) => (
+                    <span
+                      key={valueIdx}
+                      className="bg-[#FFEB3B] border-2 border-black px-2 py-0.5 rounded-full text-xs font-black uppercase"
+                    >
+                      {value}
+                    </span>
+                  ))}
+                  <span className="bg-[#FFE0E0] border-2 border-black px-2 py-0.5 rounded-full text-xs font-black uppercase text-[#B00020]">
+                    {candidate.flaws[0]}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className="font-['Nunito'] text-gray-600">
+                Candidate profile unavailable.
+              </p>
+            )}
+          </div>
+        ))}
       </motion.div>
 
       <motion.h2
