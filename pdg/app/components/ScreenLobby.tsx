@@ -20,149 +20,84 @@ export default function ScreenLobby({
   return (
     <div
       id="screen-lobby"
-      className={`screen ${screen === "lobby" ? "active" : ""}`}
-      style={{
-        padding: "12px",
-        overflowY: "auto",
-      }}
+      className={`screen ${screen === "lobby" ? "active" : ""} min-h-screen flex flex-col items-center justify-center px-4 py-8 overflow-y-auto`}
     >
-      <h1
-        className="title-text bouncing"
-        style={{ fontSize: "64px", marginBottom: "16px" }}
-      >
+      <h1 className="title-text bouncing text-center text-4xl sm:text-6xl md:text-7xl leading-tight mb-6 sm:mb-8">
         ELECTION
         <br />
         SHOWDOWN
       </h1>
 
-      {/* Game Code Section */}
-      <div className="flex flex-col items-center justify-center mb-10">
+      <div className="flex flex-col items-center justify-center mb-8 sm:mb-10 w-full">
         <div
+          className="text-3xl sm:text-5xl font-black tracking-widest uppercase mb-2"
           style={{
-            fontSize: "48px",
-            fontWeight: "900",
-            letterSpacing: "8px",
-            textTransform: "uppercase",
             color: "var(--accent)",
             textShadow: "4px 4px 0 var(--dark)",
           }}
         >
           GAME CODE
         </div>
-        <div
-          // className="sub-text"
-          style={{
-            fontSize: "20px",
-            color: "white",
-          }}
-        >
+        <div className="text-sm sm:text-base text-white mb-4 text-center">
           Share this code with your opponent to join!
         </div>
         <div
+          className="text-xl sm:text-2xl font-black tracking-[8px] sm:tracking-[12px] uppercase text-center px-6 py-5 sm:py-6 rounded-2xl w-full max-w-xs sm:max-w-sm"
           style={{
-            fontSize: "24px",
-            fontWeight: "900",
-            letterSpacing: "12px",
-            textTransform: "uppercase",
-            textAlign: "center",
-            padding: "24px",
             border: "6px solid var(--dark)",
-            borderRadius: "16px",
             backgroundColor: "white",
             color: "var(--dark)",
-            boxShadow: "12px 12px 0 var(--accent)",
-            transition: "all 0.2s ease",
-            outline: "none",
-            minWidth: "400px",
+            boxShadow: "8px 8px 0 var(--accent)",
           }}
         >
           {gameCode || "??????"}
         </div>
       </div>
 
-      {/* Players Connected Section */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: "20px",
-          marginBottom: "32px",
-          flexWrap: "wrap",
-        }}
-      >
-        {/* Player 1 */}
+      <div className="flex flex-row justify-center items-center gap-4 sm:gap-6 mb-8 w-full flex-wrap">
+
         <div
-          className="player-badge flex flex-col justify-center items-center"
+          className="player-badge flex flex-col justify-center items-center rounded-2xl p-4 w-36 h-44 sm:w-64 sm:h-48"
           style={{
             background: "var(--p1)",
-            width: "280px",
-            height: "200px",
-            padding: "16px",
             border: "5px solid var(--dark)",
             boxShadow: "6px 6px 0px var(--dark)",
-            borderRadius: "16px",
           }}
         >
-          <div className="flex justify-center items-center gap-3 mb-2">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 mb-3 text-center">
             <div
-              className="avatar"
+              className="avatar text-2xl sm:text-3xl flex items-center justify-center rounded-full flex-shrink-0"
               style={{
-                fontSize: "32px",
                 background: "var(--dark)",
-                width: "60px",
-                height: "60px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: "50%",
+                width: "48px",
+                height: "48px",
                 border: "3px solid #fff",
-                flex: "0 0 60px",
               }}
             >
               🦄
             </div>
-            <div
-              className="score-val apply-font text-2xl"
-              style={{ lineHeight: "1.2" }}
-            >
-              PLAYER 1{isHost && " (YOU)"}
+            <div className="apply-font text-base sm:text-xl leading-tight text-center">
+              PLAYER 1{isHost && <span className="text-sm">(YOU)</span> }
             </div>
           </div>
           <div
+            className="flex justify-center items-center gap-2 px-3 py-2 rounded-full font-bold text-xs sm:text-sm"
             style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 16px",
               backgroundColor: playersConnected >= 1 ? "#00fc88" : "#ffd500",
               border: "3px solid var(--dark)",
-              borderRadius: "24px",
               boxShadow: "4px 4px 0px var(--dark)",
-              fontWeight: "bold",
-              fontSize: "14px",
               color: "var(--dark)",
             }}
           >
-            <div
-              style={{
-                width: "12px",
-                height: "12px",
-                borderRadius: "50%",
-                backgroundColor: "var(--dark)",
-                opacity: 0.6,
-              }}
-            />
+            <div className="w-2.5 h-2.5 rounded-full opacity-60" style={{ backgroundColor: "var(--dark)" }} />
             <span>{playersConnected >= 1 ? "READY" : "WAITING"}</span>
           </div>
         </div>
 
         {/* VS */}
         <div
+          className="text-2xl sm:text-4xl font-black"
           style={{
-            fontSize: "24px",
-            fontWeight: "900",
             color: "var(--accent)",
             WebkitTextStroke: "2px var(--dark)",
             textShadow: "4px 4px 0 var(--dark)",
@@ -173,105 +108,70 @@ export default function ScreenLobby({
 
         {/* Player 2 */}
         <div
-          className="player-badge flex flex-col justify-center items-center"
+          className="player-badge flex flex-col justify-center items-center rounded-2xl p-4 w-36 h-44 sm:w-64 sm:h-48"
           style={{
             background: "var(--p2)",
-            width: "280px",
-            height: "200px",
-            padding: "16px",
             border: "5px solid var(--dark)",
             boxShadow: "6px 6px 0px var(--dark)",
-            borderRadius: "16px",
           }}
         >
-          <div className="flex justify-center items-center gap-3 mb-2">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 mb-3 text-center">
             <div
-              className="avatar"
+              className="avatar text-2xl sm:text-3xl flex items-center justify-center rounded-full flex-shrink-0"
               style={{
-                fontSize: "32px",
                 background: "var(--dark)",
-                width: "60px",
-                height: "60px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: "50%",
+                width: "48px",
+                height: "48px",
                 border: "3px solid #fff",
-                flex: "0 0 60px",
               }}
             >
               🦖
             </div>
-            <div
-              className="score-val apply-font text-2xl"
-              style={{ lineHeight: "1.2" }}
-            >
-              PLAYER 2{!isHost && " (YOU)"}
+            <div className="apply-font text-base sm:text-xl leading-tight text-center">
+              PLAYER 2{!isHost && <><br /><span className="text-sm">(YOU)</span></>}
             </div>
           </div>
           <div
+            className="flex justify-center items-center gap-2 px-3 py-2 rounded-full font-bold text-xs sm:text-sm"
             style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 16px",
               backgroundColor: playersConnected >= 2 ? "#00fc88" : "#ffd500",
               border: "3px solid var(--dark)",
-              borderRadius: "24px",
               boxShadow: "4px 4px 0px var(--dark)",
-              fontWeight: "bold",
-              fontSize: "14px",
               color: "var(--dark)",
             }}
           >
-            <div
-              style={{
-                width: "12px",
-                height: "12px",
-                borderRadius: "50%",
-                backgroundColor: "var(--dark)",
-                opacity: 0.6,
-              }}
-            />
+            <div className="w-2.5 h-2.5 rounded-full opacity-60" style={{ backgroundColor: "var(--dark)" }} />
             <span>{playersConnected >= 2 ? "READY" : "WAITING"}</span>
           </div>
         </div>
       </div>
 
-      {/* Start Game Button */}
       {isHost && (
-        <div>
-          <button
-            onClick={startGame}
-            disabled={!bothPlayersConnected}
-            className="btn"
-            onMouseDown={(e) => {
-              if (bothPlayersConnected) {
-                e.currentTarget.style.transform = "translate(3px, 3px)";
-                e.currentTarget.style.boxShadow = "6px 6px 0 var(--dark)";
-              }
-            }}
-            onMouseUp={(e) => {
-              if (bothPlayersConnected) {
-                e.currentTarget.style.transform = "translate(0, 0)";
-                e.currentTarget.style.boxShadow = "12px 12px 0 var(--dark)";
-              }
-            }}
-          >
-            {bothPlayersConnected ? "START" : "WAITING FOR OPPONENT..."}
-          </button>
-        </div>
+        <button
+          onClick={startGame}
+          disabled={!bothPlayersConnected}
+          className="btn w-full max-w-xs sm:max-w-sm text-lg sm:text-xl py-3 sm:py-4"
+          onMouseDown={(e) => {
+            if (bothPlayersConnected) {
+              e.currentTarget.style.transform = "translate(3px, 3px)";
+              e.currentTarget.style.boxShadow = "6px 6px 0 var(--dark)";
+            }
+          }}
+          onMouseUp={(e) => {
+            if (bothPlayersConnected) {
+              e.currentTarget.style.transform = "translate(0, 0)";
+              e.currentTarget.style.boxShadow = "12px 12px 0 var(--dark)";
+            }
+          }}
+        >
+          {bothPlayersConnected ? "START" : "WAITING FOR OPPONENT..."}
+        </button>
       )}
 
       {!isHost && playersConnected === 2 && (
         <div
-          className="sub-text"
-          style={{
-            textAlign: "center",
-            animation: "pulse 1.5s ease-in-out infinite",
-            marginTop: "16px",
-          }}
+          className="sub-text text-center mt-4 text-sm sm:text-base"
+          style={{ animation: "pulse 1.5s ease-in-out infinite" }}
         >
           Waiting for host to start...
         </div>

@@ -44,10 +44,10 @@ export default function Page() {
       existingGame.status === "lobby"
         ? `/lobby/${existingGame.code}`
         : existingGame.status === "reveal"
-          ? `/reveal/${existingGame.code}`
-          : existingGame.status === "debate"
-            ? `/debate/${existingGame.code}`
-            : `/results/${existingGame.code}`;
+        ? `/reveal/${existingGame.code}`
+        : existingGame.status === "debate"
+        ? `/debate/${existingGame.code}`
+        : `/results/${existingGame.code}`;
     router.push(targetRoute);
   };
 
@@ -181,6 +181,7 @@ export default function Page() {
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             maxLength={6}
             disabled={isLoading}
+            autoFocus
             style={{
               fontSize: "24px",
               fontWeight: "900",
