@@ -14,6 +14,7 @@ interface ScreenDebateProps {
   p2TimeRemaining: number;
   currentTopic: string;
   transcript: TranscriptEntry[];
+  roundStartTime: number | null;
   showObjectionVFX: boolean;
   objectionBy: 1 | 2 | null;
   p1Name?: string;
@@ -33,6 +34,7 @@ export default function ScreenDebate({
   p2TimeRemaining,
   currentTopic,
   transcript,
+  roundStartTime,
   showObjectionVFX,
   objectionBy,
   p1Name = "Player 1",
@@ -177,7 +179,11 @@ export default function ScreenDebate({
       formData.append("playerId", playerId);
       formData.append("roundNumber", String(roundNumber));
       formData.append("topic", topic);
-      formData.append("timestamp", String(startTime));
+      
+      const relativeStartTime = roundStartTime 
+        ? Math.round((startTime - roundStartTime) / 1000)
+        : 0;
+      formData.append("timestamp", String(relativeStartTime));
 
       await fetch("/api/transcribe", {
         method: "POST",

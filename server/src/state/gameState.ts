@@ -16,6 +16,7 @@ export interface TranscriptEntry {
   speaker: string;
   text: string;
   timestamp: number;
+  isObjection?: boolean;
   isObjectionEnd?: boolean;
   inaudible?: boolean;
 }
@@ -165,6 +166,7 @@ export function addTranscriptEntry(
   const round = game.rounds.find((r) => r.roundNumber === roundNumber);
   if (!round) return false;
   round.transcript.push(entry);
+  round.transcript.sort((a, b) => a.timestamp - b.timestamp);
   return true;
 }
 

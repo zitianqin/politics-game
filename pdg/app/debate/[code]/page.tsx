@@ -57,6 +57,7 @@ export default function DebatePage({
     advanceToWinner,
     p1Candidate,
     p2Candidate,
+    roundStartTime,
   } = useGameState(code);
 
   // Connect socket and signal reveal done on mount
@@ -117,6 +118,7 @@ export default function DebatePage({
           p2TimeRemaining={p2RoundTimeRemaining}
           currentTopic={currentTopic}
           transcript={liveTranscript}
+          roundStartTime={roundStartTime}
           showObjectionVFX={showObjectionVFX}
           objectionBy={objectionBy}
           p1Name={p1Name}

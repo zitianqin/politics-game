@@ -16,7 +16,7 @@ export default function ScreenJudging({
     >
       <div className="spinner">🤖</div>
       <h2 className="title-text" style={{ fontSize: "70px" }}>
-        AI AUDIENCE IS VOTING...
+        AUDIENCE IS VOTING...
       </h2>
       <div id="judging-joke">{judgingJoke}</div>
     </div>

@@ -14,6 +14,7 @@ export interface RoundContext {
   timerState: TimerState;
   prepIntervalId: ReturnType<typeof setInterval> | null;
   revealIntervalId: ReturnType<typeof setInterval> | null;
+  startTime: number | null;
 }
 
 const roundContexts = new Map<string, RoundContext>();
@@ -30,7 +31,7 @@ export function startMeetVotersPhase(io: Server, game: GameSession): void {
   game.status = "meet_voters";
   
   const timerState = createTimerState();
-  const ctx: RoundContext = { timerState, prepIntervalId: null, revealIntervalId: null };
+  const ctx: RoundContext = { timerState, prepIntervalId: null, revealIntervalId: null, startTime: null };
   roundContexts.set(code, ctx);
 
   let countdown = 15;
@@ -71,6 +72,7 @@ export function startRound(
     timerState: createTimerState(),
     prepIntervalId: null,
     revealIntervalId: null,
+    startTime: null,
   };
   roundContexts.set(code, ctx);
 
@@ -116,11 +118,12 @@ function beginDebatePhase(io: Server, game: GameSession): void {
   if (!ctx) return;
 
   game.debatePhase = "debate";
+  ctx.startTime = Date.now();
 
   // P1 starts Round 1, P2 starts Round 2
   const activePlayer: 1 | 2 = game.currentRound === 1 ? 1 : 2;
 
-  io.to(code).emit("round:debate", { activePlayer });
+  io.to(code).emit("round:debate", { activePlayer, startTime: ctx.startTime });
 
   const onFloorChange = (newActive: 1 | 2, reason: string) => {
     io.to(code).emit("floor:change", { activePlayer: newActive, reason });
@@ -262,13 +265,40 @@ export function processObjection(
     });
   };
 
-  return timerHandleObjection(
+  const result = timerHandleObjection(
     io,
     game.code,
     ctx.timerState,
     byPlayer,
     onFloorChange
   );
+
+  if (result.success) {
+    const timestamp = ctx.startTime
+      ? Math.round((Date.now() - ctx.startTime) / 1000)
+      : 0;
+
+    const entry = {
+      speaker: `player${byPlayer}`,
+      text: "OBJECTION!",
+      timestamp,
+      isObjection: true, // Marker for UI
+    };
+
+    const round = game.rounds.find((r) => r.roundNumber === game.currentRound);
+    if (round) {
+      round.transcript.push(entry);
+      round.transcript.sort((a, b) => a.timestamp - b.timestamp);
+    }
+
+    // Broadcast the objection entry to all clients
+    io.to(game.code).emit("transcript:update", {
+      ...entry,
+      roundNumber: game.currentRound,
+    });
+  }
+
+  return result;
 }
 
 /**
