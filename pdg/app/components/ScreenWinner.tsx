@@ -6,6 +6,8 @@ interface ScreenWinnerProps {
   p1TotalVotes: number;
   p2TotalVotes: number;
   resetGame: () => void;
+  p1Name?: string;
+  p2Name?: string;
 }
 
 export default function ScreenWinner({
@@ -14,6 +16,8 @@ export default function ScreenWinner({
   p1TotalVotes,
   p2TotalVotes,
   resetGame,
+  p1Name = "Player 1",
+  p2Name = "Player 2",
 }: ScreenWinnerProps) {
   return (
     <div
@@ -57,7 +61,7 @@ export default function ScreenWinner({
             color: "var(--p1-dark)",
           }}
         >
-          P1: <span>{p1TotalVotes}</span>
+          {p1Name}: <span>{p1TotalVotes}</span>
         </p>
         <p
           style={{
@@ -66,7 +70,7 @@ export default function ScreenWinner({
             color: "var(--p2-dark)",
           }}
         >
-          P2: <span>{p2TotalVotes}</span>
+          {p2Name}: <span>{p2TotalVotes}</span>
         </p>
       </div>
 

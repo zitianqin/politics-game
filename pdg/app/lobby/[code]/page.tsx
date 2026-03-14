@@ -20,6 +20,7 @@ export default function LobbyPage({
   });
   const [hasMic, setHasMic] = useState<boolean | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [opponentName, setOpponentName] = useState("");
 
   useEffect(() => {
     navigator.mediaDevices
@@ -45,6 +46,10 @@ export default function LobbyPage({
     const joinRoom = () => {
       socket.emit("game:join", { code, playerId });
       socket.emit("game:getState", { code });
+      const savedName = sessionStorage.getItem("playerName");
+      if (savedName) {
+        socket.emit("player:setName", { code, playerId, name: savedName });
+      }
     };
 
     if (socket.connected) {
@@ -56,12 +61,36 @@ export default function LobbyPage({
     socket.on("game:state", (data: { gameState: any }) => {
       if (data.gameState) {
         setPlayerCount(data.gameState.players.length);
+        const myId = sessionStorage.getItem("playerId");
+        const opponent = data.gameState.players.find(
+          (p: any) => p.id !== myId
+        );
+        if (opponent?.displayName) {
+          setOpponentName(opponent.displayName);
+        }
       }
     });
 
-    socket.on("player:joined", (data: { playerCount: number }) => {
-      setPlayerCount(data.playerCount);
-    });
+    socket.on(
+      "player:joined",
+      (data: { playerCount: number; displayName?: string; playerId?: string }) => {
+        setPlayerCount(data.playerCount);
+        const myId = sessionStorage.getItem("playerId");
+        if (data.playerId !== myId && data.displayName) {
+          setOpponentName(data.displayName);
+        }
+      }
+    );
+
+    socket.on(
+      "player:nameChanged",
+      (data: { playerId: string; slot: number; displayName: string | null }) => {
+        const myId = sessionStorage.getItem("playerId");
+        if (data.playerId !== myId) {
+          setOpponentName(data.displayName ?? "");
+        }
+      }
+    );
 
     socket.on("game:started", () => {
       router.push(`/reveal/${code}`);
@@ -89,6 +118,7 @@ export default function LobbyPage({
       socket.off("connect");
       socket.off("game:state");
       socket.off("player:joined");
+      socket.off("player:nameChanged");
       socket.off("game:started");
       socket.off("game:reconnected");
       socket.off("error");
@@ -103,13 +133,21 @@ export default function LobbyPage({
     getSocket().emit("game:start", { code, playerId });
   };
 
+  const handleNameChange = (name: string) => {
+    const playerId = sessionStorage.getItem("playerId");
+    if (!playerId) return;
+    getSocket().emit("player:setName", { code, playerId, name });
+  };
+
   return (
     <ScreenLobby
       screen="lobby"
       gameCode={code}
       isHost={isHost}
       playersConnected={playerCount}
+      opponentName={opponentName}
       startGame={handleStart}
+      onNameChange={handleNameChange}
     />
   );
 }

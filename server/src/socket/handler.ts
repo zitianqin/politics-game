@@ -50,6 +50,7 @@ export function registerSocketHandlers(io: Server): void {
       io.to(code).emit("player:joined", {
         playerId: player.id,
         slot: player.slot,
+        displayName: player.displayName,
         playerCount: game.players.length,
       });
 
@@ -65,6 +66,26 @@ export function registerSocketHandlers(io: Server): void {
         socket.emit("game:state", { gameState: serializeGame(game) });
       }
     });
+
+    socket.on(
+      "player:setName",
+      (data: { code: string; playerId: string; name: string }) => {
+        const { code, playerId, name } = data;
+        const game = getGame(code);
+        if (!game) return;
+
+        const player = game.players.find((p) => p.id === playerId);
+        if (!player) return;
+
+        player.displayName = name.trim().slice(0, 10) || null;
+
+        io.to(code).emit("player:nameChanged", {
+          playerId: player.id,
+          slot: player.slot,
+          displayName: player.displayName,
+        });
+      }
+    );
 
     socket.on("game:start", (data: { code: string; playerId: string }) => {
       const { code, playerId } = data;
@@ -95,6 +116,10 @@ export function registerSocketHandlers(io: Server): void {
         topics: game.topics,
         candidates: game.players.map((p) => p.candidate),
         voters: game.voters,
+        players: game.players.map((p) => ({
+          slot: p.slot,
+          displayName: p.displayName,
+        })),
       });
       startMeetVotersPhase(io, game);
     });
@@ -248,6 +273,7 @@ function serializeGame(game: ReturnType<typeof getGame>) {
       id: p.id,
       slot: p.slot,
       candidate: p.candidate,
+      displayName: p.displayName,
     })),
     voters: game.voters,
     rounds: game.rounds,

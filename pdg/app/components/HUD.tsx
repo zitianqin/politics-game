@@ -5,6 +5,8 @@ interface HUDProps {
   displayP1Votes: number;
   displayP2Votes: number;
   timeLeft: number;
+  p1Name?: string;
+  p2Name?: string;
 }
 
 export default function HUD({
@@ -12,6 +14,8 @@ export default function HUD({
   displayP1Votes,
   displayP2Votes,
   timeLeft,
+  p1Name = "Player 1",
+  p2Name = "Player 2",
 }: HUDProps) {
   return (
     <div
@@ -23,7 +27,7 @@ export default function HUD({
       <div className="player-badge" style={{ background: "var(--p1)" }}>
         <div className="avatar">🦄</div>
         <div className="score-info">
-          <span>P1 Votes</span>
+          <span>{p1Name} Votes</span>
           <div className="score-val">{displayP1Votes}</div>
         </div>
       </div>
@@ -48,7 +52,7 @@ export default function HUD({
       >
         <div className="avatar">🦖</div>
         <div className="score-info">
-          <span style={{ color: "#FFB3D9" }}>P2 Votes</span>
+          <span style={{ color: "#FFB3D9" }}>{p2Name} Votes</span>
           <div className="score-val" style={{ color: "white" }}>
             {displayP2Votes}
           </div>

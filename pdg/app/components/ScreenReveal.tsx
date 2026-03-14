@@ -8,6 +8,8 @@ interface ScreenRevealProps {
   isNextBtnVisible: boolean;
   currentRound: number;
   startNextRound: () => void;
+  p1Name?: string;
+  p2Name?: string;
 }
 
 export default function ScreenReveal({
@@ -18,6 +20,8 @@ export default function ScreenReveal({
   isNextBtnVisible,
   currentRound,
   startNextRound,
+  p1Name = "Player 1",
+  p2Name = "Player 2",
 }: ScreenRevealProps) {
   return (
     <div
@@ -42,6 +46,18 @@ export default function ScreenReveal({
           >
             <div className="bar-score">+{p1Earned}</div>
           </div>
+          <div
+            className="apply-font"
+            style={{
+              marginTop: "8px",
+              fontSize: "1.1rem",
+              fontWeight: 800,
+              textAlign: "center",
+              color: "var(--dark)",
+            }}
+          >
+            {p1Name}
+          </div>
         </div>
 
         <div className="bar-wrapper">
@@ -56,6 +72,18 @@ export default function ScreenReveal({
             style={{ height: `${currentBarsHeight.p2}px` }}
           >
             <div className="bar-score">+{p2Earned}</div>
+          </div>
+          <div
+            className="apply-font"
+            style={{
+              marginTop: "8px",
+              fontSize: "1.1rem",
+              fontWeight: 800,
+              textAlign: "center",
+              color: "var(--dark)",
+            }}
+          >
+            {p2Name}
           </div>
         </div>
       </div>
