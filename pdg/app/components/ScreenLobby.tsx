@@ -17,7 +17,7 @@ export default function ScreenLobby({ screen, startGame }: ScreenLobbyProps) {
         SHOWDOWN
       </h1>
 
-      <div className="character-select">
+      {/* <div className="character-select">
         <div
           className="char-card"
           style={{
@@ -48,11 +48,17 @@ export default function ScreenLobby({ screen, startGame }: ScreenLobbyProps) {
           <div className="avatar-preview">🦖</div>
           <h3 style={{ color: "var(--p2-dark)" }}>PLAYER 2</h3>
         </div>
-      </div>
+      </div> */}
 
-      <button className="btn green-color" onClick={startGame}>
-        START GAME!
-      </button>
+      <div className="flex flex-col justify-center items-center gap-5">
+        <button className="btn" onClick={startGame}>
+          CREATE GAME
+        </button>
+
+        <button className="btn green-color" onClick={startGame}>
+          JOIN GAME
+        </button>
+      </div>
     </div>
   );
 }

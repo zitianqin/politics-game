@@ -144,7 +144,7 @@ p {
 /* --- HUD (Top Bar) --- */
 .hud {
   position: fixed;
-  top: -100px;
+  top: -200px;
   left: 0;
   width: 100%;
   padding: 20px 40px;
