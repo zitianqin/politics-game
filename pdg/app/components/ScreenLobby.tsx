@@ -29,6 +29,7 @@ export default function ScreenLobby({
     return "";
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [partyMode, setPartyMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -66,7 +67,7 @@ export default function ScreenLobby({
         SHOWDOWN
       </h1>
 
-      <div className="flex flex-col items-center justify-center mb-8 sm:mb-10 w-full">
+      <div className="flex flex-col items-center justify-center mb-6 sm:mb-8 w-full"> 
         <div
           className="text-3xl sm:text-5xl font-black tracking-widest uppercase mb-2"
           style={{
@@ -79,6 +80,7 @@ export default function ScreenLobby({
         <div className="text-sm sm:text-base text-white mb-4 text-center">
           Share this code with your opponent to join!
         </div>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-10">
         <div
           className="relative text-xl sm:text-2xl font-black tracking-[8px] sm:tracking-[12px] uppercase text-left px-6 py-5 sm:py-6 rounded-2xl w-full max-w-xs sm:max-w-sm"
           style={{
@@ -136,6 +138,87 @@ export default function ScreenLobby({
               </svg>
             )}
           </button>
+        </div>
+
+        {/* Party Mode Toggle */}
+        <div
+          className="flex items-center gap-4 w-full max-w-xs sm:max-w-sm mt-4 px-5 py-4 rounded-2xl"
+          style={{
+            border: "5px solid var(--dark)",
+            backgroundColor: partyMode ? "#fff9db" : "#ffffff",
+            boxShadow: partyMode
+              ? "8px 8px 0 #f59e0b"
+              : "8px 8px 0 var(--dark)",
+            transition: "background-color 0.2s, box-shadow 0.2s",
+          }}
+        >
+          {/* Emoji badge */}
+          <div
+            className="text-2xl flex-shrink-0 flex items-center justify-center rounded-xl"
+            style={{
+              width: "46px",
+              height: "46px",
+              background: partyMode ? "#FFD700" : "#f3f4f6",
+              border: "3px solid var(--dark)",
+              boxShadow: "3px 3px 0 var(--dark)",
+              fontSize: "22px",
+              transition: "background 0.2s",
+            }}
+          >
+            🎉
+          </div>
+
+          {/* Text */}
+          <div className="flex-1 min-w-0">
+            <div
+              className="font-black uppercase tracking-wider text-sm sm:text-base leading-tight"
+              style={{ color: "var(--dark)" }}
+            >
+              Party Mode
+            </div>
+            <div
+              className="text-xs mt-0.5 leading-snug"
+              style={{ color: "#666" }}
+            >
+              Fun questions only — like "is pineapple on pizza good?" 🍕
+            </div>
+          </div>
+
+          {/* Toggle */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={partyMode}
+            onClick={() => setPartyMode((p) => !p)}
+            className="flex-shrink-0 relative transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+            style={{
+              width: "52px",
+              height: "30px",
+              borderRadius: "999px",
+              background: partyMode ? "#FFD700" : "#d1d5db",
+              border: "3px solid var(--dark)",
+              boxShadow: "3px 3px 0 var(--dark)",
+              cursor: "pointer",
+              padding: 0,
+              transition: "background 0.2s, box-shadow 0.1s",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                position: "absolute",
+                top: "3px",
+                left: partyMode ? "calc(100% - 25px)" : "3px",
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                background: "#fff",
+                border: "2.5px solid var(--dark)",
+                transition: "left 0.15s cubic-bezier(.4,1.4,.6,1)",
+              }}
+            />
+          </button>
+          </div>
         </div>
       </div>
 
