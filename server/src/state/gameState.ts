@@ -14,6 +14,8 @@ export interface TranscriptEntry {
   speaker: string;
   text: string;
   timestamp: number;
+  isObjectionEnd?: boolean;
+  inaudible?: boolean;
 }
 
 export interface RoundState {
@@ -144,6 +146,34 @@ export function setGameStatus(
   if (!game) return false;
   game.status = status;
   return true;
+}
+
+export function addTranscriptEntry(
+  code: string,
+  roundNumber: number,
+  entry: TranscriptEntry
+): boolean {
+  const game = games.get(code.toUpperCase());
+  if (!game) return false;
+  const round = game.rounds.find((r) => r.roundNumber === roundNumber);
+  if (!round) return false;
+  round.transcript.push(entry);
+  return true;
+}
+
+export function ensureRound(
+  code: string,
+  roundNumber: number,
+  topic: string
+): RoundState | null {
+  const game = games.get(code.toUpperCase());
+  if (!game) return null;
+  let round = game.rounds.find((r) => r.roundNumber === roundNumber);
+  if (!round) {
+    round = { roundNumber, topic, transcript: [] };
+    game.rounds.push(round);
+  }
+  return round;
 }
 
 export function reconnectPlayer(

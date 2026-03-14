@@ -1,8 +1,10 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import http from "node:http";
 import { Server } from "socket.io";
 import gameRouter from "./routes/game";
+import { createTranscribeRouter } from "./routes/transcribe";
 import { registerSocketHandlers } from "./socket/handler";
 
 const app = express();
@@ -19,6 +21,7 @@ app.use(cors({ origin: "http://localhost:3000" }));
 app.use(express.json());
 
 app.use("/api/game", gameRouter);
+app.use("/api/transcribe", createTranscribeRouter(io));
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", sockets: io.engine.clientsCount });
