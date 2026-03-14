@@ -94,3 +94,59 @@ export function joinGame(
 export function getAllGames(): Map<string, GameSession> {
   return games;
 }
+
+export function setPlayerSocketId(
+  code: string,
+  playerId: string,
+  socketId: string
+): boolean {
+  const game = games.get(code.toUpperCase());
+  if (!game) return false;
+  const player = game.players.find((p) => p.id === playerId);
+  if (!player) return false;
+  player.socketId = socketId;
+  return true;
+}
+
+export function findGameBySocketId(
+  socketId: string
+): { game: GameSession; player: Player } | null {
+  for (const game of games.values()) {
+    const player = game.players.find((p) => p.socketId === socketId);
+    if (player) return { game, player };
+  }
+  return null;
+}
+
+export function clearPlayerSocketId(playerId: string, code: string): boolean {
+  const game = games.get(code.toUpperCase());
+  if (!game) return false;
+  const player = game.players.find((p) => p.id === playerId);
+  if (!player) return false;
+  player.socketId = null;
+  return true;
+}
+
+export function setGameStatus(
+  code: string,
+  status: GameSession["status"]
+): boolean {
+  const game = games.get(code.toUpperCase());
+  if (!game) return false;
+  game.status = status;
+  return true;
+}
+
+export function reconnectPlayer(
+  code: string,
+  playerId: string
+): { game: GameSession; player: Player } | { error: string } {
+  const game = games.get(code.toUpperCase());
+  if (!game) return { error: "Game not found" };
+  if (game.status === "complete") return { error: "Game is over" };
+
+  const player = game.players.find((p) => p.id === playerId);
+  if (!player) return { error: "Player not in this game" };
+
+  return { game, player };
+}
