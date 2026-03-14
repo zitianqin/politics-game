@@ -19,7 +19,7 @@ export const JUDGING_JOKES = [
     "Asking my mom who won..."
 ];
 
-export type ScreenId = 'lobby' | 'topic' | 'input' | 'judging' | 'reveal' | 'winner';
+export type ScreenId = 'lobby' | 'voter-grid' | 'voter-profile' | 'topic' | 'input' | 'judging' | 'reveal' | 'winner';
 
 export interface ConfettiParticle {
     x: number;
