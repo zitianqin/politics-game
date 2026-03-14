@@ -17,9 +17,7 @@ export default function HUD({
     <div
       id="hud"
       className={`hud ${
-        screen !== "lobby" && screen !== "winner" && screen !== "results"
-          ? "active"
-          : ""
+        screen !== "lobby" && screen !== "winner" ? "active" : ""
       }`}
     >
       <div className="player-badge" style={{ background: "var(--p1)" }}>

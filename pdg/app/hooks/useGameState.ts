@@ -205,6 +205,10 @@ export function useGameState() {
       setLiveTranscript([]);
     });
 
+    socket.on("game:complete", () => {
+      setScreen("winner");
+    });
+
     // Live transcript chunks from /api/transcribe broadcast
     socket.on(
       "transcript:update",
@@ -265,6 +269,7 @@ export function useGameState() {
         ) {
           setP1RoundScore(rData.p1Score);
           setP2RoundScore(rData.p2Score);
+          setIsNextBtnVisible(true);
         }
       } else if (gs.status === "voting") {
         setScreen("judging");
@@ -292,6 +297,7 @@ export function useGameState() {
       socket.off("judging:start");
       socket.off("round:results");
       socket.off("game:reset");
+      socket.off("game:complete");
       socket.off("game:reconnected");
       socket.off("game:state");
       socket.off("transcript:update");
@@ -389,17 +395,13 @@ export function useGameState() {
   // Judging & scoring are now handled server-side
 
   const startNextRound = useCallback(() => {
-    if (currentRound >= TOTAL_ROUNDS) {
-      setScreen("winner");
-    } else {
-      // Signal server to advance to next round
-      const socket = getSocket();
-      const gameCode = sessionStorage.getItem("gameCode");
-      if (gameCode) {
-        socket.emit("round:advance", { code: gameCode });
-      }
+    // Always signal server to advance. Server will decide if it's new round or completion.
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("round:advance", { code: gameCode });
     }
-  }, [currentRound]);
+  }, []);
 
   const resetGame = useCallback(() => {
     const socket = getSocket();
