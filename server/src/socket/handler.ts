@@ -5,7 +5,10 @@ import {
   findGameBySocketId,
   clearPlayerSocketId,
   setGameStatus,
+<<<<<<< HEAD
   resetGameSession,
+=======
+>>>>>>> b839116b8c61e6ffc832ee4f197a85f16bbdc130
   prepareRevealData,
 } from "../state/gameState";
 import { startReconnectTimer, cancelReconnectTimer } from "./reconnect";

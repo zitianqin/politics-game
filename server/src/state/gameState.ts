@@ -193,6 +193,7 @@ export function reconnectPlayer(
   return { game, player };
 }
 
+<<<<<<< HEAD
 export function resetGameSession(code: string): GameSession | null {
   const game = games.get(code.toUpperCase());
   if (!game) return null;
@@ -211,6 +212,8 @@ export function resetGameSession(code: string): GameSession | null {
   return game;
 }
 
+=======
+>>>>>>> b839116b8c61e6ffc832ee4f197a85f16bbdc130
 export function prepareRevealData(code: string): boolean {
   const game = games.get(code.toUpperCase());
   if (!game || game.players.length !== 2) return false;
