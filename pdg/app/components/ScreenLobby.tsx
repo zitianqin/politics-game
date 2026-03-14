@@ -132,7 +132,7 @@ export default function ScreenLobby({
               🦄
             </div>
             <div className="apply-font text-base sm:text-xl leading-tight text-center">
-              PLAYER 1{isHost && <span className="text-sm">(YOU)</span>}
+              PLAYER 1 {isHost && <span className="text-sm">(YOU)</span>}
             </div>
           </div>
           <div
