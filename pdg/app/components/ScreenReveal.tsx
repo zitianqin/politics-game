@@ -65,8 +65,8 @@ export default function ScreenReveal({
         onClick={startNextRound}
         style={{
           marginTop: "40px",
-          opacity: isNextBtnVisible ? 1 : 0,
-          pointerEvents: isNextBtnVisible ? "auto" : "none",
+          opacity: "none",
+          pointerEvents: "auto",
           transition: "opacity 0.5s",
         }}
       >
