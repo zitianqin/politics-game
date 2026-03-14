@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { VoterProfile } from "../data/voterData";
 import { selectVoters } from "../lib/selectVoters";
+import { getRandomTopics } from "../lib/topicPool";
 
 export interface Player {
   id: string;
@@ -37,6 +38,9 @@ export interface GameSession {
   voters: VoterProfile[];
   rounds: RoundState[];
   timerState: TimerState | null;
+  topics: string[];
+  currentRound: number;
+  debatePhase: "idle" | "prep" | "debate" | "ended";
 }
 
 const games = new Map<string, GameSession>();
@@ -66,6 +70,9 @@ export function createGame(hostId: string): GameSession {
     voters: selectVoters(),
     rounds: [],
     timerState: null,
+    topics: getRandomTopics(2),
+    currentRound: 0,
+    debatePhase: "idle",
   };
   games.set(code, game);
   return game;
