@@ -27,8 +27,6 @@ export default function DebatePage({ params }: { params: { code: string } }) {
   } = useGameState();
 
   // Determine which timer to show in HUD
-  const activePlayerTime =
-    currentSpeaker === 1 ? p1RoundTimeRemaining : p2RoundTimeRemaining;
 
   return (
     <>
