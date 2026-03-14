@@ -22,7 +22,7 @@ export interface VotingResult {
   votes: VoterVote[];
   p1Votes: number;
   p2Votes: number;
-  winner: 1 | 2;
+  winner: 0 | 1 | 2;
 }
 
 function getGeminiApiKey(): string {
@@ -166,7 +166,7 @@ function buildPrompt(
     )
     .join(", ");
 
-  return `Below are the profiles of ${voters.length} Australian voters and the transcript(s) of a political debate between two candidates so far. For each voter, imagine you are that specific person — with their background, biases, values, and reasoning style. Decide which candidate they would currently vote for based on everything debated so far.
+  return `Below are the profiles of ${voters.length} Australian voters and the transcript of the CURRENT political debate round so far. For each voter, imagine you are that specific person — with their background, biases, values, and reasoning style. Decide which candidate they would vote for BASED SPECIFICALLY ON THE ARGUMENTS MADE IN THIS ROUND.
 
 CANDIDATES:
 
@@ -237,7 +237,7 @@ function parseVotingResponse(
     votes,
     p1Votes,
     p2Votes,
-    winner: p1Votes >= p2Votes ? 1 : 2,
+    winner: p1Votes > p2Votes ? 1 : p1Votes < p2Votes ? 2 : 0, // 0 indicates a tie
   };
 }
 

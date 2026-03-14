@@ -66,8 +66,9 @@ export default function ResultsScreen({
     }
   }, [isScoreVisible, isNextBtnVisible]);
 
-  const winner = p1TotalVotes > p2TotalVotes ? "p1" : "p2";
-  const winnerName = winner === "p1" ? p1Name : p2Name;
+  const isTie = p1TotalVotes === p2TotalVotes;
+  const winner = p1TotalVotes > p2TotalVotes ? "p1" : p1TotalVotes < p2TotalVotes ? "p2" : "tie";
+  const winnerName = winner === "p1" ? p1Name : winner === "p2" ? p2Name : "IT'S A TIE!";
   const winnerVotes = winner === "p1" ? p1TotalVotes : p2TotalVotes;
 
   return (
@@ -179,7 +180,7 @@ export default function ResultsScreen({
           </h2>
 
           <p className="sub-text text-xl sm:text-3xl md:text-[32px]">
-            WINS WITH {winnerVotes} VOTES
+            {isTie ? `BOTH SIDES SECURED ${winnerVotes} VOTES` : `WINS WITH ${winnerVotes} VOTES`}
           </p>
         </div>
       )}
