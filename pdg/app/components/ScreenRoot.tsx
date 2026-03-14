@@ -1,14 +1,19 @@
 import { ScreenId } from "../lib/gameConstants";
 
-interface ScreenLobbyProps {
+interface ScreenRootProps {
   screen: ScreenId;
-  startGame: () => void;
+  createGame: () => void;
+  joinGame: () => void;
 }
 
-export default function ScreenLobby({ screen, startGame }: ScreenLobbyProps) {
+export default function ScreenRoot({
+  screen,
+  createGame,
+  joinGame,
+}: ScreenRootProps) {
   return (
     <div
-      id="screen-lobby"
+      id="screen-root"
       className={`screen ${screen === "lobby" ? "active" : ""}`}
     >
       <h1 className="title-text bouncing">
@@ -49,6 +54,16 @@ export default function ScreenLobby({ screen, startGame }: ScreenLobbyProps) {
           <h3 style={{ color: "var(--p2-dark)" }}>PLAYER 2</h3>
         </div>
       </div> */}
+
+      <div className="flex flex-col justify-center items-center gap-5">
+        <button className="btn" onClick={createGame}>
+          CREATE GAME
+        </button>
+
+        <button className="btn green-color" onClick={joinGame}>
+          JOIN GAME
+        </button>
+      </div>
     </div>
   );
 }
