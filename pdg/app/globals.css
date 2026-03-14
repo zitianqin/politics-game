@@ -68,6 +68,10 @@ p {
   text-align: center;
 }
 
+.apply-font {
+  font-family: "Titan One", cursive;
+}
+
 .btn {
   font-family: "Titan One", cursive;
   font-size: 32px;
@@ -105,6 +109,18 @@ p {
   -webkit-text-stroke: 4px var(--dark);
   text-shadow: 10px 10px 0px var(--dark);
   line-height: 1.1;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.sub-text {
+  font-family: "Titan One", cursive;
+  font-size: 24px;
+  color: #fff;
+  -webkit-text-stroke: 2px var(--dark);
+  text-shadow: 2px 2px 0px var(--dark);
+  line-height: 1.1;
+  letter-spacing: 1px;
   margin-bottom: 30px;
   text-align: center;
 }
@@ -365,6 +381,18 @@ p {
   }
   100% {
     transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
     opacity: 1;
   }
 }
