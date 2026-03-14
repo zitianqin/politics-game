@@ -41,22 +41,20 @@ export function useGameState() {
     return () => clearTimer();
   }, [clearTimer]);
 
-  const startTopicReveal = useCallback((round: number) => {
-    const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
-    setCurrentTopic(topic);
-    setScreen("topic");
+  const startMeetVoters = useCallback(() => {
+    setScreen("voter-profile");
+  }, []);
 
-    setTimeout(() => {
-      startTurn(1);
-    }, 4000);
+  const startVoterReveal = useCallback(() => {
+    setScreen("voter-grid");
   }, []);
 
   const startGame = useCallback(() => {
     setP1TotalVotes(0);
     setP2TotalVotes(0);
     setCurrentRound(1);
-    startTopicReveal(1);
-  }, [startTopicReveal]);
+    startVoterReveal();
+  }, [startVoterReveal]);
 
   // We need a stable reference to submitArgument for the interval,
   // so we handle the auto-submission carefully. We'll use a callback ref
@@ -87,6 +85,16 @@ export function useGameState() {
     },
     [clearTimer],
   );
+
+  const startTopicReveal = useCallback((round: number) => {
+    const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+    setCurrentTopic(topic);
+    setScreen("topic");
+
+    setTimeout(() => {
+      startTurn(1);
+    }, 4000);
+  }, [startTurn]);
 
   const startJudging = useCallback(() => {
     setScreen("judging");
@@ -182,8 +190,10 @@ export function useGameState() {
     winnerLabel,
 
     startGame,
+    startTopicReveal,
     submitArgument,
     startNextRound,
     resetGame,
+    startMeetVoters,
   };
 }
