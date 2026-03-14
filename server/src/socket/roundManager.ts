@@ -206,13 +206,13 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
             winner: result.winner,
             tally: { p1: result.p1Votes, p2: result.p2Votes },
             breakdown: result.votes.map((v) => {
-              const profile = game.voters.find(vp => vp.name === v.voterName);
+              const profile = game.voters.find((vp) => vp.name === v.voterName);
               return {
                 voterName: v.voterName,
+                voterAge: profile?.age || 0,
+                voterLocation: profile?.location || "",
                 vote: v.vote === 1 ? "Candidate A" : "Candidate B",
                 reason: v.reason,
-                age: profile?.age,
-                location: profile?.location,
               };
             }),
           });
@@ -230,7 +230,13 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
         p2Score: 0,
         winner: 1,
         tally: { p1: 0, p2: 0 },
-        breakdown: [],
+        breakdown: game.voters.map((v) => ({
+          voterName: v.name,
+          voterAge: v.age,
+          voterLocation: v.location,
+          vote: "Candidate A", // fallback
+          reason: "Judging error",
+        })),
         error: "Voting failed — results are placeholder",
       });
     });

@@ -6,6 +6,7 @@ import ScreenDebate from "@/app/components/ScreenDebate";
 import ScreenJudging from "@/app/components/ScreenJudging";
 import ScreenReveal from "@/app/components/ScreenReveal";
 import ScreenWinner from "@/app/components/ScreenWinner";
+import ResultsScreen from "@/app/components/ResultsScreen";
 import { useGameState } from "@/app/hooks/useGameState";
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -49,6 +50,13 @@ export default function DebatePage({
     resetGame,
     isHydrated,
     voterResults,
+    isInterimResults,
+    setScreen,
+    advanceToResults,
+    advanceToBars,
+    advanceToWinner,
+    p1Candidate,
+    p2Candidate,
   } = useGameState(code);
 
   // Connect socket and signal reveal done on mount
@@ -79,7 +87,7 @@ export default function DebatePage({
 
   return (
     <>
-      {screen !== "topic" && (
+      {screen !== "topic" && screen !== "results" && (
         <HUD
           screen={screen}
           displayP1Votes={p1TotalVotes}
@@ -132,10 +140,15 @@ export default function DebatePage({
           currentBarsHeight={currentBarsHeight}
           isNextBtnVisible={isNextBtnVisible}
           currentRound={currentRound}
-          startNextRound={startNextRound}
+          onNext={() => {
+            if (isInterimResults) {
+              startNextRound();
+            } else {
+              advanceToWinner();
+            }
+          }}
           p1Name={p1Name}
           p2Name={p2Name}
-          voters={voterResults}
         />
       )}
 
@@ -148,6 +161,20 @@ export default function DebatePage({
           resetGame={resetGame}
           p1Name={p1Name}
           p2Name={p2Name}
+        />
+      )}
+
+      {screen === "results" && (
+        <ResultsScreen
+          currentRound={currentRound}
+          isInterim={isInterimResults}
+          voters={voterResults}
+          p1Name={p1Candidate?.name || "Player 1"}
+          p2Name={p2Candidate?.name || "Player 2"}
+          p1TotalVotes={p1TotalVotes}
+          p2TotalVotes={p2TotalVotes}
+          onContinue={advanceToBars}
+          isVisible={true}
         />
       )}
     </>
