@@ -190,7 +190,7 @@ export function useGameState(gameCodeFromUrl?: string) {
 
       setP1RoundScore(p1Score);
       setP2RoundScore(p2Score);
-      setScreen("reveal");
+      setScreen("results");
       setIsNextBtnVisible(false);
       setIsInterimResults(data.roundNumber < TOTAL_ROUNDS);
 
@@ -207,11 +207,11 @@ export function useGameState(gameCodeFromUrl?: string) {
         );
       }
 
-      // Animate bars
+      // Animate bars (each vote = 40px height)
       setTimeout(() => {
         setCurrentBarsHeight((prev) => ({
-          p1: prev.p1 + p1Score / 5,
-          p2: prev.p2 + p2Score / 5,
+          p1: prev.p1 + p1Score * 40,
+          p2: prev.p2 + p2Score * 40,
         }));
         setP1TotalVotes((prev) => prev + p1Score);
         setP2TotalVotes((prev) => prev + p2Score);
@@ -221,6 +221,7 @@ export function useGameState(gameCodeFromUrl?: string) {
         setIsNextBtnVisible(true);
       }, 3000);
     };
+
 
     socket.on("round:results", handleRoundResults);
     socket.on("game:result", handleRoundResults);
@@ -326,6 +327,10 @@ export function useGameState(gameCodeFromUrl?: string) {
 
     socket.on("game:reconnected", handleHydration);
     socket.on("game:state", handleHydration);
+
+    socket.on("game:bars_reveal", () => {
+      setScreen("reveal");
+    });
 
     // Request full state immediately on mount
     const gameCode =
@@ -460,6 +465,14 @@ export function useGameState(gameCodeFromUrl?: string) {
     }
   }, []);
 
+  const advanceToBars = useCallback(() => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("results:bars", { code: gameCode });
+    }
+  }, []);
+
   const advanceToWinner = useCallback(() => {
     const socket = getSocket();
     const gameCode = sessionStorage.getItem("gameCode");
@@ -550,6 +563,7 @@ export function useGameState(gameCodeFromUrl?: string) {
     // Navigation
     setScreen,
     advanceToResults,
+    advanceToBars,
     advanceToWinner,
     p1Candidate,
     p2Candidate,

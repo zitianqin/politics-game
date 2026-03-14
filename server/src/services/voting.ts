@@ -1,14 +1,16 @@
 import { VoterProfile } from "../data/voterData";
 import { Player, RoundState } from "../state/gameState";
 
-const GEMINI_MODEL = "gemini-3.1-flash-lite-preview";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_FLASH_MODEL = "gemini-3.1-flash-lite-preview";
+const GEMINI_PRO_MODEL = "gemini-3.1-pro-preview";
+const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 
 const PERPLEXITY_ENDPOINT = "https://api.perplexity.ai/chat/completions";
 const PERPLEXITY_MODEL = "sonar";
 
-const REQUEST_TIMEOUT_MS = 15_000;
-const GEMINI_MAX_ATTEMPTS = 2;
+const REQUEST_TIMEOUT_MS = 20_000;
+const GEMINI_FLASH_ATTEMPTS = 2;
+const GEMINI_PRO_ATTEMPTS = 1;
 
 export interface VoterVote {
   voterName: string;
@@ -20,7 +22,7 @@ export interface VotingResult {
   votes: VoterVote[];
   p1Votes: number;
   p2Votes: number;
-  winner: 1 | 2;
+  winner: 0 | 1 | 2;
 }
 
 function getGeminiApiKey(): string {
@@ -120,9 +122,11 @@ function formatTranscript(rounds: RoundState[]): string {
       const entries = round.transcript
         .map((entry) => {
           const speaker =
-            entry.speaker === "1"
+            entry.speaker === "player1" || entry.speaker === "1"
               ? "Candidate A (Player 1)"
-              : "Candidate B (Player 2)";
+              : entry.speaker === "player2" || entry.speaker === "2"
+                ? "Candidate B (Player 2)"
+                : entry.speaker;
           const objection = entry.isObjectionEnd ? " [OBJECTION]" : "";
           const inaudible = entry.inaudible ? " [inaudible]" : "";
           return `[${entry.timestamp}s] ${speaker}${objection}${inaudible}: ${entry.text}`;
@@ -162,7 +166,7 @@ function buildPrompt(
     )
     .join(", ");
 
-  return `Below are the profiles of ${voters.length} Australian voters and the transcript(s) of a political debate between two candidates so far. For each voter, imagine you are that specific person — with their background, biases, values, and reasoning style. Decide which candidate they would currently vote for based on everything debated so far.
+  return `Below are the profiles of ${voters.length} Australian voters and the transcript of the CURRENT political debate round so far. For each voter, imagine you are that specific person — with their background, biases, values, and reasoning style. Decide which candidate they would vote for BASED SPECIFICALLY ON THE ARGUMENTS MADE IN THIS ROUND.
 
 CANDIDATES:
 
@@ -181,6 +185,8 @@ DEBATE TRANSCRIPT:
 ${transcript}
 
 Important: Not every voter will make a rational, policy-based decision. Many real people vote on gut feel, emotion, personal impressions, or tribal loyalty rather than logical argument. A retiree might vote for whoever seems kinder even if their policy is weaker. A young voter might be swayed by a candidate's confidence or energy rather than what they actually said. Someone who feels talked down to might vote against a candidate purely out of spite. A voter with strong tribal loyalty may not be moveable at all regardless of argument quality. For each voter, stay true to their specific background, personality, and susceptibility as described — do not default to rational policy analysis for everyone. Some voters should absolutely be swayed by emotional appeals, populist rhetoric, personal attacks, or charisma over substance, if that fits who they are.
+
+NOTE: YOU ARE A CLOSED SYSTEM. DO NOT ATTEMPT TO SEARCH THE INTERNET OR USE EXTERNAL TOOLS. BASE YOUR DECISIONS ONLY ON THE PROVIDED TRANSCRIPTS AND PROFILES.
 
 Return ONLY a valid JSON object in this exact format, with no additional text:
 { ${voterJsonExample} }`;
@@ -231,7 +237,7 @@ function parseVotingResponse(
     votes,
     p1Votes,
     p2Votes,
-    winner: p1Votes >= p2Votes ? 1 : 2,
+    winner: p1Votes > p2Votes ? 1 : p1Votes < p2Votes ? 2 : 0, // 0 indicates a tie
   };
 }
 
@@ -240,11 +246,15 @@ type RawVoterResponse = Record<
   { name: string; vote: string; reason: string }
 >;
 
-async function callGemini(prompt: string): Promise<RawVoterResponse> {
+async function callGemini(
+  prompt: string,
+  model: string
+): Promise<RawVoterResponse> {
   const apiKey = getGeminiApiKey();
+  const url = `${GEMINI_ENDPOINT}/${model}:generateContent?key=${apiKey}`;
 
   const response = await fetchWithTimeout(
-    `${GEMINI_ENDPOINT}?key=${apiKey}`,
+    url,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -261,7 +271,7 @@ async function callGemini(prompt: string): Promise<RawVoterResponse> {
 
   if (!response.ok) {
     const errText = await response.text();
-    throw new Error(`Gemini API error (${response.status}): ${errText}`);
+    throw new Error(`Gemini API error (${model}, ${response.status}): ${errText}`);
   }
 
   const data = (await response.json()) as {
@@ -270,10 +280,10 @@ async function callGemini(prompt: string): Promise<RawVoterResponse> {
   const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!jsonText) {
-    throw new Error("Gemini returned no content");
+    throw new Error(`Gemini (${model}) returned no content`);
   }
 
-  console.log(`[voting] Gemini raw response: ${jsonText.slice(0, 300)}...`);
+  console.log(`[voting] Gemini (${model}) raw response: ${jsonText.slice(0, 300)}...`);
   return JSON.parse(jsonText) as RawVoterResponse;
 }
 
@@ -352,39 +362,49 @@ export async function runVoterSimulation(
   let parsed: RawVoterResponse | null = null;
   let lastError: Error | null = null;
 
-  // Gemini: up to 2 attempts (initial + 1 retry)
-  for (let attempt = 1; attempt <= GEMINI_MAX_ATTEMPTS; attempt++) {
+  // 1. Gemini Flash: up to GEMINI_FLASH_ATTEMPTS
+  for (let attempt = 1; attempt <= GEMINI_FLASH_ATTEMPTS; attempt++) {
     try {
-      console.log(`[voting] Gemini attempt ${attempt}/${GEMINI_MAX_ATTEMPTS}`);
-      const raw = await callGemini(prompt);
+      console.log(`[voting] Gemini Flash attempt ${attempt}/${GEMINI_FLASH_ATTEMPTS}`);
+      const raw = await callGemini(prompt, GEMINI_FLASH_MODEL);
       validateVotingResponse(raw, voters);
       parsed = raw;
       break;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      const reason =
-        lastError.name === "AbortError" ? "timeout" : lastError.message;
-      console.warn(
-        `[voting] Gemini attempt ${attempt} failed: ${reason}`
-      );
+      console.warn(`[voting] Gemini Flash attempt ${attempt} failed: ${lastError.message}`);
     }
   }
 
-  // Perplexity fallback if Gemini failed both attempts
+  // 2. Gemini Pro fallback: up to GEMINI_PRO_ATTEMPTS
   if (!parsed) {
-    console.log(
-      `[voting] Gemini failed after ${GEMINI_MAX_ATTEMPTS} attempts, falling back to Perplexity`
-    );
+    console.log(`[voting] Gemini Flash failed, falling back to Gemini Pro`);
+    for (let attempt = 1; attempt <= GEMINI_PRO_ATTEMPTS; attempt++) {
+      try {
+        console.log(`[voting] Gemini Pro attempt ${attempt}/${GEMINI_PRO_ATTEMPTS}`);
+        const raw = await callGemini(prompt, GEMINI_PRO_MODEL);
+        validateVotingResponse(raw, voters);
+        parsed = raw;
+        break;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        console.warn(`[voting] Gemini Pro attempt ${attempt} failed: ${lastError.message}`);
+      }
+    }
+  }
+
+  // 3. Perplexity fallback
+  if (!parsed) {
+    console.log(`[voting] Gemini Pro failed, falling back to Perplexity (Sonar)`);
     try {
       const raw = await callPerplexity(prompt);
       validateVotingResponse(raw, voters);
       parsed = raw;
     } catch (err) {
-      const perplexityErr =
-        err instanceof Error ? err : new Error(String(err));
+      const perplexityErr = err instanceof Error ? err : new Error(String(err));
       console.error(`[voting] Perplexity fallback also failed: ${perplexityErr.message}`);
       throw new Error(
-        `All LLM providers failed. Gemini: ${lastError?.message}. Perplexity: ${perplexityErr.message}`
+        `All LLM providers failed. Last Gemini error: ${lastError?.message}. Perplexity: ${perplexityErr.message}`
       );
     }
   }

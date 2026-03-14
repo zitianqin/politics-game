@@ -165,11 +165,11 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
   game.status = "judging";
   io.to(code).emit("judging:start", { roundNumber: game.currentRound });
 
-  const roundsSoFar = game.rounds.filter(
-    (r) => r.roundNumber <= game.currentRound
+  const currentRoundData = game.rounds.filter(
+    (r) => r.roundNumber === game.currentRound
   );
 
-  runVoterSimulation(game.voters, game.players, roundsSoFar, game.topics)
+  runVoterSimulation(game.voters, game.players, currentRoundData, game.topics)
     .then((result) => {
       game.status = "voting";
       io.to(code).emit("voting:start", {});

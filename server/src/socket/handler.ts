@@ -173,6 +173,12 @@ export function registerSocketHandlers(io: Server): void {
       io.to(code).emit("game:results_reveal");
     });
 
+    socket.on("results:bars", (data: { code: string }) => {
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
+      io.to(code).emit("game:bars_reveal");
+    });
+
     socket.on("results:complete", (data: { code: string }) => {
       const { code: rawCode } = data;
       const code = rawCode.toUpperCase();

@@ -53,6 +53,7 @@ export default function DebatePage({
     isInterimResults,
     setScreen,
     advanceToResults,
+    advanceToBars,
     advanceToWinner,
     p1Candidate,
     p2Candidate,
@@ -139,7 +140,13 @@ export default function DebatePage({
           currentBarsHeight={currentBarsHeight}
           isNextBtnVisible={isNextBtnVisible}
           currentRound={currentRound}
-          advanceToResults={advanceToResults}
+          onNext={() => {
+            if (isInterimResults) {
+              startNextRound();
+            } else {
+              advanceToWinner();
+            }
+          }}
           p1Name={p1Name}
           p2Name={p2Name}
         />
@@ -166,13 +173,7 @@ export default function DebatePage({
           p2Name={p2Candidate?.name || "Player 2"}
           p1TotalVotes={p1TotalVotes}
           p2TotalVotes={p2TotalVotes}
-          onContinue={() => {
-            if (isInterimResults) {
-              startNextRound();
-            } else {
-              advanceToWinner();
-            }
-          }}
+          onContinue={advanceToBars}
           isVisible={true}
         />
       )}
