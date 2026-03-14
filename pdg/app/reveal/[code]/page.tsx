@@ -92,10 +92,18 @@ export default function RevealPage({
             ROOM CODE: {code.toUpperCase()}
           </h1>
         </div>
-        <div className="bg-white px-6 py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000]">
+        <div className="bg-white px-6 py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000] flex items-center gap-4">
           <h2 className="font-['Titan_One'] text-2xl text-red-600">
             DEBATE STARTS IN: {countdown}s
           </h2>
+          <button
+            onClick={() => {
+              getSocket().emit("reveal:done", { code });
+            }}
+            className="bg-green-500 hover:bg-green-600 text-white font-['Titan_One'] px-4 py-1 rounded-lg border-2 border-black shadow-[2px_2px_0_0_#000] transition-transform active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_0_#000] text-sm"
+          >
+            READY!
+          </button>
         </div>
       </motion.div>
 

@@ -58,9 +58,9 @@ export default function LobbyPage({
       const status = data.gameState?.status;
       if (status && status !== "lobby") {
         const route =
-          status === "reveal"
+          status === "meet_voters"
             ? `/reveal/${code}`
-            : status === "debate"
+            : ["debate", "judging", "round_results"].includes(status)
             ? `/debate/${code}`
             : `/results/${code}`;
         router.push(route);

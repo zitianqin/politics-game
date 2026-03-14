@@ -8,6 +8,7 @@ import ScreenReveal from "@/app/components/ScreenReveal";
 import ScreenWinner from "@/app/components/ScreenWinner";
 import { useGameState } from "@/app/hooks/useGameState";
 import { use, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { getSocket } from "@/app/lib/socket";
 
 export default function DebatePage({
@@ -45,6 +46,7 @@ export default function DebatePage({
     startMeetVoters,
     startNextRound,
     resetGame,
+    isHydrated,
   } = useGameState();
 
   // Connect socket and signal reveal done on mount
@@ -57,9 +59,14 @@ export default function DebatePage({
         socket.emit("game:join", { code, playerId });
       }
     }
-    // Signal that reveal is done → server starts Round 1
-    startMeetVoters();
-  }, [code, startMeetVoters]);
+  }, [code]); // Removed startMeetVoters from dependencies and call
+
+  const router = useRouter();
+  useEffect(() => {
+    if (isHydrated && screen === "lobby") {
+      router.push(`/lobby/${code}`);
+    }
+  }, [screen, isHydrated, code, router]);
 
   // Determine which timer to show in HUD
   const activePlayerTime =
