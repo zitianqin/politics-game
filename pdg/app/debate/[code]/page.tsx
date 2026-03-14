@@ -78,14 +78,16 @@ export default function DebatePage({
 
   return (
     <>
-      <HUD
-        screen={screen}
-        displayP1Votes={p1TotalVotes}
-        displayP2Votes={p2TotalVotes}
-        timeLeft={activePlayerTime}
-        p1Name={p1Name}
-        p2Name={p2Name}
-      />
+      {screen !== "topic" && (
+        <HUD
+          screen={screen}
+          displayP1Votes={p1TotalVotes}
+          displayP2Votes={p2TotalVotes}
+          timeLeft={activePlayerTime}
+          p1Name={p1Name}
+          p2Name={p2Name}
+        />
+      )}
 
       {screen === "topic" && (
         <ScreenTopic
