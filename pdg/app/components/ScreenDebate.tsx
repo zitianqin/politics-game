@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { ScreenId, formatScorecardName } from "../lib/gameConstants";
 import { TranscriptEntry } from "../hooks/useGameState";
 import TimerBar from "./TimerBar";
+import { apiUrl } from "../lib/api";
 
 interface ScreenDebateProps {
   screen: ScreenId;
@@ -64,7 +65,7 @@ export default function ScreenDebate({
       setScreenShake(true);
       try {
         const audio = new Audio(
-          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="
+          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=",
         );
         audio.volume = 0.5;
         audio.play().catch(() => {});
@@ -160,7 +161,14 @@ export default function ScreenDebate({
       stopRecording();
     }
     return () => stopRecording();
-  }, [screen, isCurrentPlayerActive, currentRound, currentTopic, startRecording, stopRecording]);
+  }, [
+    screen,
+    isCurrentPlayerActive,
+    currentRound,
+    currentTopic,
+    startRecording,
+    stopRecording,
+  ]);
 
   const sendAudioForTranscription = async (
     audioBlob: Blob,
@@ -179,13 +187,13 @@ export default function ScreenDebate({
       formData.append("playerId", playerId);
       formData.append("roundNumber", String(roundNumber));
       formData.append("topic", topic);
-      
-      const relativeStartTime = roundStartTime 
+
+      const relativeStartTime = roundStartTime
         ? Math.round((startTime - roundStartTime) / 1000)
         : 0;
       formData.append("timestamp", String(relativeStartTime));
 
-      await fetch("/api/transcribe", {
+      await fetch(apiUrl("/api/transcribe"), {
         method: "POST",
         body: formData,
       });
@@ -235,7 +243,8 @@ export default function ScreenDebate({
               fontSize: "clamp(60px, 15vw, 120px)",
               color: "var(--red)",
               WebkitTextStroke: "4px var(--dark)",
-              textShadow: "8px 8px 0 var(--dark), 0 0 40px rgba(255, 76, 76, 0.6)",
+              textShadow:
+                "8px 8px 0 var(--dark), 0 0 40px rgba(255, 76, 76, 0.6)",
               animation: "objectionSlam 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
               textTransform: "uppercase",
               letterSpacing: "8px",
@@ -301,7 +310,8 @@ export default function ScreenDebate({
               textTransform: "uppercase",
             }}
           >
-            {activePlayer === 1 ? "🦄" : "🦖"} {activePlayer === 1 ? p1Name : p2Name} SPEAKING
+            {activePlayer === 1 ? "🦄" : "🦖"}{" "}
+            {activePlayer === 1 ? p1Name : p2Name} SPEAKING
           </div>
         </div>
       </div>
@@ -394,7 +404,14 @@ export default function ScreenDebate({
         >
           {transcript.length === 0 ? (
             <span
-              style={{ color: "#999", fontStyle: "italic", fontSize: "14px", alignSelf: "center", marginTop: "auto", marginBottom: "auto" }}
+              style={{
+                color: "#999",
+                fontStyle: "italic",
+                fontSize: "14px",
+                alignSelf: "center",
+                marginTop: "auto",
+                marginBottom: "auto",
+              }}
             >
               Waiting for debate to start...
             </span>
@@ -406,7 +423,9 @@ export default function ScreenDebate({
                 : `🦖 ${formatScorecardName(p2Name, 2)}`;
               const color = isP1 ? "var(--p1)" : "var(--p2)";
               const ts = entry.timestamp;
-              const mins = Math.floor(ts / 60).toString().padStart(2, "0");
+              const mins = Math.floor(ts / 60)
+                .toString()
+                .padStart(2, "0");
               const secs = (ts % 60).toString().padStart(2, "0");
               return (
                 <div
@@ -418,20 +437,56 @@ export default function ScreenDebate({
                     paddingBottom: "4px",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
-                    <span style={{ fontFamily: "Titan One, cursive", fontSize: "14px", color, fontWeight: "900" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "Titan One, cursive",
+                        fontSize: "14px",
+                        color,
+                        fontWeight: "900",
+                      }}
+                    >
                       {label}
                     </span>
-                    <span style={{ fontFamily: "monospace", fontSize: "11px", color: "#888" }}>
+                    <span
+                      style={{
+                        fontFamily: "monospace",
+                        fontSize: "11px",
+                        color: "#888",
+                      }}
+                    >
                       {mins}:{secs}
                     </span>
                     {entry.isObjection && (
-                      <span style={{ fontFamily: "Titan One, cursive", fontSize: "11px", color: "var(--red)", fontWeight: "900", letterSpacing: "1px" }}>
+                      <span
+                        style={{
+                          fontFamily: "Titan One, cursive",
+                          fontSize: "11px",
+                          color: "var(--red)",
+                          fontWeight: "900",
+                          letterSpacing: "1px",
+                        }}
+                      >
                         ⚖️ OBJECTION
                       </span>
                     )}
                   </div>
-                  <div style={{ fontFamily: "Nunito, sans-serif", fontSize: "16px", fontWeight: "700", color: "var(--dark)", lineHeight: "1.5" }}>
+                  <div
+                    style={{
+                      fontFamily: "Nunito, sans-serif",
+                      fontSize: "16px",
+                      fontWeight: "700",
+                      color: "var(--dark)",
+                      lineHeight: "1.5",
+                    }}
+                  >
                     {entry.text}
                   </div>
                 </div>
@@ -505,14 +560,18 @@ export default function ScreenDebate({
           }}
           onMouseDown={(e) => {
             if (canObjection) {
-              (e.target as HTMLButtonElement).style.transform = "translate(4px, 4px)";
-              (e.target as HTMLButtonElement).style.boxShadow = "2px 2px 0 var(--dark)";
+              (e.target as HTMLButtonElement).style.transform =
+                "translate(4px, 4px)";
+              (e.target as HTMLButtonElement).style.boxShadow =
+                "2px 2px 0 var(--dark)";
             }
           }}
           onMouseUp={(e) => {
             if (canObjection) {
-              (e.target as HTMLButtonElement).style.transform = "translate(0, 0)";
-              (e.target as HTMLButtonElement).style.boxShadow = "5px 5px 0 var(--dark)";
+              (e.target as HTMLButtonElement).style.transform =
+                "translate(0, 0)";
+              (e.target as HTMLButtonElement).style.boxShadow =
+                "5px 5px 0 var(--dark)";
             }
           }}
         >
@@ -536,7 +595,9 @@ export default function ScreenDebate({
           disabled={!isCurrentPlayerActive}
           style={{
             background: isCurrentPlayerActive
-              ? isRecording ? "var(--p2)" : "var(--green)"
+              ? isRecording
+                ? "var(--p2)"
+                : "var(--green)"
               : "#999",
             color: "var(--dark)",
             border: "3px solid var(--dark)",
@@ -551,8 +612,8 @@ export default function ScreenDebate({
               isCurrentPlayerActive && !isRecording
                 ? "8px 8px 0 var(--dark)"
                 : isCurrentPlayerActive && isRecording
-                ? "8px 8px 0 var(--p2)"
-                : "none",
+                  ? "8px 8px 0 var(--p2)"
+                  : "none",
             transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
             opacity: isCurrentPlayerActive ? 1 : 0.5,
             letterSpacing: "1px",
@@ -560,13 +621,16 @@ export default function ScreenDebate({
           }}
           onMouseDown={(e) => {
             if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform = "translate(4px, 4px)";
-              (e.target as HTMLButtonElement).style.boxShadow = "2px 2px 0 var(--dark)";
+              (e.target as HTMLButtonElement).style.transform =
+                "translate(4px, 4px)";
+              (e.target as HTMLButtonElement).style.boxShadow =
+                "2px 2px 0 var(--dark)";
             }
           }}
           onMouseUp={(e) => {
             if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform = "translate(0, 0)";
+              (e.target as HTMLButtonElement).style.transform =
+                "translate(0, 0)";
               (e.target as HTMLButtonElement).style.boxShadow = isRecording
                 ? "5px 5px 0 var(--p2)"
                 : "5px 5px 0 var(--dark)";
@@ -599,14 +663,18 @@ export default function ScreenDebate({
           }}
           onMouseDown={(e) => {
             if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform = "translate(4px, 4px)";
-              (e.target as HTMLButtonElement).style.boxShadow = "2px 2px 0 var(--dark)";
+              (e.target as HTMLButtonElement).style.transform =
+                "translate(4px, 4px)";
+              (e.target as HTMLButtonElement).style.boxShadow =
+                "2px 2px 0 var(--dark)";
             }
           }}
           onMouseUp={(e) => {
             if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform = "translate(0, 0)";
-              (e.target as HTMLButtonElement).style.boxShadow = "5px 5px 0 var(--dark)";
+              (e.target as HTMLButtonElement).style.transform =
+                "translate(0, 0)";
+              (e.target as HTMLButtonElement).style.boxShadow =
+                "5px 5px 0 var(--dark)";
             }
           }}
         >

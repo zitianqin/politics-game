@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { votersData } from "../../lib/voterData";
 import PixelPortrait from "../../components/PixelPortrait";
 import { getSocket } from "../../lib/socket";
+import { apiUrl } from "../../lib/api";
 
 interface CandidateProfile {
   fullName: string;
@@ -50,11 +51,18 @@ export default function RevealPage({
     const meById = players.find((p) => p.id === playerId);
     const meBySlot = playerId
       ? undefined
-      : players.find((p) => p.slot === (sessionStorage.getItem("isHost") === "true" ? 1 : 2));
+      : players.find(
+          (p) =>
+            p.slot === (sessionStorage.getItem("isHost") === "true" ? 1 : 2),
+        );
     const me = meById ?? meBySlot;
 
-    const opponentById = playerId ? players.find((p) => p.id !== playerId) : undefined;
-    const opponentBySlot = me?.slot ? players.find((p) => p.slot !== me.slot) : undefined;
+    const opponentById = playerId
+      ? players.find((p) => p.id !== playerId)
+      : undefined;
+    const opponentBySlot = me?.slot
+      ? players.find((p) => p.slot !== me.slot)
+      : undefined;
     const opponent = opponentById ?? opponentBySlot;
 
     setMyCandidate(me?.candidate ?? null);
@@ -64,7 +72,7 @@ export default function RevealPage({
   useEffect(() => {
     setMounted(true);
 
-    fetch(`/api/game/${code}`)
+    fetch(apiUrl(`/api/game/${code}`))
       .then((res) => res.json())
       .then((data) => {
         if (data.voters) {
@@ -178,7 +186,6 @@ export default function RevealPage({
           </div>
 
           <div className="bg-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000] flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto text-center">
-            
             <h2 className="font-['Titan_One'] text-lg sm:text-2xl text-red-600">
               DEBATE STARTS IN: {countdown}s
             </h2>
@@ -237,7 +244,8 @@ export default function RevealPage({
                     {candidate.fullName}
                   </p>
                   <p className="font-bold text-gray-700">
-                    {candidate.age} • {candidate.profession} • {candidate.electorate}
+                    {candidate.age} • {candidate.profession} •{" "}
+                    {candidate.electorate}
                   </p>
                   <p className="inline-block mt-1 bg-black text-white px-2 py-1 rounded text-xs font-black uppercase">
                     {candidate.partyName}
