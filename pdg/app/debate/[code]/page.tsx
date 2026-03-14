@@ -1,13 +1,18 @@
 "use client";
 
-import Confetti from "@/app/components/Confetti";
+import { use, useEffect } from "react";
 import HUD from "@/app/components/HUD";
 import ScreenTopic from "@/app/components/ScreenTopic";
 import ScreenInput from "@/app/components/ScreenInput";
 import ScreenJudging from "@/app/components/ScreenJudging";
 import { useGameState } from "@/app/hooks/useGameState";
 
-export default function DebatePage({ params }: { params: { code: string } }) {
+export default function DebatePage({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}) {
+  const { code } = use(params);
   const {
     screen,
     currentRound,
@@ -16,7 +21,12 @@ export default function DebatePage({ params }: { params: { code: string } }) {
     currentTopic,
     judgingJoke,
     submitArgument,
+    startMeetVoters,
   } = useGameState();
+
+  useEffect(() => {
+    startMeetVoters();
+  }, [startMeetVoters]);
 
   return (
     <>
