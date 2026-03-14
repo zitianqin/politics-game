@@ -43,27 +43,25 @@ export default function LobbyPage({
     socket.connect();
 
     const joinRoom = () => {
+      console.log("Emitting game:join and game:getState for", code);
       socket.emit("game:join", { code, playerId });
       socket.emit("game:getState", { code });
     };
 
-    if (socket.connected) {
-      joinRoom();
-    } else {
-      socket.on("connect", joinRoom);
-    }
-
     socket.on("game:state", (data: { gameState: any }) => {
+      console.log("Received game:state in lobby:", data.gameState?.players?.length);
       if (data.gameState) {
         setPlayerCount(data.gameState.players.length);
       }
     });
 
     socket.on("player:joined", (data: { playerCount: number }) => {
+      console.log("Received player:joined in lobby. Count:", data.playerCount);
       setPlayerCount(data.playerCount);
     });
 
     socket.on("game:started", () => {
+      console.log("Received game:started in lobby");
       router.push(`/reveal/${code}`);
     });
 
@@ -84,6 +82,12 @@ export default function LobbyPage({
       setIsStarting(false);
       console.error("Socket error:", data.message);
     });
+
+    if (socket.connected) {
+      joinRoom();
+    } else {
+      socket.on("connect", joinRoom);
+    }
 
     return () => {
       socket.off("connect");

@@ -199,8 +199,10 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
       setTimeout(
         () => {
           game.status = "round_results";
-          io.to(code).emit("game:result", {
+          io.to(code).emit("round:results", {
             roundNumber: game.currentRound,
+            p1Score: result.p1Votes,
+            p2Score: result.p2Votes,
             winner: result.winner,
             tally: { p1: result.p1Votes, p2: result.p2Votes },
             breakdown: result.votes.map((v) => ({
@@ -217,8 +219,10 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
       console.error(`[judging] LLM voting failed for game ${code}:`, err);
       game.status = "round_results";
 
-      io.to(code).emit("game:result", {
+      io.to(code).emit("round:results", {
         roundNumber: game.currentRound,
+        p1Score: 0,
+        p2Score: 0,
         winner: 1,
         tally: { p1: 0, p2: 0 },
         breakdown: [],

@@ -23,7 +23,8 @@ export function registerSocketHandlers(io: Server): void {
     console.log(`Socket connected: ${socket.id}`);
 
     socket.on("game:join", (data: { code: string; playerId: string }) => {
-      const { code, playerId } = data;
+      const { code: rawCode, playerId } = data;
+      const code = rawCode.toUpperCase();
       const game = getGame(code);
 
       if (!game) {
@@ -43,10 +44,10 @@ export function registerSocketHandlers(io: Server): void {
 
       if (wasReconnect) {
         console.log(`Player ${playerId} reconnected to game ${code}`);
-        socket.emit("game:reconnected", {
-          gameState: serializeGame(game),
-        });
       }
+
+      // Broadcast full state to everyone in the room to ensure consistency
+      io.to(code).emit("game:state", { gameState: serializeGame(game) });
 
       io.to(code).emit("player:joined", {
         playerId: player.id,
@@ -55,12 +56,13 @@ export function registerSocketHandlers(io: Server): void {
       });
 
       console.log(
-        `Player ${playerId} (slot ${player.slot}) joined room ${code}`
+        `Player ${playerId} (slot ${player.slot}) joined room ${code}. Total players: ${game.players.length}`
       );
     });
 
     socket.on("game:getState", (data: { code: string }) => {
-      const { code } = data;
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
       const game = getGame(code);
       if (game) {
         socket.emit("game:state", { gameState: serializeGame(game) });
@@ -68,7 +70,8 @@ export function registerSocketHandlers(io: Server): void {
     });
 
     socket.on("game:start", (data: { code: string; playerId: string }) => {
-      const { code, playerId } = data;
+      const { code: rawCode, playerId } = data;
+      const code = rawCode.toUpperCase();
       const game = getGame(code);
 
       if (!game) {
@@ -113,7 +116,8 @@ export function registerSocketHandlers(io: Server): void {
     });
 
     socket.on("reveal:done", (data: { code: string; playerId?: string }) => {
-      const { code } = data;
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
       const game = getGame(code);
       if (!game) return;
 
@@ -138,7 +142,8 @@ export function registerSocketHandlers(io: Server): void {
     });
 
     socket.on("game:reset", (data: { code: string }) => {
-      const { code } = data;
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
       const game = resetGameSession(code);
       if (game) {
         cleanupRound(code);
@@ -151,7 +156,8 @@ export function registerSocketHandlers(io: Server): void {
     socket.on(
       "objection:raised",
       (data: { code: string; byPlayer: 1 | 2 }) => {
-        const { code, byPlayer } = data;
+        const { code: rawCode, byPlayer } = data;
+        const code = rawCode.toUpperCase();
         const game = getGame(code);
         if (!game) {
           socket.emit("error", { message: "Game not found" });
@@ -167,7 +173,8 @@ export function registerSocketHandlers(io: Server): void {
 
     // Player voluntarily yields the floor
     socket.on("floor:yield", (data: { code: string; byPlayer: 1 | 2 }) => {
-      const { code, byPlayer } = data;
+      const { code: rawCode, byPlayer } = data;
+      const code = rawCode.toUpperCase();
       const game = getGame(code);
       if (!game) {
         socket.emit("error", { message: "Game not found" });
@@ -182,7 +189,8 @@ export function registerSocketHandlers(io: Server): void {
 
     // After judging/voting for a round, advance to next round or end
     socket.on("round:advance", (data: { code: string }) => {
-      const { code } = data;
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
       const game = getGame(code);
       if (!game) return;
 
