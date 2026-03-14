@@ -30,11 +30,11 @@ export default function RevealPage({ params }: { params: Promise<{ code: string 
     return () => clearInterval(timer);
   }, []);
 
-  // useEffect(() => {
-  //   if (countdown === 0) {
-  //     router.push(`/debate/${code}`);
-  //   }
-  // }, [countdown, code, router]);
+  useEffect(() => {
+    if (countdown === 0) {
+      router.push(`/debate/${code}`);
+    }
+  }, [countdown, code, router]);
 
   if (!mounted) return null;
 
