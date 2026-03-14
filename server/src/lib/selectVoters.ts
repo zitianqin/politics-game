@@ -1,6 +1,6 @@
 import { voterPool, VoterProfile } from '../data/voterData';
 
-const VOTERS_PER_GAME = 21;
+const VOTERS_PER_GAME = 5;
 
 /**
  * Randomly draws 21 distinct voter profiles from the 67-profile pool.

@@ -8,6 +8,7 @@ import {
   handleYield as timerHandleYield,
   TimerState,
 } from "./timerManager";
+import { runVoterSimulation } from "../services/voting";
 
 export interface RoundContext {
   timerState: TimerState;
@@ -157,48 +158,73 @@ export function endRound(io: Server, game: GameSession): void {
 }
 
 /**
- * Start the judging phase.
+ * Start the judging phase — call the LLM voter simulation.
  */
 export function startJudgingPhase(io: Server, game: GameSession): void {
   const code = game.code;
   game.status = "judging";
   io.to(code).emit("judging:start", { roundNumber: game.currentRound });
 
-  // Simulate judging time (4 seconds)
-  setTimeout(() => {
-    startRoundResultsPhase(io, game);
-  }, 4000);
-}
+  const roundsSoFar = game.rounds.filter(
+    (r) => r.roundNumber <= game.currentRound
+  );
 
-/**
- * Start the round results phase (reveal scores).
- */
-export function startRoundResultsPhase(io: Server, game: GameSession): void {
-  const code = game.code;
-  game.status = "round_results";
+  runVoterSimulation(game.voters, game.players, roundsSoFar, game.topics)
+    .then((result) => {
+      game.status = "voting";
+      io.to(code).emit("voting:start", {});
 
-  const round = game.rounds.find((r) => r.roundNumber === game.currentRound);
-  if (!round) return;
+      const round = game.rounds.find(
+        (r) => r.roundNumber === game.currentRound
+      );
+      if (round) {
+        round.p1Score = result.p1Votes;
+        round.p2Score = result.p2Votes;
+      }
 
-  // Calculate scores based on transcript lengths + random factor
-  let p1Length = 0;
-  let p2Length = 0;
-  round.transcript.forEach((t) => {
-    if (t.speaker === "1") p1Length += t.text.length;
-    else if (t.speaker === "2") p2Length += t.text.length;
-  });
+      const VOTE_REVEAL_DELAY_MS = 1500;
 
-  const p1Score = p1Length * 3 + Math.floor(Math.random() * 300);
-  const p2Score = p2Length * 3 + Math.floor(Math.random() * 300);
+      result.votes.forEach((vote, i) => {
+        setTimeout(() => {
+          io.to(code).emit("vote:cast", {
+            voterName: vote.voterName,
+            vote: vote.vote === 1 ? "Candidate A" : "Candidate B",
+            reason: vote.reason,
+            index: i,
+            total: result.votes.length,
+          });
+        }, (i + 1) * VOTE_REVEAL_DELAY_MS);
+      });
 
-  round.p1Score = p1Score;
-  round.p2Score = p2Score;
+      setTimeout(
+        () => {
+          game.status = "round_results";
+          io.to(code).emit("game:result", {
+            roundNumber: game.currentRound,
+            winner: result.winner,
+            tally: { p1: result.p1Votes, p2: result.p2Votes },
+            breakdown: result.votes.map((v) => ({
+              voterName: v.voterName,
+              vote: v.vote === 1 ? "Candidate A" : "Candidate B",
+              reason: v.reason,
+            })),
+          });
+        },
+        (result.votes.length + 1) * VOTE_REVEAL_DELAY_MS
+      );
+    })
+    .catch((err) => {
+      console.error(`[judging] LLM voting failed for game ${code}:`, err);
+      game.status = "round_results";
 
-  io.to(code).emit("round:results", {
-    roundNumber: game.currentRound,
-    p1Score,
-    p2Score,
-  });
+      io.to(code).emit("game:result", {
+        roundNumber: game.currentRound,
+        winner: 1,
+        tally: { p1: 0, p2: 0 },
+        breakdown: [],
+        error: "Voting failed — results are placeholder",
+      });
+    });
 }
 
 /**

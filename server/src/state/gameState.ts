@@ -45,6 +45,7 @@ export interface GameSession {
   topics: string[];
   currentRound: number;
   debatePhase: "idle" | "prep" | "debate" | "ended";
+  revealReady: string[];
 }
 
 const games = new Map<string, GameSession>();
@@ -77,6 +78,7 @@ export function createGame(hostId: string): GameSession {
     topics: getRandomTopics(2),
     currentRound: 0,
     debatePhase: "idle",
+    revealReady: [],
   };
   games.set(code, game);
   return game;
@@ -199,6 +201,7 @@ export function resetGameSession(code: string): GameSession | null {
   game.status = "lobby";
   game.currentRound = 0;
   game.rounds = [];
+  game.revealReady = [];
   game.topics = getRandomTopics(2);
   game.debatePhase = "idle";
   game.timerState = null;

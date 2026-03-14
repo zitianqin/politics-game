@@ -99,11 +99,24 @@ export function registerSocketHandlers(io: Server): void {
       startMeetVotersPhase(io, game);
     });
 
-    socket.on("reveal:done", (data: { code: string }) => {
+    socket.on("reveal:done", (data: { code: string; playerId?: string }) => {
       const { code } = data;
       const game = getGame(code);
+      if (!game) return;
+
+      let pId = data.playerId;
+      if (!pId) {
+        const found = findGameBySocketId(socket.id);
+        if (found) pId = found.player.id;
+      }
+
+      if (pId && !game.revealReady.includes(pId)) {
+        game.revealReady.push(pId);
+        io.to(code).emit("reveal:ready", { playerId: pId, readyCount: game.revealReady.length });
+      }
+
       const ctx = getRoundContext(code);
-      if (game && ctx && ctx.revealIntervalId) {
+      if (game.revealReady.length >= 2 && ctx && ctx.revealIntervalId) {
         clearInterval(ctx.revealIntervalId);
         ctx.revealIntervalId = null;
         io.to(code).emit("reveal:end", {});
