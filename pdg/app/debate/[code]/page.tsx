@@ -62,12 +62,6 @@ export default function DebatePage({
 
   const router = useRouter();
 
-  // Redirect to results page when game finishes
-  useEffect(() => {
-    if (isHydrated && screen === "winner") {
-      router.push(`/results/${code}`);
-    }
-  }, [screen, isHydrated, code, router]);
 
   // Redirect to lobby if screen is lobby
   useEffect(() => {
@@ -84,8 +78,8 @@ export default function DebatePage({
     <>
       <HUD
         screen={screen}
-        displayP1Votes={0}
-        displayP2Votes={0}
+        displayP1Votes={p1TotalVotes}
+        displayP2Votes={p2TotalVotes}
         timeLeft={activePlayerTime}
       />
 

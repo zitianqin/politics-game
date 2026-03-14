@@ -192,7 +192,7 @@ export function registerSocketHandlers(io: Server): void {
       const { code: rawCode } = data;
       const code = rawCode.toUpperCase();
       const game = getGame(code);
-      if (!game) return;
+      if (!game || game.status !== "round_results") return;
 
       cleanupRound(code);
 
