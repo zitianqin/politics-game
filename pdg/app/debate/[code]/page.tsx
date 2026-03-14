@@ -85,6 +85,10 @@ export default function DebatePage({
   const activePlayerTime =
     currentSpeaker === 1 ? p1RoundTimeRemaining : p2RoundTimeRemaining;
 
+  // Extract candidate full names for voting results display
+  const p1CandidateName = p1Candidate?.fullName || p1Name;
+  const p2CandidateName = p2Candidate?.fullName || p2Name;
+
   return (
     <>
       {screen !== "topic" && screen !== "results" && (
@@ -148,8 +152,8 @@ export default function DebatePage({
               advanceToWinner();
             }
           }}
-          p1Name={p1Name}
-          p2Name={p2Name}
+          p1Name={p1CandidateName}
+          p2Name={p2CandidateName}
         />
       )}
 
@@ -160,8 +164,8 @@ export default function DebatePage({
           p1TotalVotes={p1TotalVotes}
           p2TotalVotes={p2TotalVotes}
           resetGame={resetGame}
-          p1Name={p1Name}
-          p2Name={p2Name}
+          p1Name={p1CandidateName}
+          p2Name={p2CandidateName}
         />
       )}
 
@@ -170,8 +174,8 @@ export default function DebatePage({
           currentRound={currentRound}
           isInterim={isInterimResults}
           voters={voterResults}
-          p1Name={p1Name}
-          p2Name={p2Name}
+          p1Name={p1CandidateName}
+          p2Name={p2CandidateName}
           p1TotalVotes={p1TotalVotes}
           p2TotalVotes={p2TotalVotes}
           onContinue={advanceToBars}

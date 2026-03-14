@@ -231,10 +231,7 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
               voterName: v.voterName,
               voterAge: profile?.age || 0,
               voterLocation: profile?.location || "",
-              vote:
-                v.vote === 1
-                  ? result.p1CandidateName || "Candidate A"
-                  : result.p2CandidateName || "Candidate B",
+              vote: v.vote === 1 ? "Candidate A" : "Candidate B",
               reason: v.reason,
             };
           }),
