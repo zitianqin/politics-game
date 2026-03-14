@@ -1,8 +1,8 @@
 import { Router, Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { createGame, getGame, joinGame } from "../state/gameState";
+import { createGame, getGame, joinGame, reconnectPlayer } from "../state/gameState";
 
-const router = Router();
+const router: Router = Router();
 
 router.post("/create", (_req: Request, res: Response) => {
   const hostId = uuidv4();
@@ -39,8 +39,33 @@ router.post("/join", (req: Request, res: Response) => {
   });
 });
 
+router.post("/reconnect", (req: Request, res: Response) => {
+  const { code, playerId } = req.body;
+
+  if (!code || !playerId) {
+    res.status(400).json({ error: "Missing code or playerId" });
+    return;
+  }
+
+  const result = reconnectPlayer(code, playerId);
+
+  if ("error" in result) {
+    res.status(404).json({ error: result.error });
+    return;
+  }
+
+  res.status(200).json({
+    code: result.game.code,
+    gameId: result.game.id,
+    playerId: result.player.id,
+    slot: result.player.slot,
+    status: result.game.status,
+    isHost: result.game.hostId === playerId,
+  });
+});
+
 router.get("/:code", (req: Request, res: Response) => {
-  const game = getGame(req.params.code);
+  const game = getGame(req.params.code as string);
 
   if (!game) {
     res.status(404).json({ error: "Game not found" });

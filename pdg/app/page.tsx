@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ScreenRoot from "./components/ScreenRoot";
 
 export default function Page() {
@@ -9,13 +9,67 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [showJoinInput, setShowJoinInput] = useState(false);
+  const [existingGame, setExistingGame] = useState<{
+    code: string;
+    status: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const playerId = sessionStorage.getItem("playerId");
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (!playerId || !gameCode) return;
+
+    fetch("/api/game/reconnect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: gameCode, playerId }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.status !== "complete") {
+          setExistingGame({ code: data.code, status: data.status });
+          sessionStorage.setItem("isHost", String(data.isHost));
+        } else {
+          sessionStorage.removeItem("playerId");
+          sessionStorage.removeItem("gameCode");
+          sessionStorage.removeItem("isHost");
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleRejoin = () => {
+    if (!existingGame) return;
+    const targetRoute =
+      existingGame.status === "lobby"
+        ? `/lobby/${existingGame.code}`
+        : existingGame.status === "reveal"
+          ? `/reveal/${existingGame.code}`
+          : existingGame.status === "debate"
+            ? `/debate/${existingGame.code}`
+            : `/results/${existingGame.code}`;
+    router.push(targetRoute);
+  };
+
+  const handleNewGame = () => {
+    sessionStorage.removeItem("playerId");
+    sessionStorage.removeItem("gameCode");
+    sessionStorage.removeItem("isHost");
+    setExistingGame(null);
+  };
 
   const handleCreateGame = async () => {
     setIsLoading(true);
     try {
-      // For now, generate a mock code
-      const gameCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      router.push(`/lobby/${gameCode}`);
+      const response = await fetch("/api/game/create", { method: "POST" });
+      if (!response.ok) throw new Error("Failed to create game");
+      const data = await response.json();
+
+      sessionStorage.setItem("playerId", data.playerId);
+      sessionStorage.setItem("gameCode", data.code);
+      sessionStorage.setItem("isHost", "true");
+
+      router.push(`/lobby/${data.code}`);
     } catch (error) {
       console.error("Failed to create game:", error);
     } finally {
@@ -31,14 +85,73 @@ export default function Page() {
 
     setIsLoading(true);
     try {
-      router.push(`/lobby/${joinCode.toUpperCase()}`);
+      const response = await fetch("/api/game/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: joinCode.trim().toUpperCase() }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Invalid code");
+      }
+      const data = await response.json();
+
+      sessionStorage.setItem("playerId", data.playerId);
+      sessionStorage.setItem("gameCode", data.code);
+      sessionStorage.setItem("isHost", "false");
+
+      router.push(`/lobby/${data.code}`);
     } catch (error) {
       console.error("Failed to join game:", error);
-      alert("Invalid game code");
+      alert(error instanceof Error ? error.message : "Invalid game code");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (existingGame) {
+    return (
+      <div className="screen active">
+        <h1 className="title-text bouncing">
+          ELECTION
+          <br />
+          SHOWDOWN
+        </h1>
+        <div className="flex flex-col justify-center items-center gap-8">
+          <div
+            style={{
+              fontSize: "32px",
+              fontWeight: "900",
+              color: "var(--accent)",
+              textShadow: "4px 4px 0 var(--dark)",
+              textTransform: "uppercase",
+            }}
+          >
+            GAME IN PROGRESS
+          </div>
+          <div
+            style={{
+              fontSize: "48px",
+              fontWeight: "900",
+              letterSpacing: "12px",
+              color: "var(--light)",
+              fontFamily: "monospace",
+            }}
+          >
+            {existingGame.code}
+          </div>
+          <div className="flex flex-col justify-center items-center gap-5">
+            <button className="btn green-color" onClick={handleRejoin}>
+              REJOIN GAME
+            </button>
+            <button className="btn" onClick={handleNewGame}>
+              NEW GAME
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showJoinInput) {
     return (
