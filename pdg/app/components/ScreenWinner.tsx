@@ -38,8 +38,8 @@ export default function ScreenWinner({
             p1TotalVotes > p2TotalVotes
               ? "var(--p1)"
               : p2TotalVotes > p1TotalVotes
-                ? "var(--p2)"
-                : "var(--accent)",
+              ? "var(--p2)"
+              : "var(--accent)",
         }}
       >
         {winnerLabel}
