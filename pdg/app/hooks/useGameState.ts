@@ -112,12 +112,12 @@ export function useGameState(gameCodeFromUrl?: string) {
     });
 
     // Debate phase begins
-    socket.on("round:debate", (data: { activePlayer: 1 | 2 }) => {
+    socket.on("round:debate", (data: { activePlayer: 1 | 2; startTime?: number }) => {
       setCurrentSpeaker(data.activePlayer);
       setP1RoundTimeRemaining(60);
       setP2RoundTimeRemaining(60);
       setLiveTranscript([]);
-      setRoundStartTime(Date.now());
+      setRoundStartTime(data.startTime ?? Date.now());
       audioChunksRef.current = [];
       currentP1ArgRef.current = "";
       currentP2ArgRef.current = "";
@@ -257,15 +257,18 @@ export function useGameState(gameCodeFromUrl?: string) {
         text: string;
         timestamp: number;
         roundNumber: number;
+        isObjection?: boolean;
         isObjectionEnd?: boolean;
         inaudible?: boolean;
       }) => {
         if (data.inaudible) return; // skip silent segments
         const speakerNum: 1 | 2 = data.speaker === "player1" ? 1 : 2;
-        setLiveTranscript((prev) => [
-          ...prev,
-          { speaker: speakerNum, text: data.text, timestamp: data.timestamp },
-        ]);
+        setLiveTranscript((prev) =>
+          [
+            ...prev,
+            { speaker: speakerNum, text: data.text, timestamp: data.timestamp, isObjection: data.isObjection },
+          ].sort((a, b) => a.timestamp - b.timestamp)
+        );
       }
     );
 
@@ -300,7 +303,18 @@ export function useGameState(gameCodeFromUrl?: string) {
           (r: any) => r.roundNumber === gs.currentRound
         );
         if (rData && rData.transcript) {
-          setLiveTranscript(rData.transcript);
+          const mapped: TranscriptEntry[] = rData.transcript.map((t: any) => ({
+            speaker: t.speaker === "player1" ? 1 : 2,
+            text: t.text,
+            timestamp: t.timestamp,
+            isObjection: t.isObjection,
+          }));
+          setLiveTranscript(
+            mapped.sort(
+              (a: TranscriptEntry, b: TranscriptEntry) =>
+                a.timestamp - b.timestamp
+            )
+          );
         }
       } else if (gs.status === "judging") {
         setScreen("judging");
@@ -397,10 +411,12 @@ export function useGameState(gameCodeFromUrl?: string) {
         ? Math.round((Date.now() - roundStartTime) / 1000)
         : 0;
 
-      setLiveTranscript((prev) => [
-        ...prev,
-        { speaker, text, timestamp, isObjection },
-      ]);
+      setLiveTranscript((prev) =>
+        [
+          ...prev,
+          { speaker, text, timestamp, isObjection },
+        ].sort((a, b) => a.timestamp - b.timestamp)
+      );
 
       if (speaker === 1) {
         currentP1ArgRef.current += (currentP1ArgRef.current ? " " : "") + text;
@@ -421,11 +437,11 @@ export function useGameState(gameCodeFromUrl?: string) {
           code: gameCode,
           byPlayer: objectingPlayer,
         });
-        // Add objection marker to local transcript
-        addTranscriptEntry(objectingPlayer, "OBJECTION!", true);
+        // We no longer add a local transcript entry here.
+        // The server will broadcast a transcript:update for the OBJECTION! marker.
       }
     },
-    [addTranscriptEntry]
+    []
   );
 
   // Emit yield to server
