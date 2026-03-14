@@ -16,7 +16,9 @@ export default function HUD({
   return (
     <div
       id="hud"
-      className={`hud ${screen !== "lobby" && screen !== "winner" ? "active" : ""}`}
+      className={`hud ${
+        screen !== "lobby" && screen !== "winner" ? "active" : ""
+      }`}
     >
       <div className="player-badge" style={{ background: "var(--p1)" }}>
         <div className="avatar">🦄</div>
@@ -28,12 +30,16 @@ export default function HUD({
 
       <div
         className="clock"
-        style={{
-          color: timeLeft <= 10 ? "var(--p2)" : "#FFF",
-          borderColor: timeLeft <= 10 ? "var(--p2)" : "#FFF",
-        }}
+        style={
+          screen === "input"
+            ? {
+                color: timeLeft <= 10 ? "var(--p2)" : "#FFF",
+                borderColor: timeLeft <= 10 ? "var(--p2)" : "#FFF",
+              }
+            : { display: "none" }
+        }
       >
-        {screen === "input" ? timeLeft : "--"}
+        {timeLeft}
       </div>
 
       <div
