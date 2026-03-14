@@ -41,10 +41,6 @@ export function useGameState() {
     return () => clearTimer();
   }, [clearTimer]);
 
-  const startMeetVoters = useCallback(() => {
-    setScreen("voter-profile");
-  }, []);
-
   const startVoterReveal = useCallback(() => {
     setScreen("voter-grid");
   }, []);
@@ -95,6 +91,11 @@ export function useGameState() {
       startTurn(1);
     }, 4000);
   }, [startTurn]);
+
+  const startMeetVoters = useCallback(() => {
+    // Skipped voter-profile directly to topic reveal as requested
+    startTopicReveal(currentRound);
+  }, [startTopicReveal, currentRound]);
 
   const startJudging = useCallback(() => {
     setScreen("judging");

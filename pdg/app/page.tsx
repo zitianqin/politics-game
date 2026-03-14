@@ -3,7 +3,6 @@
 import Confetti from "./components/Confetti";
 import HUD from "./components/HUD";
 import ScreenLobby from "./components/ScreenLobby";
-import ScreenVoterProfile from "./components/ScreenVoterProfile";
 import ScreenTopic from "./components/ScreenTopic";
 import ScreenInput from "./components/ScreenInput";
 import ScreenJudging from "./components/ScreenJudging";
@@ -12,14 +11,6 @@ import ScreenWinner from "./components/ScreenWinner";
 import ScreenVoterGrid from "./components/ScreenVoterGrid";
 import { useGameState } from "./hooks/useGameState";
 import { useRevealAnimation } from "./hooks/useRevealAnimation";
-import { VoterProfileProps } from "./components/VoterSVG";
-
-const MOCK_VOTERS: VoterProfileProps[] = [
-  { name: "Barry Nolan", age: 64, location: "Penrith, NSW", occupation: "Retired Sparkie", quote: ["Spent 35 years on-site. Back's shot,", "energy bills are a joke. I just want", "someone who speaks plain English."], lean: "CONSERVATIVE", votingStyle: "POPULIST", concerns: ["Energy Costs", "Cost of Living"], vulnerableTo: "Straight-Talkin' & No Bulls**t" },
-  { name: "Chloe Atkinson", age: 23, location: "Fitzroy, VIC", occupation: "Barista / Student", quote: ["Rent is too high and the planet", "is burning. I want someone who", "actually cares about the future."], lean: "PROGRESSIVE", votingStyle: "EMOTIONAL", concerns: ["Climate", "Housing", "LGBTQ+ Rights"], vulnerableTo: "Values-based Appeals" },
-  { name: "Dr. Helen F.", age: 72, location: "Toorak, VIC", occupation: "Retired GP", quote: ["I read the AFR daily. I want", "steady, evidence-based policy,", "not these silly populist slogans."], lean: "CENTRE", votingStyle: "RATIONAL", concerns: ["Healthcare", "Fiscal Resp."], vulnerableTo: "Expert References" },
-  { name: "Damo Perkins", age: 46, location: "Broken Hill, NSW", occupation: "Long-haul Truckie", quote: ["Both major parties are rotten.", "I don't trust any of 'em. I'll", "just vote for whoever pisses me off less."], lean: "APATHETIC", votingStyle: "POPULIST", concerns: ["Fuel Costs", "Gov Overreach"], vulnerableTo: "Anti-Politician Sentiment" }
-];
 
 export default function Page() {
   const {
@@ -69,12 +60,6 @@ export default function Page() {
       <ScreenLobby screen={screen} startGame={startGame} />
 
       <ScreenVoterGrid screen={screen} startDebate={startMeetVoters} />
-
-      <ScreenVoterProfile 
-        screen={screen} 
-        voterProfiles={MOCK_VOTERS} 
-        startNextRound={() => startTopicReveal(currentRound)} 
-      />
 
       <ScreenTopic
         screen={screen}
