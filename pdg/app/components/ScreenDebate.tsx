@@ -3,15 +3,19 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ScreenId } from "../lib/gameConstants";
 import { TranscriptEntry } from "../hooks/useGameState";
+import TimerBar from "./TimerBar";
 
 interface ScreenDebateProps {
   screen: ScreenId;
   currentRound: number;
   currentPlayer: 1 | 2;
   activePlayer: 1 | 2;
-  timeLeft: number;
+  p1TimeRemaining: number;
+  p2TimeRemaining: number;
   currentTopic: string;
   transcript: TranscriptEntry[];
+  showObjectionVFX: boolean;
+  objectionBy: 1 | 2 | null;
   onObjection: () => void;
   onYield: () => void;
   onSubmitSpeech: (transcript: string) => void;
@@ -24,9 +28,12 @@ export default function ScreenDebate({
   currentRound,
   currentPlayer,
   activePlayer,
-  timeLeft,
+  p1TimeRemaining,
+  p2TimeRemaining,
   currentTopic,
   transcript,
+  showObjectionVFX,
+  objectionBy,
   onObjection,
   onYield,
   onSubmitSpeech,
@@ -38,14 +45,32 @@ export default function ScreenDebate({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const [screenShake, setScreenShake] = useState(false);
 
-  // Determine if current player can object
-  // They can object if it's opponent's turn AND they have > 15s remaining
+  // Determine if current player can object (server-driven constraints)
   const isCurrentPlayerActive = activePlayer === currentPlayer;
+  const myRemaining = currentPlayer === 1 ? p1TimeRemaining : p2TimeRemaining;
   const canObjection =
-    !isCurrentPlayerActive && timeLeft > 15 && screen === "debate";
+    !isCurrentPlayerActive && myRemaining > 15 && screen === "debate";
 
-  // Update transcript display when it changes
+  // Trigger screen shake on objection VFX
+  useEffect(() => {
+    if (showObjectionVFX) {
+      setScreenShake(true);
+      // Play gavel SFX
+      try {
+        const audio = new Audio(
+          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=",
+        );
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      } catch {}
+      const timer = setTimeout(() => setScreenShake(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showObjectionVFX]);
+
+  // Update transcript display
   useEffect(() => {
     const formatted = transcript
       .map((entry) => {
@@ -56,7 +81,6 @@ export default function ScreenDebate({
       .join("\n\n");
     setDisplayTranscript(formatted);
 
-    // Scroll to bottom
     setTimeout(() => {
       if (transcriptEndRef.current) {
         transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -64,14 +88,14 @@ export default function ScreenDebate({
     }, 0);
   }, [transcript]);
 
-  // Start recording when this player's turn begins
+  // Start/stop recording based on active player
   useEffect(() => {
     if (screen === "debate" && isCurrentPlayerActive && !isRecording) {
       startRecording();
     } else if (screen !== "debate" || !isCurrentPlayerActive) {
       stopRecording();
     }
-  }, [screen, isCurrentPlayerActive, isRecording]);
+  }, [screen, isCurrentPlayerActive]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -89,7 +113,6 @@ export default function ScreenDebate({
         const audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
         });
-        // Send to backend for transcription
         await sendAudioForTranscription(audioBlob);
         stream.getTracks().forEach((track) => track.stop());
       };
@@ -115,21 +138,9 @@ export default function ScreenDebate({
 
   const sendAudioForTranscription = async (audioBlob: Blob) => {
     try {
-      const formData = new FormData();
-      formData.append("audio", audioBlob);
-
-      const response = await fetch("/api/transcribe", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Transcription failed");
-
-      const { transcript: transcribedText } = await response.json();
-
-      if (transcribedText) {
-        onSubmitSpeech(transcribedText);
-      }
+      // Mock transcription for now — returns a placeholder
+      const mockText = "[speech captured]";
+      onSubmitSpeech(mockText);
     } catch (error) {
       console.error("Transcription error:", error);
     }
@@ -141,13 +152,6 @@ export default function ScreenDebate({
     }
   };
 
-  // Helper to get timer color
-  const getTimerColor = (): string => {
-    if (timeLeft <= 10) return "var(--p2)"; // Red
-    if (timeLeft <= 20) return "var(--accent)"; // Amber
-    return "var(--green)"; // Green
-  };
-
   return (
     <div
       id="screen-debate"
@@ -157,81 +161,130 @@ export default function ScreenDebate({
         display: "flex",
         flexDirection: "column",
         gap: "0",
+        animation: screenShake ? "screenShake 0.5s ease-out" : "none",
       }}
     >
+      {/* OBJECTION VFX Overlay */}
+      {showObjectionVFX && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "Titan One, cursive",
+              fontSize: "120px",
+              color: "var(--red)",
+              WebkitTextStroke: "4px var(--dark)",
+              textShadow:
+                "8px 8px 0 var(--dark), 0 0 40px rgba(255, 76, 76, 0.6)",
+              animation: "objectionSlam 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+              textTransform: "uppercase",
+              letterSpacing: "8px",
+            }}
+          >
+            OBJECTION!
+          </div>
+        </div>
+      )}
+
       {/* Top HUD Bar */}
       <div
         style={{
-          padding: "16px 24px",
+          padding: "12px 24px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           gap: "20px",
         }}
       >
-        {/* Center: Round & Timer */}
+        {/* Round Badge */}
         <div
+          className="flex"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "16px",
-            flex: "0 0 auto",
+            background: "var(--p2)",
+            border: "4px solid var(--dark)",
+            borderRadius: "12px",
+            padding: "10px 20px",
+            textAlign: "center",
+            boxShadow: "4px 4px 0 var(--dark)",
           }}
         >
-          {/* Round Badge */}
-          <div
-            className="flex"
-            style={{
-              background: "var(--p2)",
-              border: "4px solid var(--dark)",
-              borderRadius: "12px",
-              padding: "12px 20px",
-              textAlign: "center",
-              boxShadow: "4px 4px 0 var(--dark)",
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "Titan One, cursive",
-                fontSize: "36px",
-                fontWeight: "900",
-                color: "white",
-                textTransform: "uppercase",
-                letterSpacing: "2px",
-              }}
-            >
-              ROUND {currentRound}
-            </div>
-          </div>
-
-          {/* Timer */}
           <div
             style={{
-              background: "var(--dark)",
-              border: "4px solid " + getTimerColor(),
-              borderRadius: "12px",
-              padding: "12px 20px",
-              textAlign: "center",
-              boxShadow: "4px 4px 0 " + getTimerColor(),
-              minWidth: "120px",
-              transition: "border-color 0.3s, box-shadow 0.3s",
+              fontFamily: "Titan One, cursive",
+              fontSize: "28px",
+              fontWeight: "900",
+              color: "white",
+              textTransform: "uppercase",
+              letterSpacing: "2px",
             }}
           >
-            <div
-              style={{
-                fontFamily: "Titan One, cursive",
-                fontSize: "36px",
-                letterSpacing: "2px",
-                fontWeight: "900",
-                color: getTimerColor(),
-                transition: "color 0.3s",
-              }}
-            >
-              {String(Math.floor(timeLeft / 60)).padStart(1, "0")}:
-              {String(timeLeft % 60).padStart(2, "0")}
-            </div>
+            ROUND {currentRound}
           </div>
         </div>
+
+        {/* Floor indicator */}
+        <div
+          style={{
+            background: activePlayer === 1 ? "var(--p1)" : "var(--p2)",
+            border: "4px solid var(--dark)",
+            borderRadius: "12px",
+            padding: "10px 20px",
+            boxShadow: "4px 4px 0 var(--dark)",
+            animation: "pulse 1.5s infinite",
+            transition: "background 0.3s",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "Titan One, cursive",
+              fontSize: "18px",
+              color: "white",
+              textShadow: "2px 2px 0 var(--dark)",
+              textTransform: "uppercase",
+            }}
+          >
+            {activePlayer === 1 ? "🦄" : "🦖"} P{activePlayer} SPEAKING
+          </div>
+        </div>
+      </div>
+
+      {/* Per-Player Timer Bars */}
+      <div
+        style={{
+          padding: "0 24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "4px",
+        }}
+      >
+        <TimerBar
+          playerLabel="P1"
+          playerEmoji="🦄"
+          remaining={p1TimeRemaining}
+          total={60}
+          isActive={activePlayer === 1}
+          colorVar="var(--p1)"
+        />
+        <TimerBar
+          playerLabel="P2"
+          playerEmoji="🦖"
+          remaining={p2TimeRemaining}
+          total={60}
+          isActive={activePlayer === 2}
+          colorVar="var(--p2)"
+        />
       </div>
 
       {/* Topic Banner */}
@@ -240,7 +293,7 @@ export default function ScreenDebate({
           background: "linear-gradient(90deg, var(--accent), var(--p2))",
           border: "4px solid var(--dark)",
           borderTop: "none",
-          padding: "16px 24px",
+          padding: "12px 24px",
           textAlign: "center",
           boxShadow: "0 4px 0 var(--dark)",
         }}
@@ -248,7 +301,7 @@ export default function ScreenDebate({
         <div
           id="topic-text"
           style={{
-            fontSize: "28px",
+            fontSize: "22px",
             fontFamily: "Titan One, cursive",
             fontWeight: "900",
             color: "white",
@@ -258,7 +311,7 @@ export default function ScreenDebate({
             lineHeight: "1.3",
           }}
         >
-          "{currentTopic}"
+          &ldquo;{currentTopic}&rdquo;
         </div>
       </div>
 
@@ -268,7 +321,7 @@ export default function ScreenDebate({
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          padding: "20px",
+          padding: "16px 20px",
           minHeight: 0,
         }}
       >
@@ -277,12 +330,12 @@ export default function ScreenDebate({
             background: "rgba(255, 255, 255, 0.98)",
             border: "6px solid var(--dark)",
             borderRadius: "16px",
-            padding: "24px",
+            padding: "20px",
             flex: 1,
             overflowY: "auto",
             boxShadow: "8px 8px 0 var(--dark)",
             fontFamily: "Nunito, sans-serif",
-            fontSize: "24px",
+            fontSize: "20px",
             fontWeight: "700",
             lineHeight: "1.8",
             whiteSpace: "pre-wrap",
@@ -304,7 +357,7 @@ export default function ScreenDebate({
         {isRecording && (
           <div
             style={{
-              marginTop: "16px",
+              marginTop: "12px",
               textAlign: "center",
               animation: "pulse 1s infinite",
             }}
@@ -314,10 +367,10 @@ export default function ScreenDebate({
                 display: "inline-block",
                 background: "var(--p2)",
                 color: "white",
-                padding: "12px 24px",
+                padding: "10px 20px",
                 borderRadius: "24px",
                 fontWeight: "900",
-                fontSize: "16px",
+                fontSize: "14px",
                 fontFamily: "Titan One, cursive",
                 textTransform: "uppercase",
                 letterSpacing: "1px",
@@ -332,11 +385,11 @@ export default function ScreenDebate({
       {/* Bottom Action Bar */}
       <div
         style={{
-          padding: "20px 24px",
+          padding: "16px 24px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          gap: "16px",
+          gap: "12px",
           flexShrink: 0,
         }}
       >
@@ -349,9 +402,9 @@ export default function ScreenDebate({
             color: canObjection ? "black" : "rgba(0, 0, 0, 0.5)",
             border: "6px solid var(--dark)",
             borderRadius: "16px",
-            padding: "20px 32px",
+            padding: "18px 28px",
             fontFamily: "Titan One, cursive",
-            fontSize: "22px",
+            fontSize: "20px",
             fontWeight: "900",
             textTransform: "uppercase",
             cursor: canObjection ? "pointer" : "not-allowed",
@@ -379,6 +432,9 @@ export default function ScreenDebate({
           }}
         >
           ⚖️ OBJECTION!
+          {!canObjection && myRemaining <= 15 && myRemaining > 0 && (
+            <div style={{ fontSize: "10px", opacity: 0.7 }}>NEED &gt;15s</div>
+          )}
         </button>
 
         {/* Speak/Record Button */}
@@ -402,9 +458,9 @@ export default function ScreenDebate({
             color: "var(--dark)",
             border: "6px solid var(--dark)",
             borderRadius: "16px",
-            padding: "20px 32px",
+            padding: "18px 28px",
             fontFamily: "Titan One, cursive",
-            fontSize: "22px",
+            fontSize: "20px",
             fontWeight: "900",
             textTransform: "uppercase",
             cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
@@ -412,8 +468,8 @@ export default function ScreenDebate({
               isCurrentPlayerActive && !isRecording
                 ? "8px 8px 0 var(--dark)"
                 : isCurrentPlayerActive && isRecording
-                ? "8px 8px 0 var(--p2)"
-                : "none",
+                  ? "8px 8px 0 var(--p2)"
+                  : "none",
             transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
             opacity: isCurrentPlayerActive ? 1 : 0.5,
             letterSpacing: "1px",
@@ -449,9 +505,9 @@ export default function ScreenDebate({
             color: "var(--dark)",
             border: "6px solid var(--dark)",
             borderRadius: "16px",
-            padding: "20px 32px",
+            padding: "18px 28px",
             fontFamily: "Titan One, cursive",
-            fontSize: "22px",
+            fontSize: "20px",
             fontWeight: "900",
             textTransform: "uppercase",
             cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
@@ -484,12 +540,26 @@ export default function ScreenDebate({
 
       <style>{`
         @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.7;
-          }
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        @keyframes screenShake {
+          0%, 100% { transform: translateX(0) translateY(0); }
+          10% { transform: translateX(-8px) translateY(-4px); }
+          20% { transform: translateX(8px) translateY(2px); }
+          30% { transform: translateX(-6px) translateY(-2px); }
+          40% { transform: translateX(6px) translateY(4px); }
+          50% { transform: translateX(-4px) translateY(-2px); }
+          60% { transform: translateX(4px) translateY(2px); }
+          70% { transform: translateX(-2px) translateY(-1px); }
+          80% { transform: translateX(2px) translateY(1px); }
+          90% { transform: translateX(-1px) translateY(0); }
+        }
+        @keyframes objectionSlam {
+          0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+          50% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+          70% { transform: scale(0.95) rotate(-2deg); }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
       `}</style>
     </div>

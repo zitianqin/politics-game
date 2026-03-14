@@ -1,13 +1,6 @@
-export const TOTAL_ROUNDS = 3;
-export const TURN_TIME = 60; // seconds for party mode
-
-export const TOPICS = [
-  "SHOULD WE REPLACE TAXES WITH A DANCE BATTLE?",
-  "ARE HOTDOGS CLASSIFIED AS SANDWICHES UNDER FEDERAL LAW?",
-  "SHOULD WE GIVE CATS THE RIGHT TO VOTE?",
-  "ALIEN INVASION: DO WE SURRENDER OR FIGHT?",
-  "UNIVERSAL BASIC ICE CREAM FOR ALL CITIZENS!",
-];
+export const TOTAL_ROUNDS = 2;
+export const TURN_TIME = 60; // seconds per player per round
+export const PREP_COUNTDOWN = 10; // seconds for topic prep
 
 export const JUDGING_JOKES = [
   "Bribing the judges...",
@@ -40,3 +33,4 @@ export interface ConfettiParticle {
   rot: number;
   rotSpeed: number;
 }
+

@@ -1,13 +1,12 @@
 "use client";
 
-import Confetti from "@/app/components/Confetti";
 import HUD from "@/app/components/HUD";
 import ScreenTopic from "@/app/components/ScreenTopic";
 import ScreenDebate from "@/app/components/ScreenDebate";
 import ScreenJudging from "@/app/components/ScreenJudging";
 import { useGameState } from "@/app/hooks/useGameState";
-import { TranscriptEntry } from "@/app/hooks/useDebate";
 import { use, useEffect } from "react";
+import { getSocket } from "@/app/lib/socket";
 
 export default function DebatePage({
   params,
@@ -24,21 +23,35 @@ export default function DebatePage({
     p2RoundTimeRemaining,
     currentSpeaker,
     currentTopic,
+    prepCountdown,
     liveTranscript,
     judgingJoke,
+    showObjectionVFX,
+    objectionBy,
     addTranscriptEntry,
     handleObjection,
     handleYield,
     setIsRecording,
     setMediaStream,
     startMeetVoters,
+    startNextRound,
   } = useGameState();
 
-  // Determine which timer to show in HUD
+  // Connect socket and signal reveal done on mount
   useEffect(() => {
+    const socket = getSocket();
+    if (!socket.connected) {
+      socket.connect();
+      const playerId = sessionStorage.getItem("playerId");
+      if (playerId) {
+        socket.emit("game:join", { code, playerId });
+      }
+    }
+    // Signal that reveal is done → server starts Round 1
     startMeetVoters();
-  }, [startMeetVoters]);
+  }, [code, startMeetVoters]);
 
+  // Determine which timer to show in HUD
   const activePlayerTime =
     currentSpeaker === 1 ? p1RoundTimeRemaining : p2RoundTimeRemaining;
 
@@ -51,23 +64,27 @@ export default function DebatePage({
         timeLeft={activePlayerTime}
       />
 
-      {screen == "topic" && (
+      {screen === "topic" && (
         <ScreenTopic
           screen={screen}
           currentRound={currentRound}
           currentTopic={currentTopic}
+          prepCountdown={prepCountdown}
         />
       )}
 
-      {screen == "debate" && (
+      {screen === "debate" && (
         <ScreenDebate
           screen={screen}
           currentRound={currentRound}
           currentPlayer={currentPlayer}
           activePlayer={currentSpeaker}
-          timeLeft={activePlayerTime}
+          p1TimeRemaining={p1RoundTimeRemaining}
+          p2TimeRemaining={p2RoundTimeRemaining}
           currentTopic={currentTopic}
           transcript={liveTranscript}
+          showObjectionVFX={showObjectionVFX}
+          objectionBy={objectionBy}
           onObjection={() => handleObjection(currentPlayer)}
           onYield={handleYield}
           onSubmitSpeech={(text) => addTranscriptEntry(currentPlayer, text)}
@@ -76,7 +93,7 @@ export default function DebatePage({
         />
       )}
 
-      {screen == "judging" && (
+      {screen === "judging" && (
         <ScreenJudging screen={screen} judgingJoke={judgingJoke} />
       )}
     </>

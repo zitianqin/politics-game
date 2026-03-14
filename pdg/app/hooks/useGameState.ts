@@ -1,12 +1,12 @@
+"use client";
+
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
   ScreenId,
   TOTAL_ROUNDS,
-  TURN_TIME,
-  TOPICS,
   JUDGING_JOKES,
 } from "../lib/gameConstants";
-import { scoreArgument } from "../lib/scoring";
+import { getSocket } from "../lib/socket";
 
 export interface TranscriptEntry {
   speaker: 1 | 2;
@@ -18,17 +18,26 @@ export interface TranscriptEntry {
 export function useGameState() {
   const [screen, setScreen] = useState<ScreenId>("lobby");
   const [currentRound, setCurrentRound] = useState(1);
-  const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1);
+  const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("isHost") === "true" ? 1 : 2;
+    }
+    return 1;
+  });
   const [p1TotalVotes, setP1TotalVotes] = useState(0);
   const [p2TotalVotes, setP2TotalVotes] = useState(0);
 
-  // Debate Screen Timing (Per-player, per-round)
-  const [p1RoundTimeRemaining, setP1RoundTimeRemaining] = useState(TURN_TIME);
-  const [p2RoundTimeRemaining, setP2RoundTimeRemaining] = useState(TURN_TIME);
+  // Server-driven debate state
+  const [currentTopic, setCurrentTopic] = useState("");
   const [currentSpeaker, setCurrentSpeaker] = useState<1 | 2>(1);
-  const [activeSpeakerPausedTime, setActiveSpeakerPausedTime] = useState<
-    number | null
-  >(null);
+  const [p1RoundTimeRemaining, setP1RoundTimeRemaining] = useState(60);
+  const [p2RoundTimeRemaining, setP2RoundTimeRemaining] = useState(60);
+  const [prepCountdown, setPrepCountdown] = useState(10);
+
+  // Objection VFX state
+  const [showObjectionVFX, setShowObjectionVFX] = useState(false);
+  const [objectionBy, setObjectionBy] = useState<1 | 2 | null>(null);
+  const [floorChangeReason, setFloorChangeReason] = useState<string | null>(null);
 
   // Audio Recording
   const [isRecording, setIsRecording] = useState(false);
@@ -38,7 +47,6 @@ export function useGameState() {
   const [liveTranscript, setLiveTranscript] = useState<TranscriptEntry[]>([]);
 
   // Round metadata
-  const [currentTopic, setCurrentTopic] = useState("");
   const [roundStartTime, setRoundStartTime] = useState<number | null>(null);
 
   // Reveal State
@@ -46,19 +54,12 @@ export function useGameState() {
   const [p2RoundScore, setP2RoundScore] = useState(0);
   const [judgingJoke, setJudgingJoke] = useState(JUDGING_JOKES[0]);
 
-  // Internal tracking for non-render data
+  // Internal tracking
   const currentP1ArgRef = useRef("");
   const currentP2ArgRef = useRef("");
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-
-  const clearTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
+  const socketListenersAttached = useRef(false);
 
   // Stop audio recording and cleanup
   const stopAudioRecording = useCallback(() => {
@@ -72,13 +73,124 @@ export function useGameState() {
     setIsRecording(false);
   }, [isRecording, mediaStream]);
 
-  // Cleanup on unmount
+  // ──────────────────────────────────────────────
+  // Socket event listeners (server-authoritative)
+  // ──────────────────────────────────────────────
   useEffect(() => {
-    return () => {
-      clearTimer();
+    if (socketListenersAttached.current) return;
+    const socket = getSocket();
+    socketListenersAttached.current = true;
+
+    // Round start: set topic, show topic screen
+    socket.on("round:start", (data: { roundNumber: number; topic: string }) => {
+      setCurrentRound(data.roundNumber);
+      setCurrentTopic(data.topic);
+      setPrepCountdown(10);
+      setScreen("topic");
+    });
+
+    // Prep countdown from server
+    socket.on("round:prep", (data: { countdown: number }) => {
+      setPrepCountdown(data.countdown);
+    });
+
+    // Debate phase begins
+    socket.on("round:debate", (data: { activePlayer: 1 | 2 }) => {
+      setCurrentSpeaker(data.activePlayer);
+      setP1RoundTimeRemaining(60);
+      setP2RoundTimeRemaining(60);
+      setLiveTranscript([]);
+      setRoundStartTime(Date.now());
+      audioChunksRef.current = [];
+      currentP1ArgRef.current = "";
+      currentP2ArgRef.current = "";
+      setScreen("debate");
+    });
+
+    // Server timer ticks (every 500ms)
+    socket.on("timer:update", (data: { p1remaining: number; p2remaining: number; activePlayer: 1 | 2 }) => {
+      setP1RoundTimeRemaining(data.p1remaining);
+      setP2RoundTimeRemaining(data.p2remaining);
+      if (data.activePlayer) setCurrentSpeaker(data.activePlayer);
+    });
+
+    // Floor changes (objection, timeout, yield)
+    socket.on("floor:change", (data: { activePlayer: 1 | 2; reason: string }) => {
+      setCurrentSpeaker(data.activePlayer);
+      setFloorChangeReason(data.reason);
+
+      if (data.reason === "objection") {
+        setShowObjectionVFX(true);
+        setObjectionBy(data.activePlayer);
+        // Clear VFX after animation
+        setTimeout(() => {
+          setShowObjectionVFX(false);
+          setObjectionBy(null);
+        }, 2000);
+      }
+    });
+
+    // Round end
+    socket.on("round:end", (data: { roundNumber: number }) => {
       stopAudioRecording();
+      startJudging();
+    });
+
+    // Reconnect and explicit state hydration
+    const handleHydration = (data: { gameState: any }) => {
+      const gs = data.gameState;
+      if (!gs) return;
+
+      setCurrentRound(gs.currentRound || 1);
+      
+      const myId = sessionStorage.getItem("playerId");
+      const me = gs.players.find((p: any) => p.id === myId);
+      if (me) setCurrentPlayer(me.slot as (1 | 2));
+
+      if (gs.status === "reveal") {
+        setScreen("voter-grid");
+      } else if (gs.status === "debate") {
+        if (gs.debatePhase === "prep") setScreen("topic");
+        else setScreen("debate");
+        
+        setCurrentTopic(gs.topics[gs.currentRound - 1] || "");
+        
+        const rData = gs.rounds.find((r: any) => r.roundNumber === gs.currentRound);
+        if (rData && rData.transcript) {
+          setLiveTranscript(rData.transcript);
+        }
+      } else if (gs.status === "voting") {
+        setScreen("judging");
+      } else if (gs.status === "complete") {
+        setScreen("winner");
+      }
     };
-  }, [clearTimer, stopAudioRecording]);
+
+    socket.on("game:reconnected", handleHydration);
+    socket.on("game:state", handleHydration);
+
+    // Request full state immediately on mount
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("game:getState", { code: gameCode });
+    }
+
+    return () => {
+      socket.off("round:start");
+      socket.off("round:prep");
+      socket.off("round:debate");
+      socket.off("timer:update");
+      socket.off("floor:change");
+      socket.off("round:end");
+      socket.off("game:reconnected");
+      socket.off("game:state");
+      socketListenersAttached.current = false;
+    };
+  }, [stopAudioRecording]);
+
+  // ──────────────────────────────
+  // Game flow methods
+  // ──────────────────────────────
 
   const startVoterReveal = useCallback(() => {
     setScreen("voter-grid");
@@ -91,41 +203,22 @@ export function useGameState() {
     startVoterReveal();
   }, [startVoterReveal]);
 
-  // We need a stable reference to submitArgument for the interval,
-  // so we handle the auto-submission carefully. We'll use a callback ref
-  // for the current submit action to avoid stale closures in the timer.
+  // Signal server that reveal is done → triggers round 1
+  const signalRevealDone = useCallback(() => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("reveal:done", { code: gameCode });
+    }
+  }, []);
 
-  // Using a ref to hold the *latest* version of submitArgument
-  const submitCallbackRef =
-    useRef<(text: string, forcePassPlayer?: 1 | 2) => void>(undefined);
+  const startMeetVoters = useCallback(() => {
+    signalRevealDone();
+  }, [signalRevealDone]);
 
-  const startDebateTimer = useCallback(
-    (speaker: 1 | 2) => {
-      clearTimer();
-      timerRef.current = setInterval(() => {
-        setP1RoundTimeRemaining((prev) => {
-          if (speaker === 1 && prev <= 1) {
-            clearTimer();
-            // P1's time ran out, switch to P2
-            setCurrentSpeaker(2);
-            return 0;
-          }
-          return speaker === 1 ? Math.max(0, prev - 1) : prev;
-        });
-
-        setP2RoundTimeRemaining((prev) => {
-          if (speaker === 2 && prev <= 1) {
-            clearTimer();
-            // P2's time ran out, switch to P1
-            setCurrentSpeaker(1);
-            return 0;
-          }
-          return speaker === 2 ? Math.max(0, prev - 1) : prev;
-        });
-      }, 1000);
-    },
-    [clearTimer]
-  );
+  // ──────────────────────────────
+  // Debate methods (emit to server)
+  // ──────────────────────────────
 
   // Add transcript entry during debate
   const addTranscriptEntry = useCallback(
@@ -139,7 +232,6 @@ export function useGameState() {
         { speaker, text, timestamp, isObjection },
       ]);
 
-      // Also accumulate in refs for final submission
       if (speaker === 1) {
         currentP1ArgRef.current += (currentP1ArgRef.current ? " " : "") + text;
       } else {
@@ -149,93 +241,44 @@ export function useGameState() {
     [roundStartTime]
   );
 
-  // Handle objection: deduct 15s from objecting player, pause opponent, switch floor
+  // Emit objection to server
   const handleObjection = useCallback(
     (objectingPlayer: 1 | 2) => {
-      if (currentSpeaker === objectingPlayer) {
-        // Can't object on own turn
-        return;
+      const socket = getSocket();
+      const gameCode = sessionStorage.getItem("gameCode");
+      if (gameCode) {
+        socket.emit("objection:raised", {
+          code: gameCode,
+          byPlayer: objectingPlayer,
+        });
+        // Add objection marker to local transcript
+        addTranscriptEntry(objectingPlayer, "OBJECTION!", true);
       }
-
-      const remainingTime =
-        objectingPlayer === 1 ? p1RoundTimeRemaining : p2RoundTimeRemaining;
-
-      if (remainingTime <= 15) {
-        // Not enough time to object
-        return;
-      }
-
-      // Deduct 15 seconds from objecting player
-      if (objectingPlayer === 1) {
-        setP1RoundTimeRemaining((prev) => Math.max(0, prev - 15));
-      } else {
-        setP2RoundTimeRemaining((prev) => Math.max(0, prev - 15));
-      }
-
-      // Pause the current speaker's time
-      setActiveSpeakerPausedTime(
-        objectingPlayer === 1 ? p2RoundTimeRemaining : p1RoundTimeRemaining
-      );
-
-      // Add objection to transcript
-      addTranscriptEntry(objectingPlayer, "OBJECTION!", true);
-
-      // Switch floor to objecting player
-      setCurrentSpeaker(objectingPlayer);
     },
-    [
-      currentSpeaker,
-      p1RoundTimeRemaining,
-      p2RoundTimeRemaining,
-      addTranscriptEntry,
-    ]
+    [addTranscriptEntry]
   );
 
-  // Yield floor to other player
+  // Emit yield to server
   const handleYield = useCallback(() => {
-    const otherPlayer = currentSpeaker === 1 ? 2 : 1;
-    setCurrentSpeaker(otherPlayer);
-    setActiveSpeakerPausedTime(null);
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("floor:yield", {
+        code: gameCode,
+        byPlayer: currentSpeaker,
+      });
+    }
   }, [currentSpeaker]);
 
-  // End debate round and trigger judging
+  // End debate round → judging
   const endDebateRound = useCallback(() => {
-    clearTimer();
     stopAudioRecording();
     startJudging();
-  }, [clearTimer, stopAudioRecording]);
+  }, [stopAudioRecording]);
 
-  const startTopicReveal = useCallback((round: number) => {
-    const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
-    setCurrentTopic(topic);
-    setScreen("topic");
-
-    setTimeout(() => {
-      startDebateRound(1);
-    }, 4000);
-    // Intentionally empty - startDebateRound is captured by closure
-  }, []);
-
-  // Initialize debate round with fresh timers
-  const startDebateRound = useCallback((startingSpeaker: 1 | 2) => {
-    setScreen("debate");
-    setCurrentSpeaker(startingSpeaker);
-    setP1RoundTimeRemaining(TURN_TIME);
-    setP2RoundTimeRemaining(TURN_TIME);
-    setActiveSpeakerPausedTime(null);
-    setLiveTranscript([]);
-    setRoundStartTime(Date.now());
-    audioChunksRef.current = [];
-
-    // Start the debate timer
-    startDebateTimer(startingSpeaker);
-    // Intentionally empty - startDebateTimer is captured by closure
-  }, []);
-
-  const startMeetVoters = useCallback(() => {
-    // Skipped voter-profile directly to topic reveal as requested
-    startTopicReveal(currentRound);
-  }, [startTopicReveal, currentRound]);
+  // ──────────────────────────────
+  // Judging & scoring
+  // ──────────────────────────────
 
   const startJudging = useCallback(() => {
     setScreen("judging");
@@ -253,51 +296,32 @@ export function useGameState() {
   }, []);
 
   const showRevealScreen = useCallback(() => {
-    const p1Score = scoreArgument(currentP1ArgRef.current);
-    const p2Score = scoreArgument(currentP2ArgRef.current);
+    // Simple mock scoring for now
+    const p1Score = currentP1ArgRef.current.length * 3 + Math.floor(Math.random() * 300);
+    const p2Score = currentP2ArgRef.current.length * 3 + Math.floor(Math.random() * 300);
 
     setP1RoundScore(p1Score);
     setP2RoundScore(p2Score);
-
     setScreen("reveal");
 
-    // They animate visually in the view, but functionally we update the totals here
-    // The view can animate counting up if it wants, but state is exact.
     setTimeout(() => {
       setP1TotalVotes((prev) => prev + p1Score);
       setP2TotalVotes((prev) => prev + p2Score);
     }, 1000);
   }, []);
 
-  const submitArgument = useCallback(
-    (text: string, forPlayer?: 1 | 2) => {
-      clearTimer();
-      const actingPlayer = forPlayer || currentPlayer;
-
-      if (actingPlayer === 1) {
-        currentP1ArgRef.current = text;
-        // Legacy: in new debate flow, this is replaced by startDebateRound
-      } else {
-        currentP2ArgRef.current = text;
-        startJudging();
-      }
-    },
-    [currentPlayer, startJudging, clearTimer]
-  );
-
-  // Keep the callback ref updated
-  useEffect(() => {
-    submitCallbackRef.current = submitArgument;
-  }, [submitArgument]);
-
   const startNextRound = useCallback(() => {
     if (currentRound >= TOTAL_ROUNDS) {
       setScreen("winner");
     } else {
-      setCurrentRound((prev) => prev + 1);
-      startTopicReveal(currentRound + 1);
+      // Signal server to advance to next round
+      const socket = getSocket();
+      const gameCode = sessionStorage.getItem("gameCode");
+      if (gameCode) {
+        socket.emit("round:advance", { code: gameCode });
+      }
     }
-  }, [currentRound, startTopicReveal]);
+  }, [currentRound]);
 
   const resetGame = useCallback(() => {
     setScreen("lobby");
@@ -329,16 +353,21 @@ export function useGameState() {
     p1RoundScore,
     p2RoundScore,
 
-    // Debate state
+    // Debate state (server-driven)
     currentTopic,
     currentSpeaker,
     p1RoundTimeRemaining,
     p2RoundTimeRemaining,
-    activeSpeakerPausedTime,
+    prepCountdown,
     liveTranscript,
     isRecording,
     mediaStream,
     roundStartTime,
+
+    // Objection VFX state
+    showObjectionVFX,
+    objectionBy,
+    floorChangeReason,
 
     // UI state
     judgingJoke,
@@ -346,14 +375,12 @@ export function useGameState() {
 
     // Game flow methods
     startGame,
-    startTopicReveal,
-    startDebateRound,
     startMeetVoters,
-    submitArgument,
+    signalRevealDone,
     startNextRound,
     resetGame,
 
-    // Debate methods
+    // Debate methods (server-emitting)
     addTranscriptEntry,
     handleObjection,
     handleYield,

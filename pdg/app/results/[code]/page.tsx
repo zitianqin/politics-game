@@ -11,8 +11,8 @@ export default function ResultsPage({ params }: { params: { code: string } }) {
   const {
     p1TotalVotes,
     p2TotalVotes,
-    p1Earned,
-    p2Earned,
+    p1RoundScore: p1Earned,
+    p2RoundScore: p2Earned,
     currentRound,
     winnerLabel,
     resetGame,
