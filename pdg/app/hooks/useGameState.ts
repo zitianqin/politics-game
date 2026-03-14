@@ -66,6 +66,8 @@ export function useGameState() {
     }>
   >([]);
   const [isInterimResults, setIsInterimResults] = useState(false);
+  const [p1Candidate, setP1Candidate] = useState<any>(null);
+  const [p2Candidate, setP2Candidate] = useState<any>(null);
 
   // Internal tracking
   const currentP1ArgRef = useRef("");
@@ -172,7 +174,12 @@ export function useGameState() {
     // Round results arrived from server
     socket.on(
       "round:results",
-      (data: { roundNumber: number; p1Score: number; p2Score: number }) => {
+      (data: {
+        roundNumber: number;
+        p1Score: number;
+        p2Score: number;
+        breakdown?: any[];
+      }) => {
         if ((window as any)._judgingInterval) {
           clearInterval((window as any)._judgingInterval);
         }
@@ -180,6 +187,7 @@ export function useGameState() {
         setP2RoundScore(data.p2Score);
         setScreen("reveal");
         setIsNextBtnVisible(false);
+        setIsInterimResults(data.roundNumber < TOTAL_ROUNDS);
 
         // Animate bars
         setTimeout(() => {
@@ -190,6 +198,19 @@ export function useGameState() {
           setP1TotalVotes((prev) => prev + data.p1Score);
           setP2TotalVotes((prev) => prev + data.p2Score);
         }, 500);
+
+        if (data.breakdown) {
+          setVoterResults(
+            data.breakdown.map((v) => ({
+              name: v.voterName,
+              age: v.voterAge || 0,
+              location: v.voterLocation || "",
+              votedFor:
+                v.vote === "Candidate A" ? ("p1" as const) : ("p2" as const),
+              rationale: v.reason,
+            }))
+          );
+        }
 
         setTimeout(() => {
           setIsNextBtnVisible(true);
@@ -206,6 +227,15 @@ export function useGameState() {
     });
 
     socket.on("game:complete", () => {
+      setIsInterimResults(false);
+      setScreen("results");
+    });
+
+    socket.on("game:results_reveal", () => {
+      setScreen("results");
+    });
+
+    socket.on("game:winner_reveal", () => {
       setScreen("winner");
     });
 
@@ -240,6 +270,11 @@ export function useGameState() {
       const myId = sessionStorage.getItem("playerId");
       const me = gs.players.find((p: any) => p.id === myId);
       if (me) setCurrentPlayer(me.slot as 1 | 2);
+
+      const p1 = gs.players.find((p: any) => p.slot === 1);
+      const p2 = gs.players.find((p: any) => p.slot === 2);
+      if (p1?.candidate) setP1Candidate(p1.candidate);
+      if (p2?.candidate) setP2Candidate(p2.candidate);
 
       if (gs.status === "meet_voters") {
         setScreen("voter-grid");
@@ -403,6 +438,22 @@ export function useGameState() {
     }
   }, []);
 
+  const advanceToResults = useCallback(() => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("results:reveal", { code: gameCode });
+    }
+  }, []);
+
+  const advanceToWinner = useCallback(() => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("results:complete", { code: gameCode });
+    }
+  }, []);
+
   const resetGame = useCallback(() => {
     const socket = getSocket();
     const gameCode = sessionStorage.getItem("gameCode");
@@ -479,5 +530,12 @@ export function useGameState() {
 
     // Sync state
     isHydrated,
+
+    // Navigation
+    setScreen,
+    advanceToResults,
+    advanceToWinner,
+    p1Candidate,
+    p2Candidate,
   };
 }

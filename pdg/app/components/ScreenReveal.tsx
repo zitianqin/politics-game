@@ -7,7 +7,7 @@ interface ScreenRevealProps {
   currentBarsHeight: { p1: number; p2: number };
   isNextBtnVisible: boolean;
   currentRound: number;
-  startNextRound: () => void;
+  advanceToResults: () => void;
 }
 
 export default function ScreenReveal({
@@ -17,7 +17,7 @@ export default function ScreenReveal({
   currentBarsHeight,
   isNextBtnVisible,
   currentRound,
-  startNextRound,
+  advanceToResults,
 }: ScreenRevealProps) {
   return (
     <div
@@ -62,7 +62,7 @@ export default function ScreenReveal({
 
       <button
         className="btn green-color"
-        onClick={startNextRound}
+        onClick={advanceToResults}
         style={{
           marginTop: "40px",
           opacity: isNextBtnVisible ? 1 : 0,
