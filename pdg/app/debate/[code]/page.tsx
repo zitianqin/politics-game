@@ -7,8 +7,15 @@ import ScreenDebate from "@/app/components/ScreenDebate";
 import ScreenJudging from "@/app/components/ScreenJudging";
 import { useGameState } from "@/app/hooks/useGameState";
 import { TranscriptEntry } from "@/app/hooks/useDebate";
+import { use, useEffect } from "react";
 
-export default function DebatePage({ params }: { params: { code: string } }) {
+export default function DebatePage({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}) {
+  const { code } = use(params);
+
   const {
     screen,
     currentRound,
@@ -24,9 +31,16 @@ export default function DebatePage({ params }: { params: { code: string } }) {
     handleYield,
     setIsRecording,
     setMediaStream,
+    startMeetVoters,
   } = useGameState();
 
   // Determine which timer to show in HUD
+  useEffect(() => {
+    startMeetVoters();
+  }, [startMeetVoters]);
+
+  const activePlayerTime =
+    currentSpeaker === 1 ? p1RoundTimeRemaining : p2RoundTimeRemaining;
 
   return (
     <>
