@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { votersData } from '../../lib/voterData';
 import PixelPortrait from '../../components/PixelPortrait';
 
-export default function RevealPage({ params }: { params: { code: string } }) {
+export default function RevealPage({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = use(params);
   const router = useRouter();
   const [countdown, setCountdown] = useState(15);
   const [mounted, setMounted] = useState(false);
@@ -17,7 +18,6 @@ export default function RevealPage({ params }: { params: { code: string } }) {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push(`/debate/${params.code}`);
           return 0;
         }
         return prev - 1;
@@ -25,21 +25,26 @@ export default function RevealPage({ params }: { params: { code: string } }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [params.code, router]);
+  }, []);
+
+  useEffect(() => {
+    if (countdown === 0) {
+      router.push(`/debate/${code}`);
+    }
+  }, [countdown, code, router]);
 
   if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-[#6149D2] bg-[radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:20px_20px] flex flex-col items-center p-8 overflow-y-auto font-sans">
       
-      {/* Header Area */}
       <motion.div 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         className="w-full max-w-7xl flex justify-between items-center mb-6"
       >
         <div className="bg-[#FFEB3B] px-6 py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000]">
-          <h1 className="font-['Titan_One'] text-3xl text-black">ROOM CODE: {params.code.toUpperCase()}</h1>
+          <h1 className="font-['Titan_One'] text-3xl text-black">ROOM CODE: {code.toUpperCase()}</h1>
         </div>
         <div className="bg-white px-6 py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000]">
           <h2 className="font-['Titan_One'] text-2xl text-red-600">DEBATE STARTS IN: {countdown}s</h2>
