@@ -28,14 +28,14 @@ export default function RevealPage({
           setSelectedVoters(data.voters.slice(0, 5));
         } else {
           setSelectedVoters(
-            [...votersData].sort(() => Math.random() - 0.5).slice(0, 5)
+            [...votersData].sort(() => Math.random() - 0.5).slice(0, 5),
           );
         }
       })
       .catch((err) => {
         console.error("Failed to fetch voters", err);
         setSelectedVoters(
-          [...votersData].sort(() => Math.random() - 0.5).slice(0, 5)
+          [...votersData].sort(() => Math.random() - 0.5).slice(0, 5),
         );
       });
 
@@ -62,9 +62,9 @@ export default function RevealPage({
 
     // Initial sync if refreshing mid-reveal
     socket.on("game:reconnected", (data: { gameState: any }) => {
-        if (data.gameState?.status === "debate") {
-            router.push(`/debate/${code}`);
-        }
+      if (data.gameState?.status === "debate") {
+        router.push(`/debate/${code}`);
+      }
     });
 
     return () => {
@@ -112,7 +112,7 @@ export default function RevealPage({
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-7xl"
+        className="flex flex-col gap-6 w-full max-w-5xl"
       >
         {selectedVoters.map((voter) => (
           <div

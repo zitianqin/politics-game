@@ -105,7 +105,7 @@ p {
 }
 
 .title-text {
-  font-size: 90px;
+  font-size: clamp(50px, 10vw, 90px);
   color: #fff;
   -webkit-text-stroke: 4px var(--dark);
   text-shadow: 10px 10px 0px var(--dark);
