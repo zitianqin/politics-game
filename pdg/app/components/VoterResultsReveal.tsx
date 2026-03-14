@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatScorecardName } from "../lib/gameConstants";
 import VoterResultCard from "./VoterResultCard";
 
 interface VoterResult {
@@ -58,7 +59,10 @@ export default function VoterResultsReveal({
   }
 
   const voter = voters[currentVoterIndex];
-  const candidateName = voter.votedFor === "p1" ? p1Name : p2Name;
+  const candidateName = formatScorecardName(
+    voter.votedFor === "p1" ? p1Name : p2Name,
+    voter.votedFor === "p1" ? 1 : 2
+  );
   const tilt = currentVoterIndex % 2 === 0 ? -2 : 2; // Alternate tilt
 
   return (

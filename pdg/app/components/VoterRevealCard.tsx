@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatScorecardName } from "../lib/gameConstants";
 
 interface VoterRevealCardProps {
   voterName: string;
@@ -38,7 +39,10 @@ export default function VoterRevealCard({
     return () => clearTimeout(timer);
   }, [isAnimating, delayMs]);
 
-  const candidateName = votedFor === "p1" ? p1Name : p2Name;
+  const candidateName = formatScorecardName(
+    votedFor === "p1" ? p1Name : p2Name,
+    votedFor === "p1" ? 1 : 2
+  );
   const voteColor = votedFor === "p1" ? "var(--p1)" : "var(--p2)";
 
   return (

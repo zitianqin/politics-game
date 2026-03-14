@@ -9,6 +9,7 @@ export interface Player {
   slot: 1 | 2;
   socketId: string | null;
   candidate: CandidateProfile | null;
+  displayName: string | null;
 }
 
 export interface TranscriptEntry {
@@ -72,7 +73,7 @@ export function createGame(hostId: string): GameSession {
     status: "lobby",
     hostId,
     createdAt: new Date(),
-    players: [{ id: hostId, slot: 1, socketId: null, candidate: null }],
+    players: [{ id: hostId, slot: 1, socketId: null, candidate: null, displayName: null }],
     voters: selectVoters(),
     rounds: [],
     timerState: null,
@@ -103,6 +104,7 @@ export function joinGame(
     slot: 2,
     socketId: null,
     candidate: null,
+    displayName: null,
   });
   return { game };
 }
