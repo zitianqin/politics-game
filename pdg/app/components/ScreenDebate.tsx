@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ScreenId } from "../lib/gameConstants";
+import { ScreenId, formatScorecardName } from "../lib/gameConstants";
 import { TranscriptEntry } from "../hooks/useGameState";
 import TimerBar from "./TimerBar";
 
@@ -16,6 +16,8 @@ interface ScreenDebateProps {
   transcript: TranscriptEntry[];
   showObjectionVFX: boolean;
   objectionBy: 1 | 2 | null;
+  p1Name?: string;
+  p2Name?: string;
   onObjection: () => void;
   onYield: () => void;
   setIsRecording: (value: boolean) => void;
@@ -33,6 +35,8 @@ export default function ScreenDebate({
   transcript,
   showObjectionVFX,
   objectionBy,
+  p1Name = "Player 1",
+  p2Name = "Player 2",
   onObjection,
   onYield,
   setIsRecording: setIsRecordingGlobal,
@@ -291,7 +295,7 @@ export default function ScreenDebate({
               textTransform: "uppercase",
             }}
           >
-            {activePlayer === 1 ? "🦄" : "🦖"} P{activePlayer} SPEAKING
+            {activePlayer === 1 ? "🦄" : "🦖"} {activePlayer === 1 ? p1Name : p2Name} SPEAKING
           </div>
         </div>
       </div>
@@ -335,7 +339,7 @@ export default function ScreenDebate({
         className="sm:px-6 sm:py-2"
       >
         <TimerBar
-          playerLabel="P1"
+          playerLabel={p1Name}
           playerEmoji="🦄"
           remaining={p1TimeRemaining}
           total={60}
@@ -343,7 +347,7 @@ export default function ScreenDebate({
           colorVar="var(--p1)"
         />
         <TimerBar
-          playerLabel="P2"
+          playerLabel={p2Name}
           playerEmoji="🦖"
           remaining={p2TimeRemaining}
           total={60}
@@ -391,7 +395,9 @@ export default function ScreenDebate({
           ) : (
             transcript.map((entry, i) => {
               const isP1 = entry.speaker === 1;
-              const label = isP1 ? "🦄 P1" : "🦖 P2";
+              const label = isP1
+                ? `🦄 ${formatScorecardName(p1Name, 1)}`
+                : `🦖 ${formatScorecardName(p2Name, 2)}`;
               const color = isP1 ? "var(--p1)" : "var(--p2)";
               const ts = entry.timestamp;
               const mins = Math.floor(ts / 60).toString().padStart(2, "0");

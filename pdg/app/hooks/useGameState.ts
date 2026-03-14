@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ScreenId, TOTAL_ROUNDS, JUDGING_JOKES } from "../lib/gameConstants";
+import { ScreenId, JUDGING_JOKES } from "../lib/gameConstants";
 import { getSocket } from "../lib/socket";
 
 export interface TranscriptEntry {
@@ -11,7 +11,7 @@ export interface TranscriptEntry {
   isObjection?: boolean;
 }
 
-export function useGameState() {
+export function useGameState(gameCodeFromUrl?: string) {
   const [screen, setScreen] = useState<ScreenId>("lobby");
   const [isHydrated, setIsHydrated] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
@@ -54,6 +54,8 @@ export function useGameState() {
   const [currentBarsHeight, setCurrentBarsHeight] = useState({ p1: 0, p2: 0 });
   const [isNextBtnVisible, setIsNextBtnVisible] = useState(false);
   const [judgingJoke, setJudgingJoke] = useState(JUDGING_JOKES[0]);
+  const [p1Name, setP1Name] = useState("Player 1");
+  const [p2Name, setP2Name] = useState("Player 2");
 
   // Voter Results State (for Results screen)
   const [voterResults, setVoterResults] = useState<
@@ -169,33 +171,43 @@ export function useGameState() {
       (window as any)._judgingInterval = jokeInt;
     });
 
-    // Round results arrived from server
-    socket.on(
-      "round:results",
-      (data: { roundNumber: number; p1Score: number; p2Score: number }) => {
-        if ((window as any)._judgingInterval) {
-          clearInterval((window as any)._judgingInterval);
-        }
-        setP1RoundScore(data.p1Score);
-        setP2RoundScore(data.p2Score);
-        setScreen("reveal");
-        setIsNextBtnVisible(false);
+// Round results arrived from server (handles both 'round:results' and 'game:result' events)
+const handleRoundResults = (data: {
+  roundNumber: number;
+  p1Score?: number;
+  p2Score?: number;
+  tally?: { p1: number; p2: number };
+}) => {
+  if ((window as any)._judgingInterval) {
+    clearInterval((window as any)._judgingInterval);
+  }
+  // Most recent logic from main: prefer explicit p1Score/p2Score
+  // But incorporate the fallback logic from yours for maximum compatibility
+  const p1Score = data.p1Score ?? data.tally?.p1 ?? 0;
+  const p2Score = data.p2Score ?? data.tally?.p2 ?? 0;
 
-        // Animate bars
-        setTimeout(() => {
-          setCurrentBarsHeight((prev) => ({
-            p1: prev.p1 + data.p1Score / 5,
-            p2: prev.p2 + data.p2Score / 5,
-          }));
-          setP1TotalVotes((prev) => prev + data.p1Score);
-          setP2TotalVotes((prev) => prev + data.p2Score);
-        }, 500);
+  setP1RoundScore(p1Score);
+  setP2RoundScore(p2Score);
+  setScreen("reveal");
+  setIsNextBtnVisible(false);
 
-        setTimeout(() => {
-          setIsNextBtnVisible(true);
-        }, 3000);
-      }
-    );
+  // Animate bars
+  setTimeout(() => {
+    setCurrentBarsHeight((prev) => ({
+      p1: prev.p1 + p1Score / 5,
+      p2: prev.p2 + p2Score / 5,
+    }));
+    setP1TotalVotes((prev) => prev + p1Score);
+    setP2TotalVotes((prev) => prev + p2Score);
+  }, 500);
+
+  setTimeout(() => {
+    setIsNextBtnVisible(true);
+  }, 3000);
+};
+
+socket.on("round:results", handleRoundResults);
+socket.on("game:result", handleRoundResults);
 
     socket.on("game:reset", () => {
       setScreen("lobby");
@@ -203,6 +215,8 @@ export function useGameState() {
       setP1TotalVotes(0);
       setP2TotalVotes(0);
       setLiveTranscript([]);
+      setP1Name("Player 1");
+      setP2Name("Player 2");
     });
 
     socket.on("game:complete", () => {
@@ -238,8 +252,13 @@ export function useGameState() {
       setCurrentRound(gs.currentRound || 1);
 
       const myId = sessionStorage.getItem("playerId");
-      const me = gs.players.find((p: any) => p.id === myId);
+      const me = gs.players?.find((p: any) => p.id === myId);
       if (me) setCurrentPlayer(me.slot as 1 | 2);
+
+      const p1 = gs.players?.find((p: any) => p.slot === 1);
+      const p2 = gs.players?.find((p: any) => p.slot === 2);
+      if (p1?.displayName) setP1Name(p1.displayName);
+      if (p2?.displayName) setP2Name(p2.displayName);
 
       if (gs.status === "meet_voters") {
         setScreen("voter-grid");
@@ -282,7 +301,8 @@ export function useGameState() {
     socket.on("game:state", handleHydration);
 
     // Request full state immediately on mount
-    const gameCode = sessionStorage.getItem("gameCode");
+    const gameCode =
+      gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
     if (gameCode) {
       socket.emit("game:getState", { code: gameCode });
     }
@@ -296,6 +316,7 @@ export function useGameState() {
       socket.off("round:end");
       socket.off("judging:start");
       socket.off("round:results");
+      socket.off("game:result");
       socket.off("game:reset");
       socket.off("game:complete");
       socket.off("game:reconnected");
@@ -397,11 +418,12 @@ export function useGameState() {
   const startNextRound = useCallback(() => {
     // Always signal server to advance. Server will decide if it's new round or completion.
     const socket = getSocket();
-    const gameCode = sessionStorage.getItem("gameCode");
+    const gameCode =
+      gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
     if (gameCode) {
       socket.emit("round:advance", { code: gameCode });
     }
-  }, []);
+  }, [gameCodeFromUrl]);
 
   const resetGame = useCallback(() => {
     const socket = getSocket();
@@ -414,9 +436,9 @@ export function useGameState() {
   let winnerLabel = "";
   if (screen === "winner") {
     if (p1TotalVotes > p2TotalVotes) {
-      winnerLabel = "🦄 PLAYER 1 WINS!";
+      winnerLabel = `🦄 ${p1Name.toUpperCase()} WINS!`;
     } else if (p2TotalVotes > p1TotalVotes) {
-      winnerLabel = "🦖 PLAYER 2 WINS!";
+      winnerLabel = `🦖 ${p2Name.toUpperCase()} WINS!`;
     } else {
       winnerLabel = "IT'S A TIE!!";
     }
@@ -435,6 +457,8 @@ export function useGameState() {
     p2RoundScore,
     currentBarsHeight,
     isNextBtnVisible,
+    p1Name,
+    p2Name,
 
     // Debate state (server-driven)
     currentTopic,

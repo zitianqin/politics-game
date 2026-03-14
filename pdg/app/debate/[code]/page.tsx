@@ -37,6 +37,8 @@ export default function DebatePage({
     p2TotalVotes,
     currentBarsHeight,
     isNextBtnVisible,
+    p1Name,
+    p2Name,
     winnerLabel,
     handleObjection,
     handleYield,
@@ -46,7 +48,7 @@ export default function DebatePage({
     startNextRound,
     resetGame,
     isHydrated,
-  } = useGameState();
+  } = useGameState(code);
 
   // Connect socket and signal reveal done on mount
   useEffect(() => {
@@ -79,9 +81,11 @@ export default function DebatePage({
       {screen !== "topic" && (
         <HUD
           screen={screen}
-          displayP1Votes={0}
-          displayP2Votes={0}
+          displayP1Votes={p1TotalVotes}
+          displayP2Votes={p2TotalVotes}
           timeLeft={activePlayerTime}
+          p1Name={p1Name}
+          p2Name={p2Name}
         />
       )}
 
@@ -106,6 +110,8 @@ export default function DebatePage({
           transcript={liveTranscript}
           showObjectionVFX={showObjectionVFX}
           objectionBy={objectionBy}
+          p1Name={p1Name}
+          p2Name={p2Name}
           onObjection={() => handleObjection(currentPlayer)}
           onYield={handleYield}
           setIsRecording={setIsRecording}
@@ -126,6 +132,8 @@ export default function DebatePage({
           isNextBtnVisible={isNextBtnVisible}
           currentRound={currentRound}
           startNextRound={startNextRound}
+          p1Name={p1Name}
+          p2Name={p2Name}
         />
       )}
 
@@ -136,6 +144,8 @@ export default function DebatePage({
           p1TotalVotes={p1TotalVotes}
           p2TotalVotes={p2TotalVotes}
           resetGame={resetGame}
+          p1Name={p1Name}
+          p2Name={p2Name}
         />
       )}
     </>
