@@ -48,6 +48,7 @@ export default function DebatePage({
     startNextRound,
     resetGame,
     isHydrated,
+    voterResults,
   } = useGameState(code);
 
   // Connect socket and signal reveal done on mount
@@ -134,6 +135,7 @@ export default function DebatePage({
           startNextRound={startNextRound}
           p1Name={p1Name}
           p2Name={p2Name}
+          voters={voterResults}
         />
       )}
 

@@ -177,6 +177,13 @@ const handleRoundResults = (data: {
   p1Score?: number;
   p2Score?: number;
   tally?: { p1: number; p2: number };
+  breakdown?: Array<{
+    voterName: string;
+    vote: string;
+    reason: string;
+    age?: number;
+    location?: string;
+  }>;
 }) => {
   if ((window as any)._judgingInterval) {
     clearInterval((window as any)._judgingInterval);
@@ -188,6 +195,17 @@ const handleRoundResults = (data: {
 
   setP1RoundScore(p1Score);
   setP2RoundScore(p2Score);
+  
+  if (data.breakdown) {
+    setVoterResults(data.breakdown.map(b => ({
+      name: b.voterName,
+      age: b.age ?? 0,
+      location: b.location ?? "",
+      votedFor: b.vote.includes("Candidate A") ? "p1" : "p2",
+      rationale: b.reason
+    })));
+  }
+
   setScreen("reveal");
   setIsNextBtnVisible(false);
 

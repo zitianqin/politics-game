@@ -205,11 +205,16 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
             p2Score: result.p2Votes,
             winner: result.winner,
             tally: { p1: result.p1Votes, p2: result.p2Votes },
-            breakdown: result.votes.map((v) => ({
-              voterName: v.voterName,
-              vote: v.vote === 1 ? "Candidate A" : "Candidate B",
-              reason: v.reason,
-            })),
+            breakdown: result.votes.map((v) => {
+              const profile = game.voters.find(vp => vp.name === v.voterName);
+              return {
+                voterName: v.voterName,
+                vote: v.vote === 1 ? "Candidate A" : "Candidate B",
+                reason: v.reason,
+                age: profile?.age,
+                location: profile?.location,
+              };
+            }),
           });
         },
         (result.votes.length + 1) * VOTE_REVEAL_DELAY_MS
