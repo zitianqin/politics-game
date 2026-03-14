@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatScorecardName } from "../lib/gameConstants";
 import VoterResultsReveal from "./VoterResultsReveal";
 
 interface VoterResult {
@@ -139,7 +140,7 @@ export default function ResultsScreen({
         <div className="vs-label">VS</div>
 
         <div className="score-box p2-score">
-          <div className="score-label">{p2Name}</div>
+          <div className="score-label">{formatScorecardName(p2Name, 2)}</div>
           <div className="score-value" style={{ color: "var(--p2)" }}>
             {p2TotalVotes}
           </div>

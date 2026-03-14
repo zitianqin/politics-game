@@ -1,4 +1,4 @@
-import { ScreenId } from "../lib/gameConstants";
+import { ScreenId, formatScorecardName } from "../lib/gameConstants";
 
 interface HUDProps {
   screen: ScreenId;
@@ -27,7 +27,7 @@ export default function HUD({
       <div className="player-badge" style={{ background: "var(--p1)" }}>
         <div className="avatar">🦄</div>
         <div className="score-info">
-          <span>{p1Name} Votes</span>
+          <span>{formatScorecardName(p1Name, 1)} Votes</span>
           <div className="score-val">{displayP1Votes}</div>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function HUD({
       >
         <div className="avatar">🦖</div>
         <div className="score-info">
-          <span style={{ color: "#FFB3D9" }}>{p2Name} Votes</span>
+          <span style={{ color: "#FFB3D9" }}>{formatScorecardName(p2Name, 2)} Votes</span>
           <div className="score-val" style={{ color: "white" }}>
             {displayP2Votes}
           </div>

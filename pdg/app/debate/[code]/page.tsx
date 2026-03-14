@@ -108,6 +108,8 @@ export default function DebatePage({
           transcript={liveTranscript}
           showObjectionVFX={showObjectionVFX}
           objectionBy={objectionBy}
+          p1Name={p1Name}
+          p2Name={p2Name}
           onObjection={() => handleObjection(currentPlayer)}
           onYield={handleYield}
           setIsRecording={setIsRecording}

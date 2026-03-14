@@ -1,4 +1,4 @@
-import { ScreenId, TOTAL_ROUNDS } from "../lib/gameConstants";
+import { ScreenId, TOTAL_ROUNDS, formatScorecardName } from "../lib/gameConstants";
 
 interface ScreenRevealProps {
   screen: ScreenId;
@@ -56,7 +56,7 @@ export default function ScreenReveal({
               color: "var(--dark)",
             }}
           >
-            {p1Name}
+            {formatScorecardName(p1Name, 1)}
           </div>
         </div>
 
@@ -83,7 +83,7 @@ export default function ScreenReveal({
               color: "var(--dark)",
             }}
           >
-            {p2Name}
+            {formatScorecardName(p2Name, 2)}
           </div>
         </div>
       </div>

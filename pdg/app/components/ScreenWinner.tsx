@@ -1,4 +1,4 @@
-import { ScreenId } from "../lib/gameConstants";
+import { ScreenId, formatScorecardName } from "../lib/gameConstants";
 
 interface ScreenWinnerProps {
   screen: ScreenId;
@@ -61,7 +61,7 @@ export default function ScreenWinner({
             color: "var(--p1-dark)",
           }}
         >
-          {p1Name}: <span>{p1TotalVotes}</span>
+          {formatScorecardName(p1Name, 1)}: <span>{p1TotalVotes}</span>
         </p>
         <p
           style={{
@@ -70,7 +70,7 @@ export default function ScreenWinner({
             color: "var(--p2-dark)",
           }}
         >
-          {p2Name}: <span>{p2TotalVotes}</span>
+          {formatScorecardName(p2Name, 2)}: <span>{p2TotalVotes}</span>
         </p>
       </div>
 

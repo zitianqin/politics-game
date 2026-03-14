@@ -6,6 +6,12 @@ export const PREP_COUNTDOWN = 10; // seconds for topic prep
 export const VOTER_REVEAL_DELAY = 800; // ms between each voter card reveal
 export const VOTER_REVEAL_ANIMATION_DURATION = 600; // ms for individual voter card animation
 
+/** Custom name as primary, P1/P2 as subtle secondary — e.g. "HWELRO (P1)" */
+export function formatScorecardName(name: string, slot: 1 | 2): string {
+  const isDefault = name === "Player 1" || name === "Player 2";
+  return isDefault ? `P${slot}` : `${name} (P${slot})`;
+}
+
 export const JUDGING_JOKES = [
   "Bribing the judges...",
   "Consulting the magic 8-ball...",
