@@ -209,10 +209,10 @@ export function useGameState(gameCodeFromUrl?: string) {
 
       // Animate bars (each vote = 40px height)
       setTimeout(() => {
-        setCurrentBarsHeight((prev) => ({
-          p1: prev.p1 + p1Score * 40,
-          p2: prev.p2 + p2Score * 40,
-        }));
+        setCurrentBarsHeight({
+          p1: p1Score * 40,
+          p2: p2Score * 40,
+        });
         setP1TotalVotes((prev) => prev + p1Score);
         setP2TotalVotes((prev) => prev + p2Score);
       }, 500);
