@@ -11,6 +11,9 @@ export default function RevealPage({ params }: { params: Promise<{ code: string 
   const router = useRouter();
   const [countdown, setCountdown] = useState(15);
   const [mounted, setMounted] = useState(false);
+  const [selectedVoters] = useState(() =>
+    [...votersData].sort(() => Math.random() - 0.5).slice(0, 5)
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -57,7 +60,7 @@ export default function RevealPage({ params }: { params: Promise<{ code: string 
         transition={{ type: "spring", bounce: 0.5 }}
         className="text-6xl text-white font-['Titan_One'] drop-shadow-[4px_4px_0_rgba(0,0,0,1)] mb-8"
       >
-        THE JURY (21 VOTERS)
+        THE JURY (5 VOTERS)
       </motion.h2>
 
       <motion.div 
@@ -66,10 +69,10 @@ export default function RevealPage({ params }: { params: Promise<{ code: string 
         transition={{ delay: 0.2 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-7xl"
       >
-        {votersData.map((voter) => (
+        {selectedVoters.map((voter) => (
           <div 
             key={voter.id}
-            className="bg-white rounded-xl border-4 border-black p-4 flex flex-col relative shadow-[4px_4px_0_0_#000] overflow-hidden"
+            className="bg-white rounded-xl border-4 border-black p-4 flex flex-col relative shadow-[4px_4px_0_0_#000] overflow-hidden mt-4"
           >
             <div 
               className="absolute top-0 left-0 right-0 h-10 border-b-4 border-black flex items-center px-4"
