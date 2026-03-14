@@ -5,10 +5,7 @@ import ScreenTopic from "@/app/components/ScreenTopic";
 import { useGameState } from "@/app/hooks/useGameState";
 
 export default function RevealPage({ params }: { params: { code: string } }) {
-  const {
-    currentRound,
-    currentTopic,
-  } = useGameState();
+  const { currentRound, currentTopic } = useGameState();
 
   return (
     <>
