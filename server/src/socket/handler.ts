@@ -16,6 +16,7 @@ import {
   startMeetVotersPhase,
   getRoundContext,
 } from "./roundManager";
+import { generateCandidatePair } from "../lib/candidateGenerator";
 
 export function registerSocketHandlers(io: Server): void {
   io.on("connection", (socket: Socket) => {
@@ -89,6 +90,18 @@ export function registerSocketHandlers(io: Server): void {
         socket.emit("error", { message: "Game already started" });
         return;
       }
+
+      const [candidate1, candidate2] = generateCandidatePair(game.topics);
+      const player1 = game.players.find((p) => p.slot === 1);
+      const player2 = game.players.find((p) => p.slot === 2);
+
+      if (!player1 || !player2) {
+        socket.emit("error", { message: "Game missing players" });
+        return;
+      }
+
+      player1.candidate = candidate1;
+      player2.candidate = candidate2;
 
       io.to(code).emit("game:started", {
         code,

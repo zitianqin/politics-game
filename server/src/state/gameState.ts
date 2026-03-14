@@ -2,12 +2,13 @@ import { v4 as uuidv4 } from "uuid";
 import { VoterProfile } from "../data/voterData";
 import { selectVoters } from "../lib/selectVoters";
 import { getRandomTopics } from "../lib/topicPool";
+import { CandidateProfile } from "../lib/candidateGenerator";
 
 export interface Player {
   id: string;
   slot: 1 | 2;
   socketId: string | null;
-  candidate: Record<string, unknown> | null;
+  candidate: CandidateProfile | null;
 }
 
 export interface TranscriptEntry {
@@ -205,6 +206,9 @@ export function resetGameSession(code: string): GameSession | null {
   game.topics = getRandomTopics(2);
   game.debatePhase = "idle";
   game.timerState = null;
+  game.players.forEach((player) => {
+    player.candidate = null;
+  });
 
   return game;
 }
