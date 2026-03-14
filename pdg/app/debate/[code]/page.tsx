@@ -38,7 +38,6 @@ export default function DebatePage({
     currentBarsHeight,
     isNextBtnVisible,
     winnerLabel,
-    addTranscriptEntry,
     handleObjection,
     handleYield,
     setIsRecording,
@@ -113,7 +112,6 @@ export default function DebatePage({
           objectionBy={objectionBy}
           onObjection={() => handleObjection(currentPlayer)}
           onYield={handleYield}
-          onSubmitSpeech={(text) => addTranscriptEntry(currentPlayer, text)}
           setIsRecording={setIsRecording}
           setMediaStream={setMediaStream}
         />

@@ -74,17 +74,17 @@ export function useGameState() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const socketListenersAttached = useRef(false);
 
-  // Stop audio recording and cleanup
+  // Stop audio recording and cleanup.
+  // Uses functional setMediaStream so this callback never needs mediaStream or
+  // isRecording as deps — keeping the reference stable across renders and
+  // preventing the socket-listener effect from tearing down & re-mounting.
   const stopAudioRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-    }
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => track.stop());
-      setMediaStream(null);
-    }
+    setMediaStream((current) => {
+      if (current) current.getTracks().forEach((t) => t.stop());
+      return null;
+    });
     setIsRecording(false);
-  }, [isRecording, mediaStream]);
+  }, []); // stable — only depends on setter functions
 
   // ──────────────────────────────────────────────
   // Socket event listeners (server-authoritative)
@@ -205,6 +205,26 @@ export function useGameState() {
       setLiveTranscript([]);
     });
 
+    // Live transcript chunks from /api/transcribe broadcast
+    socket.on(
+      "transcript:update",
+      (data: {
+        speaker: string;
+        text: string;
+        timestamp: number;
+        roundNumber: number;
+        isObjectionEnd?: boolean;
+        inaudible?: boolean;
+      }) => {
+        if (data.inaudible) return; // skip silent segments
+        const speakerNum: 1 | 2 = data.speaker === "player1" ? 1 : 2;
+        setLiveTranscript((prev) => [
+          ...prev,
+          { speaker: speakerNum, text: data.text, timestamp: data.timestamp },
+        ]);
+      }
+    );
+
     // Reconnect and explicit state hydration
     const handleHydration = (data: { gameState: any }) => {
       const gs = data.gameState;
@@ -274,6 +294,7 @@ export function useGameState() {
       socket.off("game:reset");
       socket.off("game:reconnected");
       socket.off("game:state");
+      socket.off("transcript:update");
       socketListenersAttached.current = false;
     };
   }, [stopAudioRecording]);
