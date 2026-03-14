@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { ScreenId } from "../lib/gameConstants";
-import { VoterSVG, VoterProfileProps } from "./VoterSVG";
+import { ScreenId } from "../../lib/gameConstants";
+import { VoterSVG, VoterProfileProps } from "../VoterSVG";
 
 interface ScreenVoterProfileProps {
   screen: ScreenId;
