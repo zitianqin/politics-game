@@ -18,7 +18,6 @@ interface ScreenDebateProps {
   objectionBy: 1 | 2 | null;
   onObjection: () => void;
   onYield: () => void;
-  onSubmitSpeech: (transcript: string) => void;
   setIsRecording: (value: boolean) => void;
   setMediaStream: (stream: MediaStream | null) => void;
 }
@@ -36,14 +35,16 @@ export default function ScreenDebate({
   objectionBy,
   onObjection,
   onYield,
-  onSubmitSpeech,
   setIsRecording: setIsRecordingGlobal,
   setMediaStream,
 }: ScreenDebateProps) {
   const [isRecording, setIsRecording] = useState(false);
-  const [displayTranscript, setDisplayTranscript] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingStartTimeRef = useRef<number>(0);
+  // Ref-based flag: set before getUserMedia resolves so stopRecording() can
+  // cancel an in-flight startRecording() before it ever opens the mic.
+  const shouldRecordRef = useRef(false);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const [screenShake, setScreenShake] = useState(false);
 
@@ -70,77 +71,117 @@ export default function ScreenDebate({
     }
   }, [showObjectionVFX]);
 
-  // Update transcript display
+  // Auto-scroll to bottom when transcript grows
   useEffect(() => {
-    const formatted = transcript
-      .map((entry) => {
-        const playerLabel = entry.speaker === 1 ? "🦄 P1" : "🦖 P2";
-        const objectionMarker = entry.isObjection ? " [OBJECTION!]" : "";
-        return `${playerLabel}${objectionMarker}: ${entry.text}`;
-      })
-      .join("\n\n");
-    setDisplayTranscript(formatted);
-
-    setTimeout(() => {
-      if (transcriptEndRef.current) {
-        transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
-      }
-    }, 0);
+    if (transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [transcript]);
 
-  // Start/stop recording based on active player
-  useEffect(() => {
-    if (screen === "debate" && isCurrentPlayerActive && !isRecording) {
-      startRecording();
-    } else if (screen !== "debate" || !isCurrentPlayerActive) {
-      stopRecording();
+  // stopRecording: no isRecording state dependency — uses refs to avoid stale
+  // closures. Safe to call multiple times (idempotent).
+  const stopRecording = useCallback(() => {
+    shouldRecordRef.current = false;
+    if (mediaRecorderRef.current) {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {
+        // MediaRecorder may already be inactive — that's fine
+      }
+      mediaRecorderRef.current = null;
     }
-  }, [screen, isCurrentPlayerActive]);
-
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
-      const mediaRecorder = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
-        });
-        await sendAudioForTranscription(audioBlob);
-        stream.getTracks().forEach((track) => track.stop());
-      };
-
-      mediaRecorder.start();
-      mediaRecorderRef.current = mediaRecorder;
-      setIsRecording(true);
-      setIsRecordingGlobal(true);
-      setMediaStream(stream);
-    } catch (error) {
-      console.error("Failed to access microphone:", error);
-    }
+    setIsRecording(false);
+    setIsRecordingGlobal(false);
+    setMediaStream(null);
   }, [setIsRecordingGlobal, setMediaStream]);
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsRecordingGlobal(false);
-      setMediaStream(null);
-    }
-  }, [isRecording, setIsRecordingGlobal, setMediaStream]);
+  const startRecording = useCallback(
+    async (turnRound: number, turnTopic: string) => {
+      // Guard against double-start
+      if (shouldRecordRef.current) return;
+      shouldRecordRef.current = true;
 
-  const sendAudioForTranscription = async (audioBlob: Blob) => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+
+        // Floor may have changed while awaiting mic permission — discard
+        if (!shouldRecordRef.current) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+
+        const mediaRecorder = new MediaRecorder(stream);
+        audioChunksRef.current = [];
+        recordingStartTimeRef.current = Date.now();
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) audioChunksRef.current.push(event.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          stream.getTracks().forEach((t) => t.stop());
+          if (audioChunksRef.current.length === 0) return;
+          const audioBlob = new Blob(audioChunksRef.current, {
+            type: "audio/webm",
+          });
+          await sendAudioForTranscription(
+            audioBlob,
+            recordingStartTimeRef.current,
+            turnRound,
+            turnTopic,
+          );
+        };
+
+        mediaRecorder.start();
+        mediaRecorderRef.current = mediaRecorder;
+        setIsRecording(true);
+        setIsRecordingGlobal(true);
+        setMediaStream(stream);
+      } catch (error) {
+        shouldRecordRef.current = false;
+        console.error("Failed to access microphone:", error);
+      }
+    },
+    [setIsRecordingGlobal, setMediaStream],
+  );
+
+  // Start/stop recording based on active player.
+  // Capture round/topic NOW so the onstop closure uses turn-start values even
+  // if props change before the upload fires (e.g. round advances quickly).
+  useEffect(() => {
+    if (screen === "debate" && isCurrentPlayerActive) {
+      startRecording(currentRound, currentTopic);
+    } else {
+      stopRecording();
+    }
+    return () => stopRecording();
+  }, [screen, isCurrentPlayerActive, currentRound, currentTopic, startRecording, stopRecording]);
+
+  const sendAudioForTranscription = async (
+    audioBlob: Blob,
+    startTime: number,
+    roundNumber: number,
+    topic: string,
+  ) => {
     try {
-      // Mock transcription for now — returns a placeholder
-      const mockText = "[speech captured]";
-      onSubmitSpeech(mockText);
+      const gameCode = sessionStorage.getItem("gameCode") ?? "";
+      const playerId = sessionStorage.getItem("playerId") ?? "";
+      if (!gameCode || !playerId) return;
+
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "audio.webm");
+      formData.append("gameCode", gameCode);
+      formData.append("playerId", playerId);
+      formData.append("roundNumber", String(roundNumber));
+      formData.append("topic", topic);
+      formData.append("timestamp", String(startTime));
+
+      await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+      });
     } catch (error) {
       console.error("Transcription error:", error);
     }
@@ -330,25 +371,58 @@ export default function ScreenDebate({
             background: "rgba(255, 255, 255, 0.98)",
             border: "6px solid var(--dark)",
             borderRadius: "16px",
-            padding: "20px",
+            padding: "16px",
             flex: 1,
             overflowY: "auto",
             boxShadow: "8px 8px 0 var(--dark)",
-            fontFamily: "Nunito, sans-serif",
-            fontSize: "20px",
-            fontWeight: "700",
-            lineHeight: "1.8",
-            whiteSpace: "pre-wrap",
-            wordWrap: "break-word",
-            color: "var(--dark)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
           }}
         >
-          {displayTranscript || (
+          {transcript.length === 0 ? (
             <span
-              style={{ color: "#999", fontStyle: "italic", fontSize: "14px" }}
+              style={{ color: "#999", fontStyle: "italic", fontSize: "14px", alignSelf: "center", marginTop: "auto", marginBottom: "auto" }}
             >
               Waiting for debate to start...
             </span>
+          ) : (
+            transcript.map((entry, i) => {
+              const isP1 = entry.speaker === 1;
+              const label = isP1 ? "🦄 P1" : "🦖 P2";
+              const color = isP1 ? "var(--p1)" : "var(--p2)";
+              const ts = entry.timestamp;
+              const mins = Math.floor(ts / 60).toString().padStart(2, "0");
+              const secs = (ts % 60).toString().padStart(2, "0");
+              return (
+                <div
+                  key={i}
+                  style={{
+                    borderLeft: `5px solid ${color}`,
+                    paddingLeft: "12px",
+                    paddingTop: "4px",
+                    paddingBottom: "4px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
+                    <span style={{ fontFamily: "Titan One, cursive", fontSize: "14px", color, fontWeight: "900" }}>
+                      {label}
+                    </span>
+                    <span style={{ fontFamily: "monospace", fontSize: "11px", color: "#888" }}>
+                      {mins}:{secs}
+                    </span>
+                    {entry.isObjection && (
+                      <span style={{ fontFamily: "Titan One, cursive", fontSize: "11px", color: "var(--red)", fontWeight: "900", letterSpacing: "1px" }}>
+                        ⚖️ OBJECTION
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontFamily: "Nunito, sans-serif", fontSize: "16px", fontWeight: "700", color: "var(--dark)", lineHeight: "1.5" }}>
+                    {entry.text}
+                  </div>
+                </div>
+              );
+            })
           )}
           <div ref={transcriptEndRef} />
         </div>
@@ -444,7 +518,7 @@ export default function ScreenDebate({
               if (isRecording) {
                 stopRecording();
               } else {
-                startRecording();
+                startRecording(currentRound, currentTopic);
               }
             }
           }}
