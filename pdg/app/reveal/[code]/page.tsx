@@ -16,7 +16,9 @@ export default function RevealPage({
   const router = useRouter();
   const [countdown, setCountdown] = useState(15);
   const [mounted, setMounted] = useState(false);
-  const [selectedVoters, setSelectedVoters] = useState<typeof votersData>([]);
+   const [selectedVoters, setSelectedVoters] = useState<typeof votersData>([]);
+  const [isReady, setIsReady] = useState(false);
+  const [otherReadyCount, setOtherReadyCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -57,19 +59,36 @@ export default function RevealPage({
       router.push(`/debate/${code}`);
     };
 
+    const onRevealReady = (data: { playerId: string; readyCount: number }) => {
+      const myId = sessionStorage.getItem("playerId");
+      if (data.playerId === myId) {
+        setIsReady(true);
+      }
+      setOtherReadyCount(data.readyCount);
+    };
+
     socket.on("reveal:timer", onRevealTimer);
     socket.on("reveal:end", onRevealEnd);
+    socket.on("reveal:ready", onRevealReady);
 
     // Initial sync if refreshing mid-reveal
     socket.on("game:reconnected", (data: { gameState: any }) => {
       if (data.gameState?.status === "debate") {
         router.push(`/debate/${code}`);
       }
+      if (data.gameState?.revealReady) {
+        setOtherReadyCount(data.gameState.revealReady.length);
+        const myId = sessionStorage.getItem("playerId");
+        if (data.gameState.revealReady.includes(myId)) {
+          setIsReady(true);
+        }
+      }
     });
 
     return () => {
       socket.off("reveal:timer", onRevealTimer);
       socket.off("reveal:end", onRevealEnd);
+      socket.off("reveal:ready", onRevealReady);
       socket.off("game:reconnected");
     };
   }, [code, router]);
@@ -98,11 +117,13 @@ export default function RevealPage({
           </h2>
           <button
             onClick={() => {
-              getSocket().emit("reveal:done", { code });
+              const playerId = sessionStorage.getItem("playerId");
+              getSocket().emit("reveal:done", { code, playerId });
             }}
-            className="bg-green-500 hover:bg-green-600 text-white font-['Titan_One'] px-4 py-1 rounded-lg border-2 border-black shadow-[2px_2px_0_0_#000] transition-transform active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_0_#000] text-sm"
+            disabled={isReady}
+            className={`${isReady ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"} text-white font-['Titan_One'] px-4 py-1 rounded-lg border-2 border-black shadow-[2px_2px_0_0_#000] transition-transform active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_0_#000] text-sm flex items-center gap-2`}
           >
-            READY!
+            {isReady ? `WAITING... (${otherReadyCount}/2)` : "READY!"}
           </button>
         </div>
       </motion.div>
