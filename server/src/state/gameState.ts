@@ -1,4 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
+import { VoterProfile } from "../data/voterData";
+import { selectVoters } from "../lib/selectVoters";
 
 export interface Player {
   id: string;
@@ -32,7 +34,7 @@ export interface GameSession {
   hostId: string;
   createdAt: Date;
   players: Player[];
-  voters: Record<string, unknown>[];
+  voters: VoterProfile[];
   rounds: RoundState[];
   timerState: TimerState | null;
 }
@@ -61,7 +63,7 @@ export function createGame(hostId: string): GameSession {
     hostId,
     createdAt: new Date(),
     players: [{ id: hostId, slot: 1, socketId: null, candidate: null }],
-    voters: [],
+    voters: selectVoters(),
     rounds: [],
     timerState: null,
   };

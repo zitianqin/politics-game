@@ -1,4 +1,5 @@
-import { PoliticalLean, VotingStyle } from '../components/VoterSVG';
+export type PoliticalLean = 'CONSERVATIVE' | 'PROGRESSIVE' | 'CENTRE' | 'APATHETIC';
+export type VotingStyle = 'POPULIST' | 'RATIONAL' | 'EMOTIONAL' | 'TRIBAL' | 'IDEOLOGICAL';
 
 export interface VoterProfile {
   id: number;
@@ -9,12 +10,11 @@ export interface VoterProfile {
   background: string;
   lean: PoliticalLean;
   concerns: string[];
-  reasoningStyle: VotingStyle | 'IDEOLOGICAL'; // Extended VotingStyle to include IDEOLOGICAL which appears in PRD
+  reasoningStyle: VotingStyle;
   susceptibleTo: string;
 }
 
-// Full pool of 67 voter profiles from the PRD
-export const votersData: VoterProfile[] = [
+export const voterPool: readonly VoterProfile[] = Object.freeze([
   {
     id: 1,
     name: "Barry Nolan",
@@ -819,4 +819,4 @@ export const votersData: VoterProfile[] = [
     reasoningStyle: "RATIONAL",
     susceptibleTo: "Specificity on Indigenous policy, genuine acknowledgment over tokenism"
   }
-];
+]);
