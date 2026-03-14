@@ -61,8 +61,8 @@ export default function LobbyPage({
           status === "reveal"
             ? `/reveal/${code}`
             : status === "debate"
-              ? `/debate/${code}`
-              : `/results/${code}`;
+            ? `/debate/${code}`
+            : `/results/${code}`;
         router.push(route);
       }
     });
@@ -84,6 +84,7 @@ export default function LobbyPage({
   const handleStart = () => {
     const playerId = sessionStorage.getItem("playerId");
     if (!playerId || hasMic === false) return;
+    console.log("Start game clicked");
     setIsStarting(true);
     getSocket().emit("game:start", { code, playerId });
   };
