@@ -1,26 +1,18 @@
 "use client";
 
-import HUD from "@/app/components/HUD";
-import ScreenTopic from "@/app/components/ScreenTopic";
-import { useGameState } from "@/app/hooks/useGameState";
+import { useRouter } from "next/navigation";
+import ScreenVoterGrid from "@/app/components/ScreenVoterGrid";
 
 export default function RevealPage({ params }: { params: { code: string } }) {
-  const { currentRound, currentTopic } = useGameState();
+  const router = useRouter();
+
+  const handleStartDebate = () => {
+    router.push(`/debate/${params.code}`);
+  };
 
   return (
     <>
-      <HUD
-        screen="reveal"
-        displayP1Votes={0}
-        displayP2Votes={0}
-        timeLeft={30}
-      />
-
-      <ScreenTopic
-        screen="topic"
-        currentRound={currentRound}
-        currentTopic={currentTopic}
-      />
+      <ScreenVoterGrid screen="voter-grid" startDebate={handleStartDebate} />
     </>
   );
 }

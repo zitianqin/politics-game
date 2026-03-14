@@ -13,11 +13,6 @@ export default function Page() {
   const handleCreateGame = async () => {
     setIsLoading(true);
     try {
-      // TODO: Call API to create game and get code
-      // const response = await fetch("/api/game/create", { method: "POST" });
-      // const data = await response.json();
-      // const gameCode = data.code;
-
       // For now, generate a mock code
       const gameCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       router.push(`/lobby/${gameCode}`);
@@ -36,14 +31,6 @@ export default function Page() {
 
     setIsLoading(true);
     try {
-      // TODO: Call API to validate code and join game
-      // const response = await fetch("/api/game/join", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ code: joinCode }),
-      // });
-      // if (!response.ok) throw new Error("Invalid code");
-
       router.push(`/lobby/${joinCode.toUpperCase()}`);
     } catch (error) {
       console.error("Failed to join game:", error);
