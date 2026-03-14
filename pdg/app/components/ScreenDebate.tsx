@@ -148,6 +148,7 @@ export default function ScreenDebate({
 
   const handleObjection = () => {
     if (canObjection) {
+      new Audio("/objection.mp3").play();
       onObjection();
     }
   };
