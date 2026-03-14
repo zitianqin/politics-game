@@ -74,7 +74,6 @@ export default function DebatePage({
 
   const router = useRouter();
 
-
   // Redirect to lobby if screen is lobby
   useEffect(() => {
     if (isHydrated && screen === "lobby") {
@@ -171,8 +170,8 @@ export default function DebatePage({
           currentRound={currentRound}
           isInterim={isInterimResults}
           voters={voterResults}
-          p1Name={p1Candidate?.name || "Player 1"}
-          p2Name={p2Candidate?.name || "Player 2"}
+          p1Name={p1Name}
+          p2Name={p2Name}
           p1TotalVotes={p1TotalVotes}
           p2TotalVotes={p2TotalVotes}
           onContinue={advanceToBars}

@@ -54,13 +54,14 @@ export default function LobbyPage({
     };
 
     socket.on("game:state", (data: { gameState: any }) => {
-      console.log("Received game:state in lobby:", data.gameState?.players?.length);
+      console.log(
+        "Received game:state in lobby:",
+        data.gameState?.players?.length
+      );
       if (data.gameState) {
         setPlayerCount(data.gameState.players.length);
         const myId = sessionStorage.getItem("playerId");
-        const opponent = data.gameState.players.find(
-          (p: any) => p.id !== myId
-        );
+        const opponent = data.gameState.players.find((p: any) => p.id !== myId);
         if (opponent?.displayName) {
           setOpponentName(opponent.displayName);
         }
@@ -71,6 +72,17 @@ export default function LobbyPage({
       console.log("Received player:joined in lobby. Count:", data.playerCount);
       setPlayerCount(data.playerCount);
     });
+
+    socket.on(
+      "player:nameChanged",
+      (data: { playerId: string; slot: number; displayName: string }) => {
+        const myId = sessionStorage.getItem("playerId");
+        // If the name change is from the opponent, update opponentName
+        if (data.playerId !== myId && data.displayName) {
+          setOpponentName(data.displayName);
+        }
+      }
+    );
 
     socket.on("game:started", () => {
       console.log("Received game:started in lobby");
