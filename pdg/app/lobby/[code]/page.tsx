@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import ScreenLobby from "@/app/components/ScreenLobby";
 import { useGameState } from "@/app/hooks/useGameState";
 
-export default function LobbyPage({ params }: { params: { code: string } }) {
+export default function LobbyPage({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}) {
+  const { code } = use(params);
   const { startGame } = useGameState();
   // TODO: Replace with actual server state / Socket.io connection
   const [isHost] = useState(true);
@@ -13,7 +18,7 @@ export default function LobbyPage({ params }: { params: { code: string } }) {
   return (
     <ScreenLobby
       screen="lobby"
-      gameCode={params.code}
+      gameCode={code}
       isHost={isHost}
       playersConnected={playersConnected}
       startGame={startGame}
