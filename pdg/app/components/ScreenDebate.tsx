@@ -2,6 +2,16 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ScreenId, formatScorecardName } from "../lib/gameConstants";
+
+const OBJECTION_SOUNDS = [
+  "/sound-effects/boom.mp3",
+  "/sound-effects/bruh.mp3",
+  "/sound-effects/fart.mp3",
+  "/sound-effects/oh-hell-nah.mp3",
+  "/sound-effects/omg.mp3",
+  "/sound-effects/punch.mp3",
+  "/sound-effects/alert.mp3",
+];
 import { TranscriptEntry } from "../hooks/useGameState";
 import TimerBar from "./TimerBar";
 
@@ -196,7 +206,8 @@ export default function ScreenDebate({
 
   const handleObjection = () => {
     if (canObjection) {
-      new Audio("/objection.mp3").play();
+      const src = OBJECTION_SOUNDS[Math.floor(Math.random() * OBJECTION_SOUNDS.length)];
+      new Audio(src).play();
       onObjection();
     }
   };
