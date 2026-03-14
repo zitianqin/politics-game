@@ -42,8 +42,21 @@ export default function LobbyPage({
     const socket = getSocket();
     socket.connect();
 
-    socket.on("connect", () => {
+    const joinRoom = () => {
       socket.emit("game:join", { code, playerId });
+      socket.emit("game:getState", { code });
+    };
+
+    if (socket.connected) {
+      joinRoom();
+    } else {
+      socket.on("connect", joinRoom);
+    }
+
+    socket.on("game:state", (data: { gameState: any }) => {
+      if (data.gameState) {
+        setPlayerCount(data.gameState.players.length);
+      }
     });
 
     socket.on("player:joined", (data: { playerCount: number }) => {
@@ -58,9 +71,9 @@ export default function LobbyPage({
       const status = data.gameState?.status;
       if (status && status !== "lobby") {
         const route =
-          status === "reveal"
+          status === "meet_voters"
             ? `/reveal/${code}`
-            : status === "debate"
+            : ["debate", "judging", "round_results"].includes(status)
             ? `/debate/${code}`
             : `/results/${code}`;
         router.push(route);
@@ -74,6 +87,7 @@ export default function LobbyPage({
 
     return () => {
       socket.off("connect");
+      socket.off("game:state");
       socket.off("player:joined");
       socket.off("game:started");
       socket.off("game:reconnected");

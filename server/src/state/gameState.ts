@@ -22,6 +22,8 @@ export interface RoundState {
   roundNumber: number;
   topic: string;
   transcript: TranscriptEntry[];
+  p1Score?: number;
+  p2Score?: number;
 }
 
 export interface TimerState {
@@ -33,7 +35,7 @@ export interface TimerState {
 export interface GameSession {
   id: string;
   code: string;
-  status: "lobby" | "reveal" | "debate" | "voting" | "complete";
+  status: "lobby" | "meet_voters" | "debate" | "judging" | "round_results" | "voting" | "complete";
   hostId: string;
   createdAt: Date;
   players: Player[];
@@ -188,4 +190,18 @@ export function reconnectPlayer(
   if (!player) return { error: "Player not in this game" };
 
   return { game, player };
+}
+
+export function resetGameSession(code: string): GameSession | null {
+  const game = games.get(code.toUpperCase());
+  if (!game) return null;
+
+  game.status = "lobby";
+  game.currentRound = 0;
+  game.rounds = [];
+  game.topics = getRandomTopics(2);
+  game.debatePhase = "idle";
+  game.timerState = null;
+
+  return game;
 }

@@ -43,9 +43,9 @@ export default function Page() {
     const targetRoute =
       existingGame.status === "lobby"
         ? `/lobby/${existingGame.code}`
-        : existingGame.status === "reveal"
+        : existingGame.status === "meet_voters"
         ? `/reveal/${existingGame.code}`
-        : existingGame.status === "debate"
+        : ["debate", "judging", "round_results"].includes(existingGame.status)
         ? `/debate/${existingGame.code}`
         : `/results/${existingGame.code}`;
     router.push(targetRoute);

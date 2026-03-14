@@ -17,6 +17,7 @@ export interface TranscriptEntry {
 
 export function useGameState() {
   const [screen, setScreen] = useState<ScreenId>("lobby");
+  const [isHydrated, setIsHydrated] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(() => {
     if (typeof window !== "undefined") {
@@ -132,10 +133,53 @@ export function useGameState() {
       }
     });
 
-    // Round end
+    // Round end: stop recording, prepare for judging
     socket.on("round:end", (data: { roundNumber: number }) => {
       stopAudioRecording();
-      startJudging();
+    });
+
+    // Judging starts on server
+    socket.on("judging:start", (data: { roundNumber: number }) => {
+      setScreen("judging");
+      let jokeIdx = 0;
+      const jokeInt = setInterval(() => {
+        jokeIdx = (jokeIdx + 1) % JUDGING_JOKES.length;
+        setJudgingJoke(JUDGING_JOKES[jokeIdx]);
+      }, 1000);
+      (window as any)._judgingInterval = jokeInt;
+    });
+
+    // Round results arrived from server
+    socket.on("round:results", (data: { roundNumber: number; p1Score: number; p2Score: number }) => {
+      if ((window as any)._judgingInterval) {
+        clearInterval((window as any)._judgingInterval);
+      }
+      setP1RoundScore(data.p1Score);
+      setP2RoundScore(data.p2Score);
+      setScreen("reveal");
+      setIsNextBtnVisible(false);
+
+      // Animate bars
+      setTimeout(() => {
+        setCurrentBarsHeight((prev) => ({
+          p1: prev.p1 + data.p1Score / 5,
+          p2: prev.p2 + data.p2Score / 5,
+        }));
+        setP1TotalVotes((prev) => prev + data.p1Score);
+        setP2TotalVotes((prev) => prev + data.p2Score);
+      }, 500);
+
+      setTimeout(() => {
+        setIsNextBtnVisible(true);
+      }, 3000);
+    });
+
+    socket.on("game:reset", () => {
+      setScreen("lobby");
+      setCurrentRound(1);
+      setP1TotalVotes(0);
+      setP2TotalVotes(0);
+      setLiveTranscript([]);
     });
 
     // Reconnect and explicit state hydration
@@ -143,13 +187,14 @@ export function useGameState() {
       const gs = data.gameState;
       if (!gs) return;
 
+      setIsHydrated(true);
       setCurrentRound(gs.currentRound || 1);
       
       const myId = sessionStorage.getItem("playerId");
       const me = gs.players.find((p: any) => p.id === myId);
       if (me) setCurrentPlayer(me.slot as (1 | 2));
 
-      if (gs.status === "reveal") {
+      if (gs.status === "meet_voters") {
         setScreen("voter-grid");
       } else if (gs.status === "debate") {
         if (gs.debatePhase === "prep") setScreen("topic");
@@ -160,6 +205,15 @@ export function useGameState() {
         const rData = gs.rounds.find((r: any) => r.roundNumber === gs.currentRound);
         if (rData && rData.transcript) {
           setLiveTranscript(rData.transcript);
+        }
+      } else if (gs.status === "judging") {
+        setScreen("judging");
+      } else if (gs.status === "round_results") {
+        setScreen("reveal");
+        const rData = gs.rounds.find((r: any) => r.roundNumber === gs.currentRound);
+        if (rData && rData.p1Score !== undefined && rData.p2Score !== undefined) {
+          setP1RoundScore(rData.p1Score);
+          setP2RoundScore(rData.p2Score);
         }
       } else if (gs.status === "voting") {
         setScreen("judging");
@@ -184,6 +238,9 @@ export function useGameState() {
       socket.off("timer:update");
       socket.off("floor:change");
       socket.off("round:end");
+      socket.off("judging:start");
+      socket.off("round:results");
+      socket.off("game:reset");
       socket.off("game:reconnected");
       socket.off("game:state");
       socketListenersAttached.current = false;
@@ -202,8 +259,8 @@ export function useGameState() {
     setP1TotalVotes(0);
     setP2TotalVotes(0);
     setCurrentRound(1);
-    startVoterReveal();
-  }, [startVoterReveal]);
+    setScreen("voter-grid");
+  }, []);
 
   // Signal server that reveal is done → triggers round 1
   const signalRevealDone = useCallback(() => {
@@ -272,57 +329,12 @@ export function useGameState() {
     }
   }, [currentSpeaker]);
 
-  // End debate round → judging
+  // End debate round (usually triggered by server, but can be requested)
   const endDebateRound = useCallback(() => {
     stopAudioRecording();
-    startJudging();
   }, [stopAudioRecording]);
 
-  // ──────────────────────────────
-  // Judging & scoring
-  // ──────────────────────────────
-
-  const startJudging = useCallback(() => {
-    setScreen("judging");
-
-    let jokeIdx = 0;
-    const jokeInt = setInterval(() => {
-      jokeIdx = (jokeIdx + 1) % JUDGING_JOKES.length;
-      setJudgingJoke(JUDGING_JOKES[jokeIdx]);
-    }, 1000);
-
-    setTimeout(() => {
-      clearInterval(jokeInt);
-      showRevealScreen();
-    }, 4000);
-  }, []);
-
-  const showRevealScreen = useCallback(() => {
-    // Simple mock scoring for now
-    const p1Score =
-      currentP1ArgRef.current.length * 3 + Math.floor(Math.random() * 300);
-    const p2Score =
-      currentP2ArgRef.current.length * 3 + Math.floor(Math.random() * 300);
-
-    setP1RoundScore(p1Score);
-    setP2RoundScore(p2Score);
-    setScreen("reveal");
-    setIsNextBtnVisible(false);
-
-    // Animate bars
-    setTimeout(() => {
-      setCurrentBarsHeight((prev) => ({
-        p1: prev.p1 + p1Score / 5, // scaled for display
-        p2: prev.p2 + p2Score / 5,
-      }));
-      setP1TotalVotes((prev) => prev + p1Score);
-      setP2TotalVotes((prev) => prev + p2Score);
-    }, 500);
-
-    setTimeout(() => {
-      setIsNextBtnVisible(true);
-    }, 3000);
-  }, []);
+  // Judging & scoring are now handled server-side
 
   const startNextRound = useCallback(() => {
     if (currentRound >= TOTAL_ROUNDS) {
@@ -338,10 +350,11 @@ export function useGameState() {
   }, [currentRound]);
 
   const resetGame = useCallback(() => {
-    setScreen("lobby");
-    setP1TotalVotes(0);
-    setP2TotalVotes(0);
-    setCurrentRound(1);
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("game:reset", { code: gameCode });
+    }
   }, []);
 
   let winnerLabel = "";
@@ -405,5 +418,8 @@ export function useGameState() {
     // Audio methods
     setIsRecording,
     setMediaStream,
+
+    // Sync state
+    isHydrated,
   };
 }

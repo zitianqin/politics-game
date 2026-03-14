@@ -5,6 +5,7 @@ import {
   findGameBySocketId,
   clearPlayerSocketId,
   setGameStatus,
+  resetGameSession,
 } from "../state/gameState";
 import { startReconnectTimer, cancelReconnectTimer } from "./reconnect";
 import {
@@ -12,7 +13,8 @@ import {
   processObjection,
   processYield,
   cleanupRound,
-  startRevealPhase,
+  startMeetVotersPhase,
+  getRoundContext,
 } from "./roundManager";
 
 export function registerSocketHandlers(io: Server): void {
@@ -94,7 +96,29 @@ export function registerSocketHandlers(io: Server): void {
         candidates: game.players.map((p) => p.candidate),
         voters: game.voters,
       });
-      startRevealPhase(io, game);
+      startMeetVotersPhase(io, game);
+    });
+
+    socket.on("reveal:done", (data: { code: string }) => {
+      const { code } = data;
+      const game = getGame(code);
+      const ctx = getRoundContext(code);
+      if (game && ctx && ctx.revealIntervalId) {
+        clearInterval(ctx.revealIntervalId);
+        ctx.revealIntervalId = null;
+        io.to(code).emit("reveal:end", {});
+        startRound(io, game, 1);
+      }
+    });
+
+    socket.on("game:reset", (data: { code: string }) => {
+      const { code } = data;
+      const game = resetGameSession(code);
+      if (game) {
+        cleanupRound(code);
+        io.to(code).emit("game:state", { gameState: serializeGame(game) });
+        io.to(code).emit("game:reset", { code });
+      }
     });
 
     // Player raises an objection
@@ -140,8 +164,8 @@ export function registerSocketHandlers(io: Server): void {
 
       if (game.currentRound >= 2) {
         // Game is over after 2 rounds
-        setGameStatus(code, "voting");
-        io.to(code).emit("voting:start", {});
+        setGameStatus(code, "complete");
+        io.to(code).emit("game:complete", {});
       } else {
         // Start next round
         startRound(io, game, game.currentRound + 1);
@@ -168,8 +192,10 @@ export function registerSocketHandlers(io: Server): void {
       }
 
       if (
-        game.status === "reveal" ||
+        game.status === "meet_voters" ||
         game.status === "debate" ||
+        game.status === "judging" ||
+        game.status === "round_results" ||
         game.status === "voting"
       ) {
         io.to(game.code).emit("player:disconnected", {

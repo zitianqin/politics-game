@@ -24,9 +24,9 @@ export function getRoundContext(code: string): RoundContext | undefined {
 /**
  * Start the reveal phase: 15s countdown on server.
  */
-export function startRevealPhase(io: Server, game: GameSession): void {
+export function startMeetVotersPhase(io: Server, game: GameSession): void {
   const code = game.code;
-  game.status = "reveal";
+  game.status = "meet_voters";
   
   const timerState = createTimerState();
   const ctx: RoundContext = { timerState, prepIntervalId: null, revealIntervalId: null };
@@ -149,6 +149,56 @@ export function endRound(io: Server, game: GameSession): void {
 
   game.debatePhase = "ended";
   io.to(code).emit("round:end", { roundNumber: game.currentRound });
+
+  // Move to judging after a short delay or immediately
+  setTimeout(() => {
+    startJudgingPhase(io, game);
+  }, 2000);
+}
+
+/**
+ * Start the judging phase.
+ */
+export function startJudgingPhase(io: Server, game: GameSession): void {
+  const code = game.code;
+  game.status = "judging";
+  io.to(code).emit("judging:start", { roundNumber: game.currentRound });
+
+  // Simulate judging time (4 seconds)
+  setTimeout(() => {
+    startRoundResultsPhase(io, game);
+  }, 4000);
+}
+
+/**
+ * Start the round results phase (reveal scores).
+ */
+export function startRoundResultsPhase(io: Server, game: GameSession): void {
+  const code = game.code;
+  game.status = "round_results";
+
+  const round = game.rounds.find((r) => r.roundNumber === game.currentRound);
+  if (!round) return;
+
+  // Calculate scores based on transcript lengths + random factor
+  let p1Length = 0;
+  let p2Length = 0;
+  round.transcript.forEach((t) => {
+    if (t.speaker === "1") p1Length += t.text.length;
+    else if (t.speaker === "2") p2Length += t.text.length;
+  });
+
+  const p1Score = p1Length * 3 + Math.floor(Math.random() * 300);
+  const p2Score = p2Length * 3 + Math.floor(Math.random() * 300);
+
+  round.p1Score = p1Score;
+  round.p2Score = p2Score;
+
+  io.to(code).emit("round:results", {
+    roundNumber: game.currentRound,
+    p1Score,
+    p2Score,
+  });
 }
 
 /**
