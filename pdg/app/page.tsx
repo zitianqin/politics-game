@@ -1,98 +1,125 @@
 "use client";
 
-import Confetti from "./components/Confetti";
-import HUD from "./components/HUD";
-import ScreenLobby from "./components/ScreenLobby";
-import ScreenTopic from "./components/ScreenTopic";
-import ScreenInput from "./components/ScreenInput";
-import ScreenJudging from "./components/ScreenJudging";
-import ScreenReveal from "./components/ScreenReveal";
-import ScreenWinner from "./components/ScreenWinner";
-import ScreenVoterGrid from "./components/ScreenVoterGrid";
-import { useGameState } from "./hooks/useGameState";
-import { useRevealAnimation } from "./hooks/useRevealAnimation";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import ScreenRoot from "./components/ScreenRoot";
 
 export default function Page() {
-  const {
-    screen,
-    currentRound,
-    currentPlayer,
-    p1TotalVotes,
-    p2TotalVotes,
-    timeLeft,
-    currentTopic,
-    p1Earned,
-    p2Earned,
-    judgingJoke,
-    winnerLabel,
-    startGame,
-    startTopicReveal,
-    submitArgument,
-    startNextRound,
-    resetGame,
-    startMeetVoters,
-  } = useGameState();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [showJoinInput, setShowJoinInput] = useState(false);
 
-  const {
-    displayP1Votes,
-    displayP2Votes,
-    currentBarsHeight,
-    isNextBtnVisible,
-  } = useRevealAnimation(
-    screen,
-    p1Earned,
-    p2Earned,
-    p1TotalVotes,
-    p2TotalVotes
-  );
+  const handleCreateGame = async () => {
+    setIsLoading(true);
+    try {
+      // For now, generate a mock code
+      const gameCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      router.push(`/lobby/${gameCode}`);
+    } catch (error) {
+      console.error("Failed to create game:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleJoinGame = async () => {
+    if (!joinCode.trim()) {
+      alert("Please enter a game code");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      router.push(`/lobby/${joinCode.toUpperCase()}`);
+    } catch (error) {
+      console.error("Failed to join game:", error);
+      alert("Invalid game code");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (showJoinInput) {
+    return (
+      <div className="screen active">
+        <h1 className="title-text bouncing">
+          ELECTION
+          <br />
+          SHOWDOWN
+        </h1>
+        <div className="flex flex-col justify-center items-center gap-8">
+          <div
+            style={{
+              fontSize: "48px",
+              fontWeight: "900",
+              letterSpacing: "8px",
+              textTransform: "uppercase",
+              color: "var(--accent)",
+              textShadow: "4px 4px 0 var(--dark)",
+            }}
+          >
+            ENTER CODE
+          </div>
+          <input
+            type="text"
+            placeholder="??????"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            maxLength={6}
+            disabled={isLoading}
+            style={{
+              fontSize: "24px",
+              fontWeight: "900",
+              letterSpacing: "12px",
+              textTransform: "uppercase",
+              textAlign: "center",
+              padding: "24px 32px",
+              border: "6px solid var(--dark)",
+              borderRadius: "16px",
+              backgroundColor: "white",
+              color: "var(--dark)",
+              boxShadow: "12px 12px 0 var(--accent)",
+              transition: "all 0.2s ease",
+              outline: "none",
+              minWidth: "400px",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.transform = "translate(2px, 2px)";
+              e.currentTarget.style.boxShadow = "8px 8px 0 var(--accent)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.transform = "translate(0, 0)";
+              e.currentTarget.style.boxShadow = "12px 12px 0 var(--accent)";
+            }}
+          />
+
+          <div className="flex flex-col justify-center items-center gap-5">
+            <button
+              className="btn green-color"
+              onClick={handleJoinGame}
+              disabled={isLoading}
+            >
+              {isLoading ? "JOINING..." : "JOIN GAME"}
+            </button>
+            <button
+              className="btn"
+              onClick={() => setShowJoinInput(false)}
+              disabled={isLoading}
+            >
+              BACK
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <Confetti active={screen === "winner"} />
-
-      <HUD
-        screen={screen}
-        displayP1Votes={displayP1Votes}
-        displayP2Votes={displayP2Votes}
-        timeLeft={timeLeft}
-      />
-
-      <ScreenLobby screen={screen} startGame={startGame} />
-
-      <ScreenVoterGrid screen={screen} startDebate={startMeetVoters} />
-
-      <ScreenTopic
-        screen={screen}
-        currentRound={currentRound}
-        currentTopic={currentTopic}
-      />
-
-      <ScreenInput
-        screen={screen}
-        currentPlayer={currentPlayer}
-        currentTopic={currentTopic}
-        submitArgument={submitArgument}
-      />
-
-      <ScreenJudging screen={screen} judgingJoke={judgingJoke} />
-
-      <ScreenReveal
-        screen={screen}
-        p1Earned={p1Earned}
-        p2Earned={p2Earned}
-        currentBarsHeight={currentBarsHeight}
-        isNextBtnVisible={isNextBtnVisible}
-        currentRound={currentRound}
-        startNextRound={startNextRound}
-      />
-
-      <ScreenWinner
-        screen={screen}
-        winnerLabel={winnerLabel}
-        p1TotalVotes={p1TotalVotes}
-        p2TotalVotes={p2TotalVotes}
-        resetGame={resetGame}
-      />
-    </>
+    <ScreenRoot
+      screen="lobby"
+      createGame={handleCreateGame}
+      joinGame={() => setShowJoinInput(true)}
+    />
   );
 }
