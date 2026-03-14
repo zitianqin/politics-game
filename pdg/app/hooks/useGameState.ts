@@ -112,17 +112,20 @@ export function useGameState(gameCodeFromUrl?: string) {
     });
 
     // Debate phase begins
-    socket.on("round:debate", (data: { activePlayer: 1 | 2; startTime?: number }) => {
-      setCurrentSpeaker(data.activePlayer);
-      setP1RoundTimeRemaining(60);
-      setP2RoundTimeRemaining(60);
-      setLiveTranscript([]);
-      setRoundStartTime(data.startTime ?? Date.now());
-      audioChunksRef.current = [];
-      currentP1ArgRef.current = "";
-      currentP2ArgRef.current = "";
-      setScreen("debate");
-    });
+    socket.on(
+      "round:debate",
+      (data: { activePlayer: 1 | 2; startTime?: number }) => {
+        setCurrentSpeaker(data.activePlayer);
+        setP1RoundTimeRemaining(60);
+        setP2RoundTimeRemaining(60);
+        setLiveTranscript([]);
+        setRoundStartTime(data.startTime ?? Date.now());
+        audioChunksRef.current = [];
+        currentP1ArgRef.current = "";
+        currentP2ArgRef.current = "";
+        setScreen("debate");
+      }
+    );
 
     // Server timer ticks (every 500ms)
     socket.on(
@@ -195,6 +198,11 @@ export function useGameState(gameCodeFromUrl?: string) {
       setIsInterimResults(data.roundNumber < TOTAL_ROUNDS);
 
       if (data.breakdown) {
+        console.log(
+          "Voted for:",
+          data.breakdown.map((v) => v.vote)
+        ); // Debug log
+
         setVoterResults(
           data.breakdown.map((v) => ({
             name: v.voterName,
@@ -221,7 +229,6 @@ export function useGameState(gameCodeFromUrl?: string) {
         setIsNextBtnVisible(true);
       }, 3000);
     };
-
 
     socket.on("round:results", handleRoundResults);
     socket.on("game:result", handleRoundResults);
@@ -266,7 +273,12 @@ export function useGameState(gameCodeFromUrl?: string) {
         setLiveTranscript((prev) =>
           [
             ...prev,
-            { speaker: speakerNum, text: data.text, timestamp: data.timestamp, isObjection: data.isObjection },
+            {
+              speaker: speakerNum,
+              text: data.text,
+              timestamp: data.timestamp,
+              isObjection: data.isObjection,
+            },
           ].sort((a, b) => a.timestamp - b.timestamp)
         );
       }
@@ -347,8 +359,7 @@ export function useGameState(gameCodeFromUrl?: string) {
     });
 
     // Request full state immediately on mount
-    const gameCode =
-      gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
+    const gameCode = gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
     if (gameCode) {
       socket.emit("game:getState", { code: gameCode });
     }
@@ -412,10 +423,9 @@ export function useGameState(gameCodeFromUrl?: string) {
         : 0;
 
       setLiveTranscript((prev) =>
-        [
-          ...prev,
-          { speaker, text, timestamp, isObjection },
-        ].sort((a, b) => a.timestamp - b.timestamp)
+        [...prev, { speaker, text, timestamp, isObjection }].sort(
+          (a, b) => a.timestamp - b.timestamp
+        )
       );
 
       if (speaker === 1) {
@@ -428,21 +438,18 @@ export function useGameState(gameCodeFromUrl?: string) {
   );
 
   // Emit objection to server
-  const handleObjection = useCallback(
-    (objectingPlayer: 1 | 2) => {
-      const socket = getSocket();
-      const gameCode = sessionStorage.getItem("gameCode");
-      if (gameCode) {
-        socket.emit("objection:raised", {
-          code: gameCode,
-          byPlayer: objectingPlayer,
-        });
-        // We no longer add a local transcript entry here.
-        // The server will broadcast a transcript:update for the OBJECTION! marker.
-      }
-    },
-    []
-  );
+  const handleObjection = useCallback((objectingPlayer: 1 | 2) => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("objection:raised", {
+        code: gameCode,
+        byPlayer: objectingPlayer,
+      });
+      // We no longer add a local transcript entry here.
+      // The server will broadcast a transcript:update for the OBJECTION! marker.
+    }
+  }, []);
 
   // Emit yield to server
   const handleYield = useCallback(() => {
@@ -466,8 +473,7 @@ export function useGameState(gameCodeFromUrl?: string) {
   const startNextRound = useCallback(() => {
     // Always signal server to advance. Server will decide if it's new round or completion.
     const socket = getSocket();
-    const gameCode =
-      gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
+    const gameCode = gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
     if (gameCode) {
       socket.emit("round:advance", { code: gameCode });
     }

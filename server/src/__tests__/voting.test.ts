@@ -102,7 +102,14 @@ describe("voting service", () => {
         }),
     });
 
-    const result = await runVoterSimulation(mockVoters, mockPlayers, mockRounds, mockTopics);
+    const result = await runVoterSimulation(
+      mockVoters,
+      mockPlayers,
+      mockRounds,
+      mockTopics,
+      "Candidate A",
+      "Candidate B"
+    );
 
     expect(result.votes[0].vote).toBe(1);
     expect(mockFetch).toHaveBeenCalledTimes(4);
@@ -135,7 +142,14 @@ describe("voting service", () => {
         }),
     });
 
-    const result = await runVoterSimulation(mockVoters, mockPlayers, mockRounds, mockTopics);
+    const result = await runVoterSimulation(
+      mockVoters,
+      mockPlayers,
+      mockRounds,
+      mockTopics,
+      "Candidate A",
+      "Candidate B"
+    );
 
     expect(result.votes[0].vote).toBe(2);
     expect(result.votes[0].reason).toBe("I like B");

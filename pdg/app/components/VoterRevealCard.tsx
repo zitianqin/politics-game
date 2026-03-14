@@ -45,6 +45,11 @@ export default function VoterRevealCard({
   );
   const voteColor = votedFor === "p1" ? "var(--p1)" : "var(--p2)";
 
+  // Replace generic candidate names with actual names in the rationale
+  const replacedRationale = rationale
+    .replace(/Candidate A/g, p1Name)
+    .replace(/Candidate B/g, p2Name);
+
   return (
     <div
       className="voter-reveal-card"
@@ -72,7 +77,7 @@ export default function VoterRevealCard({
       </div>
 
       <div className="voter-rationale">
-        <p>{rationale}</p>
+        <p>{replacedRationale}</p>
       </div>
 
       <div className="voter-candidate" style={{ color: voteColor }}>

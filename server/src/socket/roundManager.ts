@@ -29,9 +29,14 @@ export function getRoundContext(code: string): RoundContext | undefined {
 export function startMeetVotersPhase(io: Server, game: GameSession): void {
   const code = game.code;
   game.status = "meet_voters";
-  
+
   const timerState = createTimerState();
-  const ctx: RoundContext = { timerState, prepIntervalId: null, revealIntervalId: null, startTime: null };
+  const ctx: RoundContext = {
+    timerState,
+    prepIntervalId: null,
+    revealIntervalId: null,
+    startTime: null,
+  };
   roundContexts.set(code, ctx);
 
   let countdown = 15;
@@ -172,7 +177,20 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
     (r) => r.roundNumber === game.currentRound
   );
 
-  runVoterSimulation(game.voters, game.players, currentRoundData, game.topics)
+  // Extract candidate names
+  const p1 = game.players.find((p) => p.slot === 1);
+  const p2 = game.players.find((p) => p.slot === 2);
+  const p1CandidateName = p1?.candidate?.fullName || "Player 1";
+  const p2CandidateName = p2?.candidate?.fullName || "Player 2";
+
+  runVoterSimulation(
+    game.voters,
+    game.players,
+    currentRoundData,
+    game.topics,
+    p1CandidateName,
+    p2CandidateName
+  )
     .then((result) => {
       game.status = "voting";
       io.to(code).emit("voting:start", {});
@@ -199,29 +217,26 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
         }, (i + 1) * VOTE_REVEAL_DELAY_MS);
       });
 
-      setTimeout(
-        () => {
-          game.status = "round_results";
-          io.to(code).emit("round:results", {
-            roundNumber: game.currentRound,
-            p1Score: result.p1Votes,
-            p2Score: result.p2Votes,
-            winner: result.winner,
-            tally: { p1: result.p1Votes, p2: result.p2Votes },
-            breakdown: result.votes.map((v) => {
-              const profile = game.voters.find((vp) => vp.name === v.voterName);
-              return {
-                voterName: v.voterName,
-                voterAge: profile?.age || 0,
-                voterLocation: profile?.location || "",
-                vote: v.vote === 1 ? "Candidate A" : "Candidate B",
-                reason: v.reason,
-              };
-            }),
-          });
-        },
-        (result.votes.length + 1) * VOTE_REVEAL_DELAY_MS
-      );
+      setTimeout(() => {
+        game.status = "round_results";
+        io.to(code).emit("round:results", {
+          roundNumber: game.currentRound,
+          p1Score: result.p1Votes,
+          p2Score: result.p2Votes,
+          winner: result.winner,
+          tally: { p1: result.p1Votes, p2: result.p2Votes },
+          breakdown: result.votes.map((v) => {
+            const profile = game.voters.find((vp) => vp.name === v.voterName);
+            return {
+              voterName: v.voterName,
+              voterAge: profile?.age || 0,
+              voterLocation: profile?.location || "",
+              vote: v.vote === 1 ? "Candidate A" : "Candidate B",
+              reason: v.reason,
+            };
+          }),
+        });
+      }, (result.votes.length + 1) * VOTE_REVEAL_DELAY_MS);
     })
     .catch((err) => {
       console.error(`[judging] LLM voting failed for game ${code}:`, err);

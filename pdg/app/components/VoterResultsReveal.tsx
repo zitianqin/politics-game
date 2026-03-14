@@ -63,6 +63,11 @@ export default function VoterResultsReveal({
     voter.votedFor === "p1" ? p1Name : p2Name,
     voter.votedFor === "p1" ? 1 : 2
   );
+
+  console.log(
+    `Revealing vote from ${voter.name} for ${candidateName} ${voter.votedFor}`
+  ); // Debug log
+
   const tilt = currentVoterIndex % 2 === 0 ? -2 : 2; // Alternate tilt
 
   return (
@@ -76,6 +81,8 @@ export default function VoterResultsReveal({
         rationale={voter.rationale}
         isVisible={true}
         tilt={tilt}
+        p1CandidateName={p1Name}
+        p2CandidateName={p2Name}
       />
     </div>
   );
