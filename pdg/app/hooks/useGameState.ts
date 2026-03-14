@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ScreenId, JUDGING_JOKES } from "../lib/gameConstants";
+import { ScreenId, TOTAL_ROUNDS, JUDGING_JOKES } from "../lib/gameConstants";
 import { getSocket } from "../lib/socket";
 
 export interface TranscriptEntry {
@@ -68,6 +68,8 @@ export function useGameState(gameCodeFromUrl?: string) {
     }>
   >([]);
   const [isInterimResults, setIsInterimResults] = useState(false);
+  const [p1Candidate, setP1Candidate] = useState<any>(null);
+  const [p2Candidate, setP2Candidate] = useState<any>(null);
 
   // Internal tracking
   const currentP1ArgRef = useRef("");
@@ -171,43 +173,57 @@ export function useGameState(gameCodeFromUrl?: string) {
       (window as any)._judgingInterval = jokeInt;
     });
 
-// Round results arrived from server (handles both 'round:results' and 'game:result' events)
-const handleRoundResults = (data: {
-  roundNumber: number;
-  p1Score?: number;
-  p2Score?: number;
-  tally?: { p1: number; p2: number };
-}) => {
-  if ((window as any)._judgingInterval) {
-    clearInterval((window as any)._judgingInterval);
-  }
-  // Most recent logic from main: prefer explicit p1Score/p2Score
-  // But incorporate the fallback logic from yours for maximum compatibility
-  const p1Score = data.p1Score ?? data.tally?.p1 ?? 0;
-  const p2Score = data.p2Score ?? data.tally?.p2 ?? 0;
+    // Round results arrived from server (handles both 'round:results' and 'game:result' events)
+    const handleRoundResults = (data: {
+      roundNumber: number;
+      p1Score?: number;
+      p2Score?: number;
+      tally?: { p1: number; p2: number };
+      breakdown?: any[];
+    }) => {
+      if ((window as any)._judgingInterval) {
+        clearInterval((window as any)._judgingInterval);
+      }
 
-  setP1RoundScore(p1Score);
-  setP2RoundScore(p2Score);
-  setScreen("reveal");
-  setIsNextBtnVisible(false);
+      const p1Score = data.p1Score ?? data.tally?.p1 ?? 0;
+      const p2Score = data.p2Score ?? data.tally?.p2 ?? 0;
 
-  // Animate bars
-  setTimeout(() => {
-    setCurrentBarsHeight((prev) => ({
-      p1: prev.p1 + p1Score / 5,
-      p2: prev.p2 + p2Score / 5,
-    }));
-    setP1TotalVotes((prev) => prev + p1Score);
-    setP2TotalVotes((prev) => prev + p2Score);
-  }, 500);
+      setP1RoundScore(p1Score);
+      setP2RoundScore(p2Score);
+      setScreen("reveal");
+      setIsNextBtnVisible(false);
+      setIsInterimResults(data.roundNumber < TOTAL_ROUNDS);
 
-  setTimeout(() => {
-    setIsNextBtnVisible(true);
-  }, 3000);
-};
+      if (data.breakdown) {
+        setVoterResults(
+          data.breakdown.map((v) => ({
+            name: v.voterName,
+            age: v.voterAge || 0,
+            location: v.voterLocation || "",
+            votedFor:
+              v.vote === "Candidate A" ? ("p1" as const) : ("p2" as const),
+            rationale: v.reason,
+          }))
+        );
+      }
 
-socket.on("round:results", handleRoundResults);
-socket.on("game:result", handleRoundResults);
+      // Animate bars
+      setTimeout(() => {
+        setCurrentBarsHeight((prev) => ({
+          p1: prev.p1 + p1Score / 5,
+          p2: prev.p2 + p2Score / 5,
+        }));
+        setP1TotalVotes((prev) => prev + p1Score);
+        setP2TotalVotes((prev) => prev + p2Score);
+      }, 500);
+
+      setTimeout(() => {
+        setIsNextBtnVisible(true);
+      }, 3000);
+    };
+
+    socket.on("round:results", handleRoundResults);
+    socket.on("game:result", handleRoundResults);
 
     socket.on("game:reset", () => {
       setScreen("lobby");
@@ -220,6 +236,15 @@ socket.on("game:result", handleRoundResults);
     });
 
     socket.on("game:complete", () => {
+      setIsInterimResults(false);
+      setScreen("results");
+    });
+
+    socket.on("game:results_reveal", () => {
+      setScreen("results");
+    });
+
+    socket.on("game:winner_reveal", () => {
       setScreen("winner");
     });
 
@@ -257,6 +282,8 @@ socket.on("game:result", handleRoundResults);
 
       const p1 = gs.players?.find((p: any) => p.slot === 1);
       const p2 = gs.players?.find((p: any) => p.slot === 2);
+      if (p1?.candidate) setP1Candidate(p1.candidate);
+      if (p2?.candidate) setP2Candidate(p2.candidate);
       if (p1?.displayName) setP1Name(p1.displayName);
       if (p2?.displayName) setP2Name(p2.displayName);
 
@@ -425,6 +452,22 @@ socket.on("game:result", handleRoundResults);
     }
   }, [gameCodeFromUrl]);
 
+  const advanceToResults = useCallback(() => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("results:reveal", { code: gameCode });
+    }
+  }, []);
+
+  const advanceToWinner = useCallback(() => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("results:complete", { code: gameCode });
+    }
+  }, []);
+
   const resetGame = useCallback(() => {
     const socket = getSocket();
     const gameCode = sessionStorage.getItem("gameCode");
@@ -503,5 +546,12 @@ socket.on("game:result", handleRoundResults);
 
     // Sync state
     isHydrated,
+
+    // Navigation
+    setScreen,
+    advanceToResults,
+    advanceToWinner,
+    p1Candidate,
+    p2Candidate,
   };
 }

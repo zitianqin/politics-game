@@ -166,6 +166,20 @@ export function registerSocketHandlers(io: Server): void {
       }
     });
 
+    // Multi-stage reveal synchronization
+    socket.on("results:reveal", (data: { code: string }) => {
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
+      io.to(code).emit("game:results_reveal");
+    });
+
+    socket.on("results:complete", (data: { code: string }) => {
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
+      io.to(code).emit("game:winner_reveal");
+    });
+
+    // Reset game completely
     socket.on("game:reset", (data: { code: string }) => {
       const { code: rawCode } = data;
       const code = rawCode.toUpperCase();
