@@ -86,7 +86,7 @@ export default function DebatePage({
 
   return (
     <>
-      {screen !== "topic" && (
+      {screen !== "topic" && screen !== "results" && (
         <HUD
           screen={screen}
           displayP1Votes={p1TotalVotes}
