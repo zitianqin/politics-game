@@ -1,4 +1,8 @@
+"use client";
+
+import { useEffect } from "react";
 import { ScreenId, formatScorecardName } from "../lib/gameConstants";
+import Confetti from "./Confetti";
 
 interface ScreenWinnerProps {
   screen: ScreenId;
@@ -19,11 +23,18 @@ export default function ScreenWinner({
   p1Name = "Player 1",
   p2Name = "Player 2",
 }: ScreenWinnerProps) {
+  useEffect(() => {
+    const audio = new Audio("/sound-effects/applause.mp3");
+    audio.play().catch(() => {});
+  }, []);
+
   return (
-    <div
-      id="screen-winner"
-      className={`screen ${screen === "winner" ? "active" : ""}`}
-    >
+    <>
+      <Confetti active={true} />
+      <div
+        id="screen-winner"
+        className={`screen ${screen === "winner" ? "active" : ""}`}
+      >
       <h2
         className="subtitle"
         style={{
@@ -78,5 +89,6 @@ export default function ScreenWinner({
         PLAY AGAIN
       </button>
     </div>
+    </>
   );
 }

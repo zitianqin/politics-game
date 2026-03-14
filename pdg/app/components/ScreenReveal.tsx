@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect } from "react";
 import { ScreenId, TOTAL_ROUNDS, formatScorecardName } from "../lib/gameConstants";
 
 interface ScreenRevealProps {
@@ -23,6 +26,11 @@ export default function ScreenReveal({
   p1Name = "Player 1",
   p2Name = "Player 2",
 }: ScreenRevealProps) {
+  useEffect(() => {
+    const audio = new Audio("/sound-effects/confetti.mp3");
+    audio.play().catch(() => {});
+  }, []);
+
   return (
     <div
       id="screen-reveal"
