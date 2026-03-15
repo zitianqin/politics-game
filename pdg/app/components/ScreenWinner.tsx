@@ -30,6 +30,13 @@ export default function ScreenWinner({
       >
         ELECTION OVER!
       </h2>
+      {p1TotalVotes !== p2TotalVotes && (
+        <img
+          src={p1TotalVotes > p2TotalVotes ? "/P1.png" : "/P2.png"}
+          alt={p1TotalVotes > p2TotalVotes ? "P1" : "P2"}
+          style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "16px", marginBottom: "16px" }}
+        />
+      )}
       <h1
         className="title-text"
         style={{

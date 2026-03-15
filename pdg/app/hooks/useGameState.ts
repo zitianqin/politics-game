@@ -414,9 +414,9 @@ export function useGameState() {
   let winnerLabel = "";
   if (screen === "winner") {
     if (p1TotalVotes > p2TotalVotes) {
-      winnerLabel = "🦄 PLAYER 1 WINS!";
+      winnerLabel = "PLAYER 1 WINS!";
     } else if (p2TotalVotes > p1TotalVotes) {
-      winnerLabel = "🦖 PLAYER 2 WINS!";
+      winnerLabel = "PLAYER 2 WINS!";
     } else {
       winnerLabel = "IT'S A TIE!!";
     }

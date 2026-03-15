@@ -32,9 +32,9 @@ export default function ScreenReveal({
         <div className="bar-wrapper">
           <div
             className="avatar"
-            style={{ fontSize: "60px", width: "100px", height: "100px" }}
+            style={{ width: "100px", height: "100px", overflow: "hidden", borderRadius: "12px" }}
           >
-            🦄
+            <img src="/P1.png" alt="P1" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
           <div
             className="bar p1-bar"
@@ -47,9 +47,9 @@ export default function ScreenReveal({
         <div className="bar-wrapper">
           <div
             className="avatar"
-            style={{ fontSize: "60px", width: "100px", height: "100px" }}
+            style={{ width: "100px", height: "100px", overflow: "hidden", borderRadius: "12px" }}
           >
-            🦖
+            <img src="/P2.png" alt="P2" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
           <div
             className="bar p2-bar"
