@@ -45,7 +45,8 @@ export default function ScreenInput({
           color: currentPlayer === 1 ? "var(--p1)" : "var(--p2)",
         }}
       >
-        {currentPlayer === 1 ? "PLAYER 1'S TURN 🦄" : "PLAYER 2'S TURN 🦖"}
+        <img src={currentPlayer === 1 ? "/P1.png" : "/P2.png"} alt={`P${currentPlayer}`} style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "10px", verticalAlign: "middle", marginRight: "12px" }} />
+        {currentPlayer === 1 ? "PLAYER 1'S TURN" : "PLAYER 2'S TURN"}
       </h2>
       <h3
         className="subtitle"

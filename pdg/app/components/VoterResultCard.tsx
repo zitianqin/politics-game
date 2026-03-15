@@ -9,6 +9,8 @@ interface VoterResultCardProps {
   rationale: string;
   isVisible: boolean;
   tilt?: number; // rotation angle, e.g., -2 or 2
+  p1CandidateName?: string;
+  p2CandidateName?: string;
 }
 
 export default function VoterResultCard({
@@ -20,8 +22,15 @@ export default function VoterResultCard({
   rationale,
   isVisible,
   tilt = -2,
+  p1CandidateName = "Candidate A",
+  p2CandidateName = "Candidate B",
 }: VoterResultCardProps) {
   const voteColor = votedFor === "p1" ? "var(--p1)" : "var(--p2)";
+
+  // Replace generic candidate names with actual names in the rationale
+  const replacedRationale = rationale
+    .replace(/Candidate A/g, p1CandidateName)
+    .replace(/Candidate B/g, p2CandidateName);
 
   return (
     <div
@@ -45,7 +54,7 @@ export default function VoterResultCard({
 
       {/* Quote/Rationale */}
       <div className="voter-result-quote">
-        <p>{rationale}</p>
+        <p>{replacedRationale}</p>
       </div>
 
       {/* Vote Indicator */}

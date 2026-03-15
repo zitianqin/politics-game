@@ -33,6 +33,7 @@ export default function VoterResultsReveal({
   useEffect(() => {
     if (!isAnimating) {
       setCurrentVoterIndex(-1);
+      setIsTransitioning(false);
       return;
     }
 
@@ -42,17 +43,30 @@ export default function VoterResultsReveal({
     const showNextVoter = () => {
       if (voterIndex < voters.length) {
         setCurrentVoterIndex(voterIndex);
+        setIsTransitioning(false); // Reset transition state
+        // Trigger animation by setting isTransitioning after component renders
+        setTimeout(() => setIsTransitioning(true), 50);
         voterIndex++;
         setTimeout(showNextVoter, secondsPerVoter);
       } else {
         // All voters shown
         setCurrentVoterIndex(-1);
+        setIsTransitioning(false);
         onComplete?.();
       }
     };
 
     showNextVoter();
   }, [isAnimating, voters.length, secondsPerVoter, onComplete]);
+
+  // Also handle transition state when currentVoterIndex changes
+  useEffect(() => {
+    if (currentVoterIndex >= 0) {
+      setIsTransitioning(false);
+      const transitionTimer = setTimeout(() => setIsTransitioning(true), 50);
+      return () => clearTimeout(transitionTimer);
+    }
+  }, [currentVoterIndex]);
 
   if (currentVoterIndex < 0 || currentVoterIndex >= voters.length) {
     return null;
@@ -63,6 +77,7 @@ export default function VoterResultsReveal({
     voter.votedFor === "p1" ? p1Name : p2Name,
     voter.votedFor === "p1" ? 1 : 2
   );
+
   const tilt = currentVoterIndex % 2 === 0 ? -2 : 2; // Alternate tilt
 
   return (
@@ -74,8 +89,10 @@ export default function VoterResultsReveal({
         votedFor={voter.votedFor}
         candidateName={candidateName}
         rationale={voter.rationale}
-        isVisible={true}
+        isVisible={isTransitioning}
         tilt={tilt}
+        p1CandidateName={p1Name}
+        p2CandidateName={p2Name}
       />
     </div>
   );

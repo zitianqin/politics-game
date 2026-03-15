@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect } from "react";
 import { ScreenId, TOTAL_ROUNDS, formatScorecardName } from "../lib/gameConstants";
 
 interface ScreenRevealProps {
@@ -23,6 +26,11 @@ export default function ScreenReveal({
   p1Name = "Player 1",
   p2Name = "Player 2",
 }: ScreenRevealProps) {
+  useEffect(() => {
+    const audio = new Audio("/sound-effects/confetti.mp3");
+    audio.play().catch(() => {});
+  }, []);
+
   return (
     <div
       id="screen-reveal"
@@ -36,9 +44,9 @@ export default function ScreenReveal({
         <div className="bar-wrapper">
           <div
             className="avatar"
-            style={{ fontSize: "60px", width: "100px", height: "100px" }}
+            style={{ width: "100px", height: "100px", overflow: "visible", borderRadius: "12px", position: "relative" }}
           >
-            🦄
+            <img src="/P1.png" alt="P1" style={{ position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)", height: "150%", width: "auto", objectFit: "contain", filter: "drop-shadow(0 -3px 8px rgba(0,0,0,0.5))" }} />
           </div>
           <div
             className="bar p1-bar"
@@ -63,9 +71,9 @@ export default function ScreenReveal({
         <div className="bar-wrapper">
           <div
             className="avatar"
-            style={{ fontSize: "60px", width: "100px", height: "100px" }}
+            style={{ width: "100px", height: "100px", overflow: "visible", borderRadius: "12px", position: "relative" }}
           >
-            🦖
+            <img src="/P2.png" alt="P2" style={{ position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)", height: "150%", width: "auto", objectFit: "contain", filter: "drop-shadow(0 -3px 8px rgba(0,0,0,0.5))" }} />
           </div>
           <div
             className="bar p2-bar"

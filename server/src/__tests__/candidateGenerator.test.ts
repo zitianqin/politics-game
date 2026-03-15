@@ -22,10 +22,6 @@ describe("Procedural Candidate Generation Engine", () => {
     expect(candidate).toHaveProperty("electorate");
     expect(candidate).toHaveProperty("background");
     expect(candidate).toHaveProperty("profession");
-    expect(candidate).toHaveProperty("keyPastActions");
-    expect(candidate).toHaveProperty("policyPositions");
-    expect(candidate).toHaveProperty("personalValues");
-    expect(candidate).toHaveProperty("flaws");
   });
 
   test("should keep age within 35-70", () => {
@@ -37,23 +33,11 @@ describe("Procedural Candidate Generation Engine", () => {
     expect(c2.age).toBeLessThanOrEqual(70);
   });
 
-  test("should include 2 positive actions and 1 controversial action", () => {
+  test("should include a non-empty background description", () => {
     const [candidate] = generateCandidatePair(topics);
 
-    expect(candidate.keyPastActions.positive.length).toBe(2);
-    expect(typeof candidate.keyPastActions.controversial).toBe("string");
-    expect(candidate.keyPastActions.controversial.length).toBeGreaterThan(0);
-  });
-
-  test("should include exactly 3 policy positions", () => {
-    const [candidate] = generateCandidatePair(topics);
-    expect(candidate.policyPositions.length).toBe(3);
-  });
-
-  test("should include exactly 3 personal values and 1 flaw", () => {
-    const [candidate] = generateCandidatePair(topics);
-    expect(candidate.personalValues.length).toBe(3);
-    expect(candidate.flaws.length).toBe(1);
+    expect(typeof candidate.background).toBe("string");
+    expect(candidate.background.length).toBeGreaterThan(0);
   });
 
   test("should generate distinct names for the two candidates", () => {

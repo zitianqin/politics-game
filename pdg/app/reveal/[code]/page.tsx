@@ -15,13 +15,6 @@ interface CandidateProfile {
   electorate: string;
   background: string;
   profession: string;
-  keyPastActions: {
-    positive: [string, string];
-    controversial: string;
-  };
-  policyPositions: [string, string, string];
-  personalValues: [string, string, string];
-  flaws: [string];
 }
 
 interface GamePlayer {
@@ -53,7 +46,7 @@ export default function RevealPage({
       ? undefined
       : players.find(
           (p) =>
-            p.slot === (sessionStorage.getItem("isHost") === "true" ? 1 : 2),
+            p.slot === (sessionStorage.getItem("isHost") === "true" ? 1 : 2)
         );
     const me = meById ?? meBySlot;
 
@@ -79,7 +72,7 @@ export default function RevealPage({
           setSelectedVoters(data.voters.slice(0, 5));
         } else {
           setSelectedVoters(
-            [...votersData].sort(() => Math.random() - 0.5).slice(0, 5),
+            [...votersData].sort(() => Math.random() - 0.5).slice(0, 5)
           );
         }
 
@@ -94,7 +87,7 @@ export default function RevealPage({
       .catch((err) => {
         console.error("Failed to fetch voters", err);
         setSelectedVoters(
-          [...votersData].sort(() => Math.random() - 0.5).slice(0, 5),
+          [...votersData].sort(() => Math.random() - 0.5).slice(0, 5)
         );
       });
 
@@ -176,18 +169,18 @@ export default function RevealPage({
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-7xl flex justify-between items-center mb-6"
+        className="w-full max-w-7xl flex justify-between items-stretch mb-12"
       >
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center w-full">
-          <div className="bg-[#FFEB3B] px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000] w-full sm:w-auto text-center">
-            <h1 className="font-['Titan_One'] text-xl sm:text-3xl text-black break-words">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center w-full h-full">
+          <div className="bg-[#FFEB3B] px-4 sm:px-6 sm:py-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex items-center justify-center w-full sm:w-auto min-h-[90px] h-full">
+            <h2 className="font-['Titan_One'] text-black break-words text-center">
               ROOM CODE: {code.toUpperCase()}
-            </h1>
+            </h2>
           </div>
 
-          <div className="bg-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000] flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto text-center">
-            <h2 className="font-['Titan_One'] text-lg sm:text-2xl text-red-600">
-              DEBATE STARTS IN: {countdown}s
+          <div className="bg-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto min-h-[90px] h-full">
+            <h2 className="font-['Titan_One'] text-black text-center sm:text-left whitespace-nowrap">
+              ⏰ STARTS IN: {countdown}s
             </h2>
 
             <button
@@ -196,12 +189,14 @@ export default function RevealPage({
                 getSocket().emit("reveal:done", { code, playerId });
               }}
               disabled={isReady}
-              className={`${isReady ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"} 
-              text-white font-['Titan_One'] px-4 py-2 rounded-lg border-2 border-black 
-              shadow-[2px_2px_0_0_#000] transition-transform 
-              active:translate-x-[1px] active:translate-y-[1px] 
-              active:shadow-[1px_1px_0_0_#000] text-sm flex items-center justify-center gap-2
-              w-full sm:w-auto`}
+              className={`${
+                isReady
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_#000]"
+              } 
+              text-black font-['Titan_One'] px-6 rounded-lg border-3 border-black 
+              shadow-[4px_4px_0_0_#000] transition-all text-base sm:text-lg
+              flex items-center justify-center gap-2 whitespace-nowrap sm:h-full min-h-[50px]`}
             >
               {isReady ? `WAITING... (${otherReadyCount}/2)` : "READY!"}
             </button>
@@ -209,20 +204,20 @@ export default function RevealPage({
         </div>
       </motion.div>
 
-      <motion.h2
+      <motion.h1
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", bounce: 0.4 }}
-        className="text-5xl text-white font-['Titan_One'] drop-shadow-[4px_4px_0_rgba(0,0,0,1)] mb-6"
+        className="text-white font-['Titan_One'] mb-6 [-webkit-text-stroke:1px_black]"
       >
         CANDIDATE BRIEFING
-      </motion.h2>
+      </motion.h1>
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10"
+        className="mb-18 w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10"
       >
         {[myCandidate, opponentCandidate].map((candidate, idx) => (
           <div
@@ -230,67 +225,55 @@ export default function RevealPage({
             className="mt-4 bg-white rounded-xl border-4 border-black p-5 shadow-[4px_4px_0_0_#000]"
           >
             <div
-              className={`-mx-5 -mt-5 mb-4 px-5 py-3 border-b-4 border-black ${idx === 0 ? "bg-[#0AA0FF]" : "bg-[#E31B23]"}`}
+              className={`-mx-5 -mt-5 mb-4 px-5 py-3 border-b-4 border-black ${
+                idx === 0 ? "bg-[#0AA0FF]" : "bg-[#E31B23]"
+              }`}
             >
-              <h3 className="font-['Titan_One'] text-2xl text-white drop-shadow-[2px_2px_0_#000]">
+              <h2 className="font-['Titan_One'] text-3xl text-white [-webkit-text-stroke:1px_black] ">
                 {idx === 0 ? "YOUR CANDIDATE" : "OPPONENT CANDIDATE"}
-              </h3>
+              </h2>
             </div>
 
             {candidate ? (
-              <div className="space-y-3 text-sm text-black font-['Nunito']">
+              <div className="text-sm text-black font-['Nunito']">
                 <div>
                   <p className="font-['Titan_One'] text-2xl leading-tight">
                     {candidate.fullName}
                   </p>
-                  <p className="font-bold text-gray-700">
+                  <p className="font-bold text-gray-700 text-xl">
                     {candidate.age} • {candidate.profession} •{" "}
                     {candidate.electorate}
                   </p>
-                  <p className="inline-block mt-1 bg-black text-white px-2 py-1 rounded text-xs font-black uppercase">
+                  <div className="inline-block bg-black text-white px-2 py-1 rounded text-lg font-black uppercase">
                     {candidate.partyName}
-                  </p>
+                  </div>
                 </div>
-
-                <p className="text-gray-800">{candidate.background}</p>
-
+                <p className="text-gray-800 text-lg">{candidate.background}</p>
+                {/* 
                 <div>
-                  <p className="font-black text-gray-600 text-xs mb-1">
-                    KEY PAST ACTIONS
-                  </p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>{candidate.keyPastActions.positive[0]}</li>
-                    <li>{candidate.keyPastActions.positive[1]}</li>
-                    <li className="text-[#B00020]">
-                      {candidate.keyPastActions.controversial}
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="font-black text-gray-600 text-xs mb-1">
+                  <p className="font-black text-gray-600 text-lg mb-1">
                     POLICY POSITIONS
                   </p>
-                  <ul className="list-disc pl-5 space-y-1">
+                  <ul className="list-disc pl-5 space-y-1 text-lg">
                     {candidate.policyPositions.map((policy, policyIdx) => (
                       <li key={policyIdx}>{policy}</li>
                     ))}
                   </ul>
-                </div>
+                </div> */}
 
-                <div className="flex flex-wrap gap-2 pt-1">
+                {/* <div className="flex flex-wrap gap-2 pt-1">
                   {candidate.personalValues.map((value, valueIdx) => (
                     <span
                       key={valueIdx}
-                      className="bg-[#FFEB3B] border-2 border-black px-2 py-0.5 rounded-full text-xs font-black uppercase"
+                      className="bg-[#FFEB3B] border-2 border-black px-2 py-0.5 rounded-full text-lg font-black uppercase"
                     >
                       {value}
                     </span>
                   ))}
-                  <span className="bg-[#FFE0E0] border-2 border-black px-2 py-0.5 rounded-full text-xs font-black uppercase text-[#B00020]">
+                  <span className="bg-[#FFE0E0] border-2 border-black px-2 py-0.5 rounded-full text-lg font-black uppercase text-[#B00020]">
                     {candidate.flaws[0]}
                   </span>
-                </div>
+                </div> */}
               </div>
             ) : (
               <p className="font-['Nunito'] text-gray-600">
@@ -301,14 +284,14 @@ export default function RevealPage({
         ))}
       </motion.div>
 
-      <motion.h2
+      <motion.h1
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", bounce: 0.5 }}
-        className="text-6xl text-white font-['Titan_One'] drop-shadow-[4px_4px_0_rgba(0,0,0,1)] mb-8"
+        className="text-white font-['Titan_One'] mb-6 [-webkit-text-stroke:1px_black]"
       >
         THE JURY (5 VOTERS)
-      </motion.h2>
+      </motion.h1>
 
       <motion.div
         initial={{ opacity: 0, y: 50 }}
@@ -319,37 +302,40 @@ export default function RevealPage({
         {selectedVoters.map((voter) => (
           <div
             key={voter.id}
-            className="bg-white rounded-xl border-4 border-black p-4 flex flex-col relative shadow-[4px_4px_0_0_#000] overflow-hidden mt-4"
+            className="mt-4 bg-white rounded-xl border-4 border-black p-5 shadow-[4px_4px_0_0_#000]"
           >
             <div
-              className="absolute top-0 left-0 right-0 h-10 border-b-4 border-black flex items-center px-4"
+              className="-mx-5 -mt-5 px-5 py-3 border-b-4 border-black"
               style={{
                 backgroundColor:
                   voter.lean === "CONSERVATIVE"
                     ? "#005696"
                     : voter.lean === "PROGRESSIVE"
-                      ? "#3B9E3A"
-                      : voter.lean === "CENTRE"
-                        ? "#808080"
-                        : "#E06B26",
+                    ? "#3B9E3A"
+                    : voter.lean === "CENTRE"
+                    ? "#808080"
+                    : "#E06B26",
               }}
             >
-              <span className="font-['Titan_One'] text-white text-lg drop-shadow-[2px_2px_0_#000]">
-                {voter.name.toUpperCase()}
-              </span>
+              <h2 className="font-['Titan_One'] text-3xl text-white [-webkit-text-stroke:1px_black] ">
+                {voter.lean}
+              </h2>
             </div>
 
-            <div className="mt-8 flex justify-between items-start gap-4 mb-3">
-              <div className="flex-1 pt-2">
-                <p className="font-['Nunito'] text-sm font-bold text-gray-500 mb-1">
+            <div className="flex justify-between items-start gap-4 mb-3">
+              <div className="flex-1">
+                <p className="font-['Titan_One'] text-2xl leading-tight">
+                  {voter.name}
+                </p>
+                <p className="font-['Nunito'] text-xl font-bold text-gray-500 mb-1">
                   {voter.age} • {voter.location}
                 </p>
-                <div className="bg-[#008080] inline-block px-2 py-1 rounded text-xs font-['Nunito'] font-black text-white shrink-0 mb-2">
+                <div className="bg-[#008080] inline-block px-2 py-1 rounded text-lg font-['Nunito'] font-black text-white shrink-0 mb-2">
                   {voter.occupation.toUpperCase()}
                 </div>
               </div>
 
-              <div className="w-[60px] h-[60px] bg-gray-200 border-2 border-black rounded shrink-0 relative overflow-hidden">
+              <div className="mt-6 w-[60px] h-[60px] bg-gray-200 border-2 border-black rounded shrink-0 relative overflow-hidden">
                 <PixelPortrait
                   lean={voter.lean}
                   style={voter.reasoningStyle}
@@ -359,17 +345,17 @@ export default function RevealPage({
               </div>
             </div>
 
-            <p className="font-['Georgia'] italic text-sm text-gray-700 leading-tight mb-4 flex-1">
+            <p className="font-['Georgia'] italic text-lg text-gray-700 leading-tight mb-4 flex-1">
               &quot;{voter.background}&quot;
             </p>
 
             <div className="border-t-2 border-dashed border-gray-300 pt-3">
-              <div className="flex flex-wrap gap-2 text-xs font-['Nunito'] font-black">
+              <div className="flex flex-wrap gap-3 text-lg font-['Nunito'] font-black items-center">
                 <span className="text-gray-500">CARES ABOUT:</span>
                 {voter.concerns.map((concern, idx) => (
                   <span
                     key={idx}
-                    className="bg-red-100 text-[#E31B23] px-2 py-0.5 rounded-full"
+                    className="bg-red-100 border-2 border-black text-[#E31B23] px-2 py-0.5 rounded-full"
                   >
                     {concern}
                   </span>

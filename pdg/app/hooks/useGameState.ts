@@ -24,6 +24,8 @@ export function useGameState(gameCodeFromUrl?: string) {
   const [p1TotalVotes, setP1TotalVotes] = useState(0);
   const [p2TotalVotes, setP2TotalVotes] = useState(0);
 
+  const [partyMode, setPartyModeState] = useState(false);
+
   // Server-driven debate state
   const [currentTopic, setCurrentTopic] = useState("");
   const [currentSpeaker, setCurrentSpeaker] = useState<1 | 2>(1);
@@ -98,6 +100,11 @@ export function useGameState(gameCodeFromUrl?: string) {
     const socket = getSocket();
     socketListenersAttached.current = true;
 
+    // Set tab name to party mode/normal mode
+    socket.on("game:partyMode", (data: { isPartyMode: boolean }) => {
+      setPartyModeState(data.isPartyMode);
+    });
+
     // Round start: set topic, show topic screen
     socket.on("round:start", (data: { roundNumber: number; topic: string }) => {
       setCurrentRound(data.roundNumber);
@@ -112,17 +119,20 @@ export function useGameState(gameCodeFromUrl?: string) {
     });
 
     // Debate phase begins
-    socket.on("round:debate", (data: { activePlayer: 1 | 2; startTime?: number }) => {
-      setCurrentSpeaker(data.activePlayer);
-      setP1RoundTimeRemaining(60);
-      setP2RoundTimeRemaining(60);
-      setLiveTranscript([]);
-      setRoundStartTime(data.startTime ?? Date.now());
-      audioChunksRef.current = [];
-      currentP1ArgRef.current = "";
-      currentP2ArgRef.current = "";
-      setScreen("debate");
-    });
+    socket.on(
+      "round:debate",
+      (data: { activePlayer: 1 | 2; startTime?: number }) => {
+        setCurrentSpeaker(data.activePlayer);
+        setP1RoundTimeRemaining(60);
+        setP2RoundTimeRemaining(60);
+        setLiveTranscript([]);
+        setRoundStartTime(data.startTime ?? Date.now());
+        audioChunksRef.current = [];
+        currentP1ArgRef.current = "";
+        currentP2ArgRef.current = "";
+        setScreen("debate");
+      }
+    );
 
     // Server timer ticks (every 500ms)
     socket.on(
@@ -195,6 +205,11 @@ export function useGameState(gameCodeFromUrl?: string) {
       setIsInterimResults(data.roundNumber < TOTAL_ROUNDS);
 
       if (data.breakdown) {
+        console.log(
+          "Voted for:",
+          data.breakdown.map((v) => v.vote)
+        ); // Debug log
+
         setVoterResults(
           data.breakdown.map((v) => ({
             name: v.voterName,
@@ -221,7 +236,6 @@ export function useGameState(gameCodeFromUrl?: string) {
         setIsNextBtnVisible(true);
       }, 3000);
     };
-
 
     socket.on("round:results", handleRoundResults);
     socket.on("game:result", handleRoundResults);
@@ -266,7 +280,12 @@ export function useGameState(gameCodeFromUrl?: string) {
         setLiveTranscript((prev) =>
           [
             ...prev,
-            { speaker: speakerNum, text: data.text, timestamp: data.timestamp, isObjection: data.isObjection },
+            {
+              speaker: speakerNum,
+              text: data.text,
+              timestamp: data.timestamp,
+              isObjection: data.isObjection,
+            },
           ].sort((a, b) => a.timestamp - b.timestamp)
         );
       }
@@ -290,6 +309,7 @@ export function useGameState(gameCodeFromUrl?: string) {
       if (p2?.candidate) setP2Candidate(p2.candidate);
       if (p1?.displayName) setP1Name(p1.displayName);
       if (p2?.displayName) setP2Name(p2.displayName);
+      if (typeof gs.isPartyMode === "boolean") setPartyModeState(gs.isPartyMode);
 
       if (gs.status === "meet_voters") {
         setScreen("voter-grid");
@@ -298,6 +318,18 @@ export function useGameState(gameCodeFromUrl?: string) {
         else setScreen("debate");
 
         setCurrentTopic(gs.topics[gs.currentRound - 1] || "");
+        if (gs.currentSpeaker === 1 || gs.currentSpeaker === 2) {
+          setCurrentSpeaker(gs.currentSpeaker);
+        }
+        if (typeof gs.p1Remaining === "number") {
+          setP1RoundTimeRemaining(gs.p1Remaining);
+        }
+        if (typeof gs.p2Remaining === "number") {
+          setP2RoundTimeRemaining(gs.p2Remaining);
+        }
+        if (typeof gs.roundStartTime === "number") {
+          setRoundStartTime(gs.roundStartTime);
+        }
 
         const rData = gs.rounds.find(
           (r: any) => r.roundNumber === gs.currentRound
@@ -347,13 +379,13 @@ export function useGameState(gameCodeFromUrl?: string) {
     });
 
     // Request full state immediately on mount
-    const gameCode =
-      gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
+    const gameCode = gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
     if (gameCode) {
       socket.emit("game:getState", { code: gameCode });
     }
 
     return () => {
+      socket.off("game:partyMode");
       socket.off("round:start");
       socket.off("round:prep");
       socket.off("round:debate");
@@ -400,6 +432,16 @@ export function useGameState(gameCodeFromUrl?: string) {
     signalRevealDone();
   }, [signalRevealDone]);
 
+  const setPartyMode = useCallback((value: boolean) => {
+    setPartyModeState(value);
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    const playerId = sessionStorage.getItem("playerId");
+    if (gameCode && playerId) {
+      socket.emit("game:partyMode", { code: gameCode, playerId, isPartyMode: value });
+    }
+  }, []);
+
   // ──────────────────────────────
   // Debate methods (emit to server)
   // ──────────────────────────────
@@ -412,10 +454,9 @@ export function useGameState(gameCodeFromUrl?: string) {
         : 0;
 
       setLiveTranscript((prev) =>
-        [
-          ...prev,
-          { speaker, text, timestamp, isObjection },
-        ].sort((a, b) => a.timestamp - b.timestamp)
+        [...prev, { speaker, text, timestamp, isObjection }].sort(
+          (a, b) => a.timestamp - b.timestamp
+        )
       );
 
       if (speaker === 1) {
@@ -428,21 +469,18 @@ export function useGameState(gameCodeFromUrl?: string) {
   );
 
   // Emit objection to server
-  const handleObjection = useCallback(
-    (objectingPlayer: 1 | 2) => {
-      const socket = getSocket();
-      const gameCode = sessionStorage.getItem("gameCode");
-      if (gameCode) {
-        socket.emit("objection:raised", {
-          code: gameCode,
-          byPlayer: objectingPlayer,
-        });
-        // We no longer add a local transcript entry here.
-        // The server will broadcast a transcript:update for the OBJECTION! marker.
-      }
-    },
-    []
-  );
+  const handleObjection = useCallback((objectingPlayer: 1 | 2) => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("objection:raised", {
+        code: gameCode,
+        byPlayer: objectingPlayer,
+      });
+      // We no longer add a local transcript entry here.
+      // The server will broadcast a transcript:update for the OBJECTION! marker.
+    }
+  }, []);
 
   // Emit yield to server
   const handleYield = useCallback(() => {
@@ -466,8 +504,7 @@ export function useGameState(gameCodeFromUrl?: string) {
   const startNextRound = useCallback(() => {
     // Always signal server to advance. Server will decide if it's new round or completion.
     const socket = getSocket();
-    const gameCode =
-      gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
+    const gameCode = gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
     if (gameCode) {
       socket.emit("round:advance", { code: gameCode });
     }
@@ -508,9 +545,9 @@ export function useGameState(gameCodeFromUrl?: string) {
   let winnerLabel = "";
   if (screen === "winner") {
     if (p1TotalVotes > p2TotalVotes) {
-      winnerLabel = `🦄 ${p1Name.toUpperCase()} WINS!`;
+      winnerLabel = `${p1Name.toUpperCase()} WINS!`;
     } else if (p2TotalVotes > p1TotalVotes) {
-      winnerLabel = `🦖 ${p2Name.toUpperCase()} WINS!`;
+      winnerLabel = `${p2Name.toUpperCase()} WINS!`;
     } else {
       winnerLabel = "IT'S A TIE!!";
     }
@@ -521,6 +558,8 @@ export function useGameState(gameCodeFromUrl?: string) {
     screen,
     currentRound,
     currentPlayer,
+    partyMode,
+    setPartyMode,
 
     // Voting state
     p1TotalVotes,

@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ELECTION SHOWDOWN: Party Mode!",
+  title: "PEERSUADE",
   description: "Next.js translation",
+  icons: {
+    icon: "/speech.png",
+  },
+
 };
 
 export default function RootLayout({

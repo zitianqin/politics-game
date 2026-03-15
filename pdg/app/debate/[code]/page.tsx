@@ -8,6 +8,7 @@ import ScreenReveal from "@/app/components/ScreenReveal";
 import ScreenWinner from "@/app/components/ScreenWinner";
 import ResultsScreen from "@/app/components/ResultsScreen";
 import { useGameState } from "@/app/hooks/useGameState";
+import { useAgoraDebateVoice } from "@/app/hooks/useAgoraDebateVoice";
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/app/lib/socket";
@@ -74,7 +75,6 @@ export default function DebatePage({
 
   const router = useRouter();
 
-
   // Redirect to lobby if screen is lobby
   useEffect(() => {
     if (isHydrated && screen === "lobby") {
@@ -85,6 +85,18 @@ export default function DebatePage({
   // Determine which timer to show in HUD
   const activePlayerTime =
     currentSpeaker === 1 ? p1RoundTimeRemaining : p2RoundTimeRemaining;
+
+  // Extract candidate full names for voting results display
+  const p1CandidateName = p1Candidate?.fullName || p1Name;
+  const p2CandidateName = p2Candidate?.fullName || p2Name;
+  const { status: voiceStatus, error: voiceError } = useAgoraDebateVoice({
+    enabled: screen === "topic" || screen === "debate",
+    gameCode: code,
+    playerSlot: currentPlayer,
+    activeSpeaker: currentSpeaker,
+    roundNumber: currentRound,
+    debateLive: screen === "debate",
+  });
 
   return (
     <>
@@ -127,6 +139,8 @@ export default function DebatePage({
           onYield={handleYield}
           setIsRecording={setIsRecording}
           setMediaStream={setMediaStream}
+          voiceStatus={voiceStatus}
+          voiceError={voiceError}
         />
       )}
 
@@ -149,8 +163,8 @@ export default function DebatePage({
               advanceToWinner();
             }
           }}
-          p1Name={p1Name}
-          p2Name={p2Name}
+          p1Name={p1CandidateName}
+          p2Name={p2CandidateName}
         />
       )}
 
@@ -161,8 +175,8 @@ export default function DebatePage({
           p1TotalVotes={p1TotalVotes}
           p2TotalVotes={p2TotalVotes}
           resetGame={resetGame}
-          p1Name={p1Name}
-          p2Name={p2Name}
+          p1Name={p1CandidateName}
+          p2Name={p2CandidateName}
         />
       )}
 
@@ -171,8 +185,8 @@ export default function DebatePage({
           currentRound={currentRound}
           isInterim={isInterimResults}
           voters={voterResults}
-          p1Name={p1Candidate?.name || "Player 1"}
-          p2Name={p2Candidate?.name || "Player 2"}
+          p1Name={p1CandidateName}
+          p2Name={p2CandidateName}
           p1TotalVotes={p1TotalVotes}
           p2TotalVotes={p2TotalVotes}
           onContinue={advanceToBars}

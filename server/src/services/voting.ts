@@ -3,7 +3,8 @@ import { Player, RoundState } from "../state/gameState";
 
 const GEMINI_FLASH_MODEL = "gemini-3.1-flash-lite-preview";
 const GEMINI_PRO_MODEL = "gemini-3.1-pro-preview";
-const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_ENDPOINT =
+  "https://generativelanguage.googleapis.com/v1beta/models";
 
 const PERPLEXITY_ENDPOINT = "https://api.perplexity.ai/chat/completions";
 const PERPLEXITY_MODEL = "sonar";
@@ -23,6 +24,8 @@ export interface VotingResult {
   p1Votes: number;
   p2Votes: number;
   winner: 0 | 1 | 2;
+  p1CandidateName?: string;
+  p2CandidateName?: string;
 }
 
 function getGeminiApiKey(): string {
@@ -75,36 +78,18 @@ function formatCandidate(player: Player, label: string): string {
     ["Profession", String(c.profession ?? "")],
     ["Background", String(c.background ?? "")],
     [
-      "Key Past Actions",
-      (() => {
-        const keyActions = (c as any).keyPastActions;
-        if (!keyActions) return "";
-        const positives = Array.isArray(keyActions.positive)
-          ? keyActions.positive.join("; ")
-          : "";
-        const controversial = String(keyActions.controversial ?? "");
-        return [positives, controversial].filter(Boolean).join("; ");
-      })(),
-    ],
-    [
       "Policy Positions",
       Array.isArray((c as any).policyPositions)
         ? ((c as any).policyPositions as string[]).join("; ")
         : Array.isArray((c as any).policies)
-          ? ((c as any).policies as string[]).join("; ")
-          : String((c as any).policies ?? ""),
+        ? ((c as any).policies as string[]).join("; ")
+        : String((c as any).policies ?? ""),
     ],
     [
       "Personal Values",
       Array.isArray((c as any).personalValues)
         ? ((c as any).personalValues as string[]).join(", ")
         : String((c as any).values ?? ""),
-    ],
-    [
-      "Flaws",
-      Array.isArray((c as any).flaws)
-        ? ((c as any).flaws as string[]).join("; ")
-        : String((c as any).flaws ?? ""),
     ],
   ];
 
@@ -123,10 +108,10 @@ function formatTranscript(rounds: RoundState[]): string {
         .map((entry) => {
           const speaker =
             entry.speaker === "player1" || entry.speaker === "1"
-              ? "Candidate A (Player 1)"
+              ? "Candidate A"
               : entry.speaker === "player2" || entry.speaker === "2"
-                ? "Candidate B (Player 2)"
-                : entry.speaker;
+              ? "Candidate B"
+              : entry.speaker;
           const objection = entry.isObjectionEnd ? " [OBJECTION]" : "";
           const inaudible = entry.inaudible ? " [inaudible]" : "";
           return `[${entry.timestamp}s] ${speaker}${objection}${inaudible}: ${entry.text}`;
@@ -151,10 +136,10 @@ function buildPrompt(
   const p2 = players.find((p) => p.slot === 2);
 
   const candidateA = p1
-    ? formatCandidate(p1, "Candidate A (Player 1)")
+    ? formatCandidate(p1, "Candidate A")
     : "Candidate A: Player 1";
   const candidateB = p2
-    ? formatCandidate(p2, "Candidate B (Player 2)")
+    ? formatCandidate(p2, "Candidate B")
     : "Candidate B: Player 2";
 
   const transcript = formatTranscript(rounds);
@@ -162,11 +147,15 @@ function buildPrompt(
   const voterJsonExample = voters
     .map(
       (_, i) =>
-        `"voter_${i + 1}": { "name": "...", "vote": "Candidate A" or "Candidate B", "reason": "1-2 sentences in that voter's own voice" }`
+        `"voter_${
+          i + 1
+        }": { "name": "...", "vote": "Candidate A" or "Candidate B", "reason": "1-2 sentences in that voter's own voice" }`
     )
     .join(", ");
 
-  return `Below are the profiles of ${voters.length} Australian voters and the transcript of the CURRENT political debate round so far. For each voter, imagine you are that specific person — with their background, biases, values, and reasoning style. Decide which candidate they would vote for BASED SPECIFICALLY ON THE ARGUMENTS MADE IN THIS ROUND.
+  return `Below are the profiles of ${
+    voters.length
+  } Australian voters and the transcript of the CURRENT political debate round so far. For each voter, imagine you are that specific person — with their background, biases, values, and reasoning style. Decide which candidate they would vote for BASED SPECIFICALLY ON THE ARGUMENTS MADE IN THIS ROUND.
 
 CANDIDATES:
 
@@ -198,13 +187,26 @@ function parseVoteChoice(voteString: string): 1 | 2 {
   if (normalized.includes("candidate b") || normalized === "b") return 2;
   if (normalized.includes("player 1")) return 1;
   if (normalized.includes("player 2")) return 2;
-  console.warn(`[voting] Ambiguous vote value: "${voteString}", defaulting to 1`);
+  console.warn(
+    `[voting] Ambiguous vote value: "${voteString}", defaulting to 1`
+  );
   return 1;
+}
+
+function parseVoteChoiceWithNames(
+  voteString: string,
+  p1Name: string,
+  p2Name: string
+): 1 | 2 {
+  // Always parse as Candidate A or B since that's what the prompt uses
+  return parseVoteChoice(voteString);
 }
 
 function parseVotingResponse(
   raw: Record<string, { name: string; vote: string; reason: string }>,
-  voters: VoterProfile[]
+  voters: VoterProfile[],
+  p1Name?: string,
+  p2Name?: string
 ): VotingResult {
   const votes: VoterVote[] = [];
   let p1Votes = 0;
@@ -221,7 +223,10 @@ function parseVotingResponse(
       continue;
     }
 
-    const voteFor = parseVoteChoice(entry.vote);
+    const voteFor =
+      p1Name && p2Name
+        ? parseVoteChoiceWithNames(entry.vote, p1Name, p2Name)
+        : parseVoteChoice(entry.vote);
 
     votes.push({
       voterName: entry.name || voters[i].name,
@@ -271,7 +276,9 @@ async function callGemini(
 
   if (!response.ok) {
     const errText = await response.text();
-    throw new Error(`Gemini API error (${model}, ${response.status}): ${errText}`);
+    throw new Error(
+      `Gemini API error (${model}, ${response.status}): ${errText}`
+    );
   }
 
   const data = (await response.json()) as {
@@ -283,7 +290,9 @@ async function callGemini(
     throw new Error(`Gemini (${model}) returned no content`);
   }
 
-  console.log(`[voting] Gemini (${model}) raw response: ${jsonText.slice(0, 300)}...`);
+  console.log(
+    `[voting] Gemini (${model}) raw response: ${jsonText.slice(0, 300)}...`
+  );
   return JSON.parse(jsonText) as RawVoterResponse;
 }
 
@@ -321,9 +330,7 @@ async function callPerplexity(prompt: string): Promise<RawVoterResponse> {
     throw new Error("Perplexity returned no content");
   }
 
-  console.log(
-    `[voting] Perplexity raw response: ${content.slice(0, 300)}...`
-  );
+  console.log(`[voting] Perplexity raw response: ${content.slice(0, 300)}...`);
 
   const jsonMatch = /\{[\s\S]*\}/.exec(content);
   if (!jsonMatch) {
@@ -340,9 +347,7 @@ function validateVotingResponse(
     const key = `voter_${i + 1}`;
     const entry = parsed[key];
     if (!entry?.vote || !entry?.reason) {
-      throw new Error(
-        `Invalid or missing vote for ${key} (${voters[i].name})`
-      );
+      throw new Error(`Invalid or missing vote for ${key} (${voters[i].name})`);
     }
   }
 }
@@ -351,8 +356,15 @@ export async function runVoterSimulation(
   voters: VoterProfile[],
   players: Player[],
   rounds: RoundState[],
-  topics: string[]
+  topics: string[],
+  p1CandidateName?: string,
+  p2CandidateName?: string
 ): Promise<VotingResult> {
+  const p1 = players.find((p) => p.slot === 1);
+  const p2 = players.find((p) => p.slot === 2);
+  const p1Name = p1?.candidate?.fullName ?? p1CandidateName ?? "Player 1";
+  const p2Name = p2?.candidate?.fullName ?? p2CandidateName ?? "Player 2";
+
   const prompt = buildPrompt(voters, players, rounds, topics);
 
   console.log(
@@ -365,14 +377,18 @@ export async function runVoterSimulation(
   // 1. Gemini Flash: up to GEMINI_FLASH_ATTEMPTS
   for (let attempt = 1; attempt <= GEMINI_FLASH_ATTEMPTS; attempt++) {
     try {
-      console.log(`[voting] Gemini Flash attempt ${attempt}/${GEMINI_FLASH_ATTEMPTS}`);
+      console.log(
+        `[voting] Gemini Flash attempt ${attempt}/${GEMINI_FLASH_ATTEMPTS}`
+      );
       const raw = await callGemini(prompt, GEMINI_FLASH_MODEL);
       validateVotingResponse(raw, voters);
       parsed = raw;
       break;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      console.warn(`[voting] Gemini Flash attempt ${attempt} failed: ${lastError.message}`);
+      console.warn(
+        `[voting] Gemini Flash attempt ${attempt} failed: ${lastError.message}`
+      );
     }
   }
 
@@ -381,35 +397,45 @@ export async function runVoterSimulation(
     console.log(`[voting] Gemini Flash failed, falling back to Gemini Pro`);
     for (let attempt = 1; attempt <= GEMINI_PRO_ATTEMPTS; attempt++) {
       try {
-        console.log(`[voting] Gemini Pro attempt ${attempt}/${GEMINI_PRO_ATTEMPTS}`);
+        console.log(
+          `[voting] Gemini Pro attempt ${attempt}/${GEMINI_PRO_ATTEMPTS}`
+        );
         const raw = await callGemini(prompt, GEMINI_PRO_MODEL);
         validateVotingResponse(raw, voters);
         parsed = raw;
         break;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        console.warn(`[voting] Gemini Pro attempt ${attempt} failed: ${lastError.message}`);
+        console.warn(
+          `[voting] Gemini Pro attempt ${attempt} failed: ${lastError.message}`
+        );
       }
     }
   }
 
   // 3. Perplexity fallback
   if (!parsed) {
-    console.log(`[voting] Gemini Pro failed, falling back to Perplexity (Sonar)`);
+    console.log(
+      `[voting] Gemini Pro failed, falling back to Perplexity (Sonar)`
+    );
     try {
       const raw = await callPerplexity(prompt);
       validateVotingResponse(raw, voters);
       parsed = raw;
     } catch (err) {
       const perplexityErr = err instanceof Error ? err : new Error(String(err));
-      console.error(`[voting] Perplexity fallback also failed: ${perplexityErr.message}`);
+      console.error(
+        `[voting] Perplexity fallback also failed: ${perplexityErr.message}`
+      );
       throw new Error(
         `All LLM providers failed. Last Gemini error: ${lastError?.message}. Perplexity: ${perplexityErr.message}`
       );
     }
   }
 
-  const result = parseVotingResponse(parsed, voters);
+  const result = parseVotingResponse(parsed, voters, p1Name, p2Name);
+  result.p1CandidateName = p1CandidateName || p1Name;
+  result.p2CandidateName = p2CandidateName || p2Name;
 
   console.log(
     `[voting] Result: P1=${result.p1Votes} P2=${result.p2Votes} Winner=Player ${result.winner}`
