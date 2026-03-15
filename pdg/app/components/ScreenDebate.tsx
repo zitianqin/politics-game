@@ -580,8 +580,6 @@ export default function ScreenDebate({
           )}
           <div ref={transcriptEndRef} />
         </div>
-
-        
       </div>
 
       {/* Bottom Action Bar */}
@@ -595,7 +593,7 @@ export default function ScreenDebate({
           flexShrink: 0,
         }}
         className="sm:px-6! sm:py-4! sm:gap-3!"
-      > 
+      >
         {/* Recording indicator with waveform */}
         <span
           style={{
@@ -722,8 +720,49 @@ export default function ScreenDebate({
           🔄 YIELD
         </button>
 
+          {/* Yield Button */}
+          <button
+            onClick={onYield}
+            disabled={!isCurrentPlayerActive}
+            style={{
+              background: isCurrentPlayerActive ? "var(--p1)" : "#999",
+              color: "var(--dark)",
+              border: "3px solid var(--dark)",
+              borderRadius: "12px",
+              padding: "10px 8px",
+              fontFamily: "Titan One, cursive",
+              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontWeight: "900",
+              textTransform: "uppercase",
+              cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
+              boxShadow: isCurrentPlayerActive
+                ? "5px 5px 0 var(--dark)"
+                : "none",
+              transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
+              opacity: isCurrentPlayerActive ? 1 : 0.5,
+              letterSpacing: "1px",
+              flex: 1,
+            }}
+            onMouseDown={(e) => {
+              if (isCurrentPlayerActive) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(4px, 4px)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "2px 2px 0 var(--dark)";
+              }
+            }}
+            onMouseUp={(e) => {
+              if (isCurrentPlayerActive) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(0, 0)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "5px 5px 0 var(--dark)";
+              }
+            }}
+          >
+            🔄 YIELD
+          </button>
         </div>
-        
       </div>
 
       <style>{`
