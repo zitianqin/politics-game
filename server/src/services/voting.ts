@@ -78,18 +78,6 @@ function formatCandidate(player: Player, label: string): string {
     ["Profession", String(c.profession ?? "")],
     ["Background", String(c.background ?? "")],
     [
-      "Key Past Actions",
-      (() => {
-        const keyActions = (c as any).keyPastActions;
-        if (!keyActions) return "";
-        const positives = Array.isArray(keyActions.positive)
-          ? keyActions.positive.join("; ")
-          : "";
-        const controversial = String(keyActions.controversial ?? "");
-        return [positives, controversial].filter(Boolean).join("; ");
-      })(),
-    ],
-    [
       "Policy Positions",
       Array.isArray((c as any).policyPositions)
         ? ((c as any).policyPositions as string[]).join("; ")
@@ -102,12 +90,6 @@ function formatCandidate(player: Player, label: string): string {
       Array.isArray((c as any).personalValues)
         ? ((c as any).personalValues as string[]).join(", ")
         : String((c as any).values ?? ""),
-    ],
-    [
-      "Flaws",
-      Array.isArray((c as any).flaws)
-        ? ((c as any).flaws as string[]).join("; ")
-        : String((c as any).flaws ?? ""),
     ],
   ];
 
