@@ -596,65 +596,6 @@ export default function ScreenDebate({
           )}
         </button>
 
-        {/* Speak/Record Button */}
-        <button
-          onClick={() => {
-            if (isCurrentPlayerActive) {
-              if (isRecording) {
-                stopRecording();
-              } else {
-                startRecording(currentRound, currentTopic);
-              }
-            }
-          }}
-          disabled={!isCurrentPlayerActive}
-          style={{
-            background: isCurrentPlayerActive
-              ? isRecording
-                ? "var(--p2)"
-                : "var(--green)"
-              : "#999",
-            color: "var(--dark)",
-            border: "3px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 8px",
-            fontFamily: "Titan One, cursive",
-            fontSize: "clamp(11px, 2.8vw, 20px)",
-            fontWeight: "900",
-            textTransform: "uppercase",
-            cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
-            boxShadow:
-              isCurrentPlayerActive && !isRecording
-                ? "8px 8px 0 var(--dark)"
-                : isCurrentPlayerActive && isRecording
-                  ? "8px 8px 0 var(--p2)"
-                  : "none",
-            transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-            opacity: isCurrentPlayerActive ? 1 : 0.5,
-            letterSpacing: "1px",
-            flex: 1,
-          }}
-          onMouseDown={(e) => {
-            if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(4px, 4px)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "2px 2px 0 var(--dark)";
-            }
-          }}
-          onMouseUp={(e) => {
-            if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(0, 0)";
-              (e.target as HTMLButtonElement).style.boxShadow = isRecording
-                ? "5px 5px 0 var(--p2)"
-                : "5px 5px 0 var(--dark)";
-            }
-          }}
-        >
-          {isRecording ? "🔵 STOP" : "🎤 SPEAK"}
-        </button>
-
         {/* Yield Button */}
         <button
           onClick={onYield}
