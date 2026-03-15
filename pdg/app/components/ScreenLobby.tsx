@@ -21,6 +21,7 @@ export default function ScreenLobby({
   onNameChange,
 }: ScreenLobbyProps) {
   const bothPlayersConnected = playersConnected === 2;
+  const canTogglePartyMode = isHost;
   const [copied, setCopied] = useState(false);
   const [playerName, setPlayerName] = useState(() => {
     if (typeof globalThis.window !== "undefined") {
@@ -184,6 +185,11 @@ export default function ScreenLobby({
               >
                 Fun questions only — like "is pineapple on pizza good?" 🍕
               </div>
+              {!isHost && (
+                <div className="text-[11px] mt-1 font-black uppercase" style={{ color: "#9ca3af" }}>
+                  room creator only
+                </div>
+              )}
             </div>
 
             {/* Toggle */}
@@ -191,7 +197,12 @@ export default function ScreenLobby({
               type="button"
               role="switch"
               aria-checked={partyMode}
-              onClick={() => setPartyMode((p) => !p)}
+              aria-disabled={!canTogglePartyMode}
+              disabled={!canTogglePartyMode}
+              onClick={() => {
+                if (!canTogglePartyMode) return;
+                setPartyMode((p) => !p);
+              }}
               className="flex-shrink-0 relative transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
               style={{
                 width: "52px",
@@ -200,7 +211,8 @@ export default function ScreenLobby({
                 background: partyMode ? "#FFD700" : "#d1d5db",
                 border: "3px solid var(--dark)",
                 boxShadow: "3px 3px 0 var(--dark)",
-                cursor: "pointer",
+                cursor: canTogglePartyMode ? "pointer" : "not-allowed",
+                opacity: canTogglePartyMode ? 1 : 0.6,
                 padding: 0,
                 transition: "background 0.2s, box-shadow 0.1s",
               }}

@@ -59,6 +59,8 @@ export default function ScreenDebate({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number>(0);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const waveformCanvasRef = useRef<HTMLCanvasElement>(null);
   // Ref-based flag: set before getUserMedia resolves so stopRecording() can
   // cancel an in-flight startRecording() before it ever opens the mic.
   const shouldRecordRef = useRef(false);
@@ -96,6 +98,7 @@ export default function ScreenDebate({
   // closures. Safe to call multiple times (idempotent).
   const stopRecording = useCallback(() => {
     shouldRecordRef.current = false;
+    mediaStreamRef.current = null;
     if (mediaRecorderRef.current) {
       try {
         mediaRecorderRef.current.stop();
@@ -150,6 +153,7 @@ export default function ScreenDebate({
 
         mediaRecorder.start();
         mediaRecorderRef.current = mediaRecorder;
+        mediaStreamRef.current = stream;
         setIsRecording(true);
         setIsRecordingGlobal(true);
         setMediaStream(stream);
@@ -179,6 +183,71 @@ export default function ScreenDebate({
     startRecording,
     stopRecording,
   ]);
+
+  // Waveform visualization when recording
+  useEffect(() => {
+    if (!isRecording || !mediaStreamRef.current || !waveformCanvasRef.current)
+      return;
+    const stream = mediaStreamRef.current;
+    const canvas = waveformCanvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.8;
+    source.connect(analyser);
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    let animationId: number;
+    const draw = () => {
+      animationId = requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(dataArray);
+
+      const w = 50;
+      const h = 18;
+      const barCount = 8;
+      const barWidth = 5;
+      const gap = (w - barCount * barWidth) / (barCount - 1);
+
+      ctx.clearRect(0, 0, w, h);
+
+      for (let i = 0; i < barCount; i++) {
+        const dataIndex = Math.floor((i / barCount) * bufferLength);
+        const value = dataArray[dataIndex] ?? 0;
+        const barHeight = Math.max(3, (value / 255) * h * 0.9);
+        const x = i * (barWidth + gap);
+        const y = (h - barHeight) / 2;
+
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.roundRect(x, y, barWidth, barHeight, 2);
+        ctx.fill();
+      }
+    };
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animationId);
+      source.disconnect();
+      audioContext.close();
+    };
+  }, [isRecording]);
 
   const sendAudioForTranscription = async (
     audioBlob: Blob,
@@ -591,169 +660,141 @@ export default function ScreenDebate({
         style={{
           padding: "8px 10px",
           display: "flex",
-          justifyContent: "space-between",
+          flexDirection: "column",
           alignItems: "center",
           gap: "8px",
           flexShrink: 0,
         }}
         className="sm:px-6! sm:py-4! sm:gap-3!"
       >
-        {/* Objection Button */}
-        <button
-          onClick={handleObjection}
-          disabled={!canObjection}
+        {/* Recording indicator with waveform */}
+        <span
           style={{
-            background: canObjection ? "var(--red)" : "#999",
-            color: canObjection ? "black" : "rgba(0, 0, 0, 0.5)",
-            border: "3px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 8px",
-            fontFamily: "Titan One, cursive",
-            fontSize: "clamp(11px, 2.8vw, 20px)",
-            fontWeight: "900",
-            textTransform: "uppercase",
-            cursor: canObjection ? "pointer" : "not-allowed",
-            boxShadow: canObjection ? "5px 5px 0 var(--dark)" : "none",
-            transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-            opacity: canObjection ? 1 : 0.5,
-            letterSpacing: "1px",
-            flex: 1,
-            minHeight: "60px",
-            display: "flex",
-            flexDirection: "column",
+            display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-          }}
-          onMouseDown={(e) => {
-            if (canObjection) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(4px, 4px)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "2px 2px 0 var(--dark)";
-            }
-          }}
-          onMouseUp={(e) => {
-            if (canObjection) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(0, 0)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "5px 5px 0 var(--dark)";
-            }
+            gap: 8,
+            background: "var(--p2)",
+            color: "white",
+            padding: "6px 20px",
+            borderRadius: "24px",
+            fontWeight: "900",
+            fontSize: "clamp(10px, 2vw, 14px)",
+            fontFamily: "Titan One, cursive",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            lineHeight: 1,
           }}
         >
-          ⚖️ OBJECTION!
-          {!canObjection && myRemaining <= 15 && myRemaining > 0 && (
-            <div style={{ fontSize: "9px", opacity: 0.7 }}>NEED &gt;15s</div>
-          )}
-        </button>
-
-        {/* Speak/Record Button */}
-        <button
-          onClick={() => {
-            if (isCurrentPlayerActive) {
-              if (isRecording) {
-                stopRecording();
-              } else {
-                startRecording(currentRound, currentTopic);
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "white",
+              flexShrink: 0,
+              animation: "pulse 1.2s ease-in-out infinite",
+            }}
+          />
+          <canvas
+            ref={waveformCanvasRef}
+            style={{
+              width: "50px",
+              height: "18px",
+              flexShrink: 0,
+              display: "block",
+            }}
+          />
+          RECORDING
+        </span>
+        <div style={{ display: "flex", width: "100%", gap: "8px" }}>
+          {/* Objection Button */}
+          <button
+            onClick={handleObjection}
+            disabled={!canObjection}
+            style={{
+              background: canObjection ? "var(--red)" : "#999",
+              color: canObjection ? "black" : "rgba(0, 0, 0, 0.5)",
+              border: "3px solid var(--dark)",
+              borderRadius: "12px",
+              padding: "10px 8px",
+              fontFamily: "Titan One, cursive",
+              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontWeight: "900",
+              textTransform: "uppercase",
+              cursor: canObjection ? "pointer" : "not-allowed",
+              boxShadow: canObjection ? "5px 5px 0 var(--dark)" : "none",
+              transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
+              opacity: canObjection ? 1 : 0.5,
+              letterSpacing: "1px",
+              flex: 1,
+            }}
+            onMouseDown={(e) => {
+              if (canObjection) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(4px, 4px)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "2px 2px 0 var(--dark)";
               }
-            }
-          }}
-          disabled={!isCurrentPlayerActive}
-          style={{
-            background: isCurrentPlayerActive
-              ? isRecording
-                ? "var(--p2)"
-                : "var(--green)"
-              : "#999",
-            color: "var(--dark)",
-            border: "3px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 8px",
-            fontFamily: "Titan One, cursive",
-            fontSize: "clamp(11px, 2.8vw, 20px)",
-            fontWeight: "900",
-            textTransform: "uppercase",
-            cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
-            boxShadow:
-              isCurrentPlayerActive && !isRecording
-                ? "8px 8px 0 var(--dark)"
-                : isCurrentPlayerActive && isRecording
-                ? "8px 8px 0 var(--p2)"
-                : "none",
-            transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-            opacity: isCurrentPlayerActive ? 1 : 0.5,
-            letterSpacing: "1px",
-            flex: 1,
-            minHeight: "60px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onMouseDown={(e) => {
-            if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(4px, 4px)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "2px 2px 0 var(--dark)";
-            }
-          }}
-          onMouseUp={(e) => {
-            if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(0, 0)";
-              (e.target as HTMLButtonElement).style.boxShadow = isRecording
-                ? "5px 5px 0 var(--p2)"
-                : "5px 5px 0 var(--dark)";
-            }
-          }}
-        >
-          {isRecording ? "🔵 STOP" : "🎤 SPEAK"}
-        </button>
+            }}
+            onMouseUp={(e) => {
+              if (canObjection) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(0, 0)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "5px 5px 0 var(--dark)";
+              }
+            }}
+          >
+            ⚖️ OBJECTION!
+            {!canObjection && myRemaining <= 15 && myRemaining > 0 && (
+              <div style={{ fontSize: "9px", opacity: 0.7 }}>NEED &gt;15s</div>
+            )}
+          </button>
 
-        {/* Yield Button */}
-        <button
-          onClick={onYield}
-          disabled={!isCurrentPlayerActive}
-          style={{
-            background: isCurrentPlayerActive ? "var(--p1)" : "#999",
-            color: "var(--dark)",
-            border: "3px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 8px",
-            fontFamily: "Titan One, cursive",
-            fontSize: "clamp(11px, 2.8vw, 20px)",
-            fontWeight: "900",
-            textTransform: "uppercase",
-            cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
-            boxShadow: isCurrentPlayerActive ? "5px 5px 0 var(--dark)" : "none",
-            transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-            opacity: isCurrentPlayerActive ? 1 : 0.5,
-            letterSpacing: "1px",
-            flex: 1,
-            minHeight: "60px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onMouseDown={(e) => {
-            if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(4px, 4px)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "2px 2px 0 var(--dark)";
-            }
-          }}
-          onMouseUp={(e) => {
-            if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(0, 0)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "5px 5px 0 var(--dark)";
-            }
-          }}
-        >
-          🔄 YIELD
-        </button>
+          {/* Yield Button */}
+          <button
+            onClick={onYield}
+            disabled={!isCurrentPlayerActive}
+            style={{
+              background: isCurrentPlayerActive ? "var(--p1)" : "#999",
+              color: "var(--dark)",
+              border: "3px solid var(--dark)",
+              borderRadius: "12px",
+              padding: "10px 8px",
+              fontFamily: "Titan One, cursive",
+              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontWeight: "900",
+              textTransform: "uppercase",
+              cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
+              boxShadow: isCurrentPlayerActive
+                ? "5px 5px 0 var(--dark)"
+                : "none",
+              transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
+              opacity: isCurrentPlayerActive ? 1 : 0.5,
+              letterSpacing: "1px",
+              flex: 1,
+            }}
+            onMouseDown={(e) => {
+              if (isCurrentPlayerActive) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(4px, 4px)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "2px 2px 0 var(--dark)";
+              }
+            }}
+            onMouseUp={(e) => {
+              if (isCurrentPlayerActive) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(0, 0)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "5px 5px 0 var(--dark)";
+              }
+            }}
+          >
+            🔄 YIELD
+          </button>
+        </div>
       </div>
 
       <style>{`
