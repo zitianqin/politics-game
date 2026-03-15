@@ -356,7 +356,7 @@ export default function RevealPage({
                 </div>
               </div>
 
-              <div className="w-[60px] h-[60px] bg-gray-200 border-2 border-black rounded shrink-0 relative overflow-hidden">
+              <div className="mt-6 w-[60px] h-[60px] bg-gray-200 border-2 border-black rounded shrink-0 relative overflow-hidden">
                 <PixelPortrait
                   lean={voter.lean}
                   style={voter.reasoningStyle}
