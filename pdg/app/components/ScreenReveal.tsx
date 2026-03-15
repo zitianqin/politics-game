@@ -44,9 +44,9 @@ export default function ScreenReveal({
         <div className="bar-wrapper">
           <div
             className="avatar"
-            style={{ width: "100px", height: "100px", overflow: "hidden", borderRadius: "12px" }}
+            style={{ width: "100px", height: "100px", overflow: "visible", borderRadius: "12px", position: "relative" }}
           >
-            <img src="/P1.png" alt="P1" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src="/P1.png" alt="P1" style={{ position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)", height: "150%", width: "auto", objectFit: "contain", filter: "drop-shadow(0 -3px 8px rgba(0,0,0,0.5))" }} />
           </div>
           <div
             className="bar p1-bar"
@@ -71,9 +71,9 @@ export default function ScreenReveal({
         <div className="bar-wrapper">
           <div
             className="avatar"
-            style={{ width: "100px", height: "100px", overflow: "hidden", borderRadius: "12px" }}
+            style={{ width: "100px", height: "100px", overflow: "visible", borderRadius: "12px", position: "relative" }}
           >
-            <img src="/P2.png" alt="P2" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src="/P2.png" alt="P2" style={{ position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)", height: "150%", width: "auto", objectFit: "contain", filter: "drop-shadow(0 -3px 8px rgba(0,0,0,0.5))" }} />
           </div>
           <div
             className="bar p2-bar"

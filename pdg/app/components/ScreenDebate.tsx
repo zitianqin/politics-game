@@ -34,6 +34,8 @@ interface ScreenDebateProps {
   onYield: () => void;
   setIsRecording: (value: boolean) => void;
   setMediaStream: (stream: MediaStream | null) => void;
+  voiceStatus?: "idle" | "connecting" | "connected" | "error";
+  voiceError?: string | null;
 }
 
 export default function ScreenDebate({
@@ -54,6 +56,8 @@ export default function ScreenDebate({
   onYield,
   setIsRecording: setIsRecordingGlobal,
   setMediaStream,
+  voiceStatus = "idle",
+  voiceError = null,
 }: ScreenDebateProps) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -71,6 +75,18 @@ export default function ScreenDebate({
   const myRemaining = currentPlayer === 1 ? p1TimeRemaining : p2TimeRemaining;
   const canObjection =
     !isCurrentPlayerActive && myRemaining > 15 && screen === "debate";
+  const voiceBadgeText = voiceError
+    ? "VOICE ERROR"
+    : voiceStatus === "connecting"
+    ? "VOICE CONNECTING"
+    : voiceStatus === "connected"
+    ? "VOICE LIVE"
+    : null;
+  const voiceBadgeColor = voiceError
+    ? "var(--red)"
+    : voiceStatus === "connected"
+    ? "var(--accent)"
+    : "var(--p2)";
 
   useEffect(() => {
     if (showObjectionVFX) {
@@ -573,84 +589,158 @@ export default function ScreenDebate({
           borderTop: "4px solid rgba(255,255,255,0.2)",
         }}
       >
-        {/* Objection Button */}
-        <button
-          onClick={handleObjection}
-          disabled={!canObjection}
-          className="flex-1"
-          style={{
-            fontFamily: "Titan One, cursive",
-            fontSize: "clamp(18px, 4vw, 24px)",
-            background: "var(--accent)",
-            color: "var(--dark)",
-            border: "4px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "12px 20px",
-            cursor: "pointer",
-            transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-            textTransform: "uppercase",
-            boxShadow: "4px 4px 0px var(--dark)",
-            opacity: canObjection ? 1 : 0.5,
-          }}
-          onMouseDown={(e) => {
-            if (canObjection) {
-              e.currentTarget.style.transform = "translate(4px, 4px)";
-              e.currentTarget.style.boxShadow = "0px 0px 0px var(--dark)";
-            }
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = "";
-            e.currentTarget.style.boxShadow = "4px 4px 0px var(--dark)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "";
-            e.currentTarget.style.boxShadow = "4px 4px 0px var(--dark)";
-          }}
-        >
-          Objection!
-          <br />
-          <span style={{ fontSize: "clamp(10px, 2vw, 12px)" }}>
-            (Cost: 15s)
+        {isRecording && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              background: "var(--p2)",
+              color: "white",
+              padding: "6px 20px",
+              borderRadius: "24px",
+              fontWeight: "900",
+              fontSize: "clamp(10px, 2vw, 14px)",
+              fontFamily: "Titan One, cursive",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              lineHeight: 1,
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "white",
+                flexShrink: 0,
+                animation: "pulse 1.2s ease-in-out infinite",
+              }}
+            />
+            <canvas
+              ref={waveformCanvasRef}
+              style={{
+                width: "50px",
+                height: "18px",
+                flexShrink: 0,
+                display: "block",
+              }}
+            />
+            RECORDING
           </span>
-        </button>
+        )}
 
-        {/* Yield Button */}
-        <button
-          onClick={onYield}
-          disabled={!isCurrentPlayerActive}
-          className="flex-1"
-          style={{
-            fontFamily: "Titan One, cursive",
-            fontSize: "clamp(18px, 4vw, 24px)",
-            background: isCurrentPlayerActive ? "var(--green)" : "#555",
-            color: "var(--dark)",
-            border: "4px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "12px 20px",
-            cursor: "pointer",
-            transition:
-              "transform 0.1s, box-shadow 0.1s, background-color 0.2s",
-            textTransform: "uppercase",
-            boxShadow: "4px 4px 0px var(--dark)",
-            opacity: isCurrentPlayerActive ? 1 : 0.5,
-          }}
-          onMouseDown={(e) => {
-            if (isCurrentPlayerActive) {
-              e.currentTarget.style.transform = "translate(4px, 4px)";
-              e.currentTarget.style.boxShadow = "0px 0px 0px var(--dark)";
-            }
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = "";
-            e.currentTarget.style.boxShadow = "4px 4px 0px var(--dark)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "";
-            e.currentTarget.style.boxShadow = "4px 4px 0px var(--dark)";
-          }}
-        >
-          Yield Floor
-        </button>
+        {voiceBadgeText && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: voiceBadgeColor,
+              color: "white",
+              padding: "6px 14px",
+              borderRadius: "24px",
+              fontWeight: "900",
+              fontSize: "clamp(10px, 2vw, 14px)",
+              fontFamily: "Titan One, cursive",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              lineHeight: 1,
+            }}
+          >
+            {voiceBadgeText}
+          </span>
+        )}
+
+        <div style={{ display: "flex", width: "100%", gap: "8px" }}>
+          {/* Objection Button */}
+          <button
+            onClick={handleObjection}
+            disabled={!canObjection}
+            style={{
+              background: canObjection ? "var(--red)" : "#999",
+              color: canObjection ? "black" : "rgba(0, 0, 0, 0.5)",
+              border: "3px solid var(--dark)",
+              borderRadius: "12px",
+              padding: "10px 8px",
+              fontFamily: "Titan One, cursive",
+              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontWeight: "900",
+              textTransform: "uppercase",
+              cursor: canObjection ? "pointer" : "not-allowed",
+              boxShadow: canObjection ? "5px 5px 0 var(--dark)" : "none",
+              transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
+              opacity: canObjection ? 1 : 0.5,
+              letterSpacing: "1px",
+              flex: 1,
+            }}
+            onMouseDown={(e) => {
+              if (canObjection) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(4px, 4px)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "2px 2px 0 var(--dark)";
+              }
+            }}
+            onMouseUp={(e) => {
+              if (canObjection) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(0, 0)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "5px 5px 0 var(--dark)";
+              }
+            }}
+          >
+            ⚖️ OBJECTION!
+            {!canObjection && myRemaining <= 15 && myRemaining > 0 && (
+              <div style={{ fontSize: "9px", opacity: 0.7 }}>NEED &gt;15s</div>
+            )}
+          </button>
+
+          {/* Yield Button */}
+          <button
+            onClick={onYield}
+            disabled={!isCurrentPlayerActive}
+            style={{
+              background: isCurrentPlayerActive ? "var(--p1)" : "#999",
+              color: "var(--dark)",
+              border: "3px solid var(--dark)",
+              borderRadius: "12px",
+              padding: "10px 8px",
+              fontFamily: "Titan One, cursive",
+              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontWeight: "900",
+              textTransform: "uppercase",
+              cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
+              boxShadow: isCurrentPlayerActive
+                ? "5px 5px 0 var(--dark)"
+                : "none",
+              transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
+              opacity: isCurrentPlayerActive ? 1 : 0.5,
+              letterSpacing: "1px",
+              flex: 1,
+            }}
+            onMouseDown={(e) => {
+              if (isCurrentPlayerActive) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(4px, 4px)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "2px 2px 0 var(--dark)";
+              }
+            }}
+            onMouseUp={(e) => {
+              if (isCurrentPlayerActive) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(0, 0)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "5px 5px 0 var(--dark)";
+              }
+            }}
+          >
+            🔄 YIELD
+          </button>
+        </div>
       </div>
 
       <style>{`

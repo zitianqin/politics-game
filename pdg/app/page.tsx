@@ -115,11 +115,7 @@ export default function Page() {
   if (existingGame) {
     return (
       <div className="screen active">
-        <h1 className="title-text bouncing">
-          ELECTION
-          <br />
-          SHOWDOWN
-        </h1>
+        <img src="/title.png" alt="Election Showdown" style={{ maxWidth: "680px", width: "90%", height: "auto" }} />
         <div className="flex flex-col justify-center items-center gap-8">
           <div
             style={{
@@ -159,11 +155,7 @@ export default function Page() {
   if (showJoinInput) {
     return (
       <div className="screen active">
-        <h1 className="title-text bouncing">
-          ELECTION
-          <br />
-          SHOWDOWN
-        </h1>
+        <img src="/title.png" alt="Election Showdown" style={{ maxWidth: "680px", width: "90%", height: "auto" }} />
         <div className="flex flex-col justify-center items-center gap-8">
           <div
             style={{
