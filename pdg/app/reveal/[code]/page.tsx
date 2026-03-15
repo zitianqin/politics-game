@@ -176,18 +176,18 @@ export default function RevealPage({
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-7xl flex justify-between items-center mb-6"
+        className="w-full max-w-7xl flex justify-between items-stretch mb-6"
       >
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center w-full">
-          <div className="bg-[#FFEB3B] px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000] w-full sm:w-auto text-center">
-            <h1 className="font-['Titan_One'] text-xl sm:text-3xl text-black break-words">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center w-full h-full">
+          <div className="bg-[#FFEB3B] px-4 sm:px-6 py-3 sm:py-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex items-center justify-center w-full sm:w-auto min-h-[70px]">
+            <h2 className="font-['Titan_One'] text-xl sm:text-3xl text-black break-words text-center">
               ROOM CODE: {code.toUpperCase()}
-            </h1>
+            </h2>
           </div>
 
-          <div className="bg-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000] flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto text-center">
-            <h2 className="font-['Titan_One'] text-lg sm:text-2xl text-red-600">
-              DEBATE STARTS IN: {countdown}s
+          <div className="bg-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto min-h-[70px]">
+            <h2 className="font-['Titan_One'] text-lg sm:text-2xl text-red-600 text-center sm:text-left whitespace-nowrap">
+              ⏰ STARTS IN: {countdown}s
             </h2>
 
             <button
@@ -197,13 +197,13 @@ export default function RevealPage({
               }}
               disabled={isReady}
               className={`${
-                isReady ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"
+                isReady
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_#000]"
               } 
-              text-white font-['Titan_One'] px-4 py-2 rounded-lg border-2 border-black 
-              shadow-[2px_2px_0_0_#000] transition-transform 
-              active:translate-x-[1px] active:translate-y-[1px] 
-              active:shadow-[1px_1px_0_0_#000] text-sm flex items-center justify-center gap-2
-              w-full sm:w-auto`}
+              text-black font-['Titan_One'] px-6 py-3 rounded-lg border-3 border-black 
+              shadow-[4px_4px_0_0_#000] transition-all text-base sm:text-lg
+              flex items-center justify-center gap-2 whitespace-nowrap sm:h-full min-h-[50px]`}
             >
               {isReady ? `WAITING... (${otherReadyCount}/2)` : "READY!"}
             </button>
@@ -326,7 +326,7 @@ export default function RevealPage({
             className="mt-4 bg-white rounded-xl border-4 border-black p-5 shadow-[4px_4px_0_0_#000]"
           >
             <div
-              className="-mx-5 -mt-5 mb-4 px-5 py-3 border-b-4 border-black"
+              className="-mx-5 -mt-5 px-5 py-3 border-b-4 border-black"
               style={{
                 backgroundColor:
                   voter.lean === "CONSERVATIVE"
