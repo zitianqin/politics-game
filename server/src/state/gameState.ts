@@ -78,7 +78,7 @@ export function createGame(hostId: string): GameSession {
     voters: selectVoters(),
     rounds: [],
     timerState: null,
-    topics: getRandomTopics(2),
+    topics: getRandomTopics(2, false),
     currentRound: 0,
     debatePhase: "idle",
     revealReady: [],
@@ -207,7 +207,7 @@ export function resetGameSession(code: string): GameSession | null {
   game.currentRound = 0;
   game.rounds = [];
   game.revealReady = [];
-  game.topics = getRandomTopics(2);
+  game.topics = getRandomTopics(2, false);
   game.debatePhase = "idle";
   game.timerState = null;
   game.players.forEach((player) => {
