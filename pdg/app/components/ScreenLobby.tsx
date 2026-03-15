@@ -235,15 +235,17 @@ export default function ScreenLobby({
         >
           <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 mb-3 text-center min-w-0 w-full">
             <div
-              className="avatar flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
+              className="avatar flex items-center justify-center rounded-full flex-shrink-0"
               style={{
                 background: "var(--dark)",
                 width: "48px",
                 height: "48px",
                 border: "3px solid #fff",
+                overflow: "visible",
+                position: "relative",
               }}
             >
-              <img src="/P1.png" alt="P1" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src="/P1.png" alt="P1" style={{ position: "absolute", bottom: "-4px", left: "50%", transform: "translateX(-50%)", height: "145%", width: "auto", objectFit: "contain", filter: "drop-shadow(0 -2px 6px rgba(0,0,0,0.5))" }} />
             </div>
             <div className="apply-font text-base sm:text-xl leading-tight text-center min-w-0 w-full">
               {isHost ? (
@@ -354,15 +356,17 @@ export default function ScreenLobby({
         >
           <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 mb-3 text-center min-w-0 w-full">
             <div
-              className="avatar flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
+              className="avatar flex items-center justify-center rounded-full flex-shrink-0"
               style={{
                 background: "var(--dark)",
                 width: "48px",
                 height: "48px",
                 border: "3px solid #fff",
+                overflow: "visible",
+                position: "relative",
               }}
             >
-              <img src="/P2.png" alt="P2" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src="/P2.png" alt="P2" style={{ position: "absolute", bottom: "-4px", left: "50%", transform: "translateX(-50%)", height: "145%", width: "auto", objectFit: "contain", filter: "drop-shadow(0 -2px 6px rgba(0,0,0,0.5))" }} />
             </div>
             <div className="apply-font text-base sm:text-xl leading-tight text-center min-w-0 w-full">
               {!isHost ? (
