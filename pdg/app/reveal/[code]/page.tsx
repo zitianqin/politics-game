@@ -15,13 +15,6 @@ interface CandidateProfile {
   electorate: string;
   background: string;
   profession: string;
-  keyPastActions: {
-    positive: [string, string];
-    controversial: string;
-  };
-  policyPositions: [string, string, string];
-  personalValues: [string, string, string];
-  flaws: [string];
 }
 
 interface GamePlayer {
@@ -255,21 +248,7 @@ export default function RevealPage({
                     {candidate.partyName}
                   </div>
                 </div>
-
                 <p className="text-gray-800 text-lg">{candidate.background}</p>
-
-                <div>
-                  <p className="font-black text-gray-600 text-lg mb-1">
-                    KEY PAST ACTIONS
-                  </p>
-                  <ul className="list-disc pl-5 space-y-1 text-lg">
-                    <li>{candidate.keyPastActions.positive[0]}</li>
-                    <li>{candidate.keyPastActions.positive[1]}</li>
-                    <li className="text-[#B00020]">
-                      {candidate.keyPastActions.controversial}
-                    </li>
-                  </ul>
-                </div>
                 {/* 
                 <div>
                   <p className="font-black text-gray-600 text-lg mb-1">
