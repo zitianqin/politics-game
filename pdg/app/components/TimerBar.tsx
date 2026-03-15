@@ -58,7 +58,17 @@ export default function TimerBar({
           gap: "6px",
         }}
       >
-        <span style={{ fontSize: "24px" }}>{playerEmoji}</span>
+        <img
+          src={playerEmoji}
+          alt={playerLabel}
+          style={{
+            width: "28px",
+            height: "28px",
+            objectFit: "cover",
+            borderRadius: "6px",
+            animation: isActive ? "avatarBounce 0.7s ease-in-out infinite" : "none",
+          }}
+        />
         {playerLabel}
       </div>
 
@@ -115,6 +125,12 @@ export default function TimerBar({
           }}
         />
       )}
+      <style>{`
+        @keyframes avatarBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+      `}</style>
     </div>
   );
 }
