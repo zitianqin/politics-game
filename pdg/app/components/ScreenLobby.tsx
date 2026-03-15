@@ -64,11 +64,7 @@ export default function ScreenLobby({
         screen === "lobby" ? "active" : ""
       } min-h-screen flex flex-col items-center justify-center px-4 py-8 overflow-y-auto`}
     >
-      <h1 className="title-text bouncing text-center text-4xl sm:text-6xl md:text-7xl leading-tight mb-6 sm:mb-8">
-        ELECTION
-        <br />
-        SHOWDOWN
-      </h1>
+      <img src="/title.png" alt="Election Showdown" style={{ maxWidth: "680px", width: "90%", height: "auto" }} />
 
       <div className="flex flex-col items-center justify-center mb-6 sm:mb-8 w-full">
         <div
