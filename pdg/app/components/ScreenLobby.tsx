@@ -7,8 +7,10 @@ interface ScreenLobbyProps {
   isHost: boolean;
   playersConnected: number;
   opponentName: string;
-  startGame: () => void;
+  startGame: (partyMode: boolean) => void;
   onNameChange: (name: string) => void;
+  partyMode: boolean;
+  setPartyMode: (value: boolean) => void;
 }
 
 export default function ScreenLobby({
@@ -19,6 +21,8 @@ export default function ScreenLobby({
   opponentName,
   startGame,
   onNameChange,
+  partyMode,
+  setPartyMode
 }: ScreenLobbyProps) {
   const bothPlayersConnected = playersConnected === 2;
   const canTogglePartyMode = isHost;
@@ -30,7 +34,6 @@ export default function ScreenLobby({
     return "";
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [partyMode, setPartyMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -39,6 +42,10 @@ export default function ScreenLobby({
       inputRef.current.select();
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    document.title = partyMode ? "PEERSUADE: Party Mode!!" : "PEERSUADE: Normal Mode";
+  }, [partyMode]);
 
   const MAX_NAME_LENGTH = 10;
 
@@ -197,7 +204,7 @@ export default function ScreenLobby({
               disabled={!canTogglePartyMode}
               onClick={() => {
                 if (!canTogglePartyMode) return;
-                setPartyMode((p) => !p);
+                setPartyMode(!partyMode);
               }}
               className="flex-shrink-0 relative transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
               style={{
@@ -465,7 +472,7 @@ export default function ScreenLobby({
 
       {isHost && (
         <button
-          onClick={startGame}
+          onClick={() => startGame(partyMode)}
           disabled={!bothPlayersConnected}
           className="btn w-full max-w-xs sm:max-w-sm text-lg sm:text-xl py-3 sm:py-4"
           onMouseDown={(e) => {

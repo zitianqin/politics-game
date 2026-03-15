@@ -17,6 +17,7 @@ import {
   getRoundContext,
 } from "./roundManager";
 import { generateCandidatePair } from "../lib/candidateGenerator";
+import { getRandomTopics } from "../lib/topicPool";
 
 export function registerSocketHandlers(io: Server): void {
   io.on("connection", (socket: Socket) => {
@@ -70,6 +71,17 @@ export function registerSocketHandlers(io: Server): void {
       }
     });
 
+    socket.on("game:partyMode", (data: { code: string; playerId: string; isPartyMode: boolean }) => {
+      const { code: rawCode, playerId, isPartyMode } = data;
+      const code = rawCode.toUpperCase();
+      const game = getGame(code);
+      if (!game) return;
+      if (game.hostId !== playerId) return;
+    
+      game.isPartyMode = isPartyMode;
+      io.to(code).emit("game:partyMode", { isPartyMode });
+    });
+
     socket.on(
       "player:setName",
       (data: { code: string; playerId: string; name: string }) => {
@@ -90,8 +102,8 @@ export function registerSocketHandlers(io: Server): void {
       }
     );
 
-    socket.on("game:start", (data: { code: string; playerId: string }) => {
-      const { code: rawCode, playerId } = data;
+    socket.on("game:start", (data: { code: string; playerId: string; partyMode?: boolean }) => {
+      const { code: rawCode, playerId, partyMode } = data;
       const code = rawCode.toUpperCase();
       const game = getGame(code);
 
@@ -114,6 +126,9 @@ export function registerSocketHandlers(io: Server): void {
         socket.emit("error", { message: "Game already started" });
         return;
       }
+
+      game.partyMode = partyMode ?? false;
+      game.topics = getRandomTopics(2, game.partyMode);
 
       const [candidate1, candidate2] = generateCandidatePair(game.topics);
       const player1 = game.players.find((p) => p.slot === 1);
@@ -327,5 +342,6 @@ function serializeGame(game: ReturnType<typeof getGame>) {
     p1Remaining: ctx ? Math.round(ctx.timerState.p1Remaining / 1000) : null,
     p2Remaining: ctx ? Math.round(ctx.timerState.p2Remaining / 1000) : null,
     roundStartTime: ctx?.startTime ?? null,
+    isPartyMode: game.isPartyMode,
   };
 }

@@ -25,7 +25,35 @@ export const TOPIC_POOL: string[] = [
   "Should Australia introduce a wealth tax on billionaires?",
 ];
 
-export function getRandomTopics(count: number = 2): string[] {
-  const shuffled = [...TOPIC_POOL].sort(() => 0.5 - Math.random());
+export const PARTY_TOPIC_POOL: string[] = [
+  "Is pineapple on pizza good?",
+  "Are hot dogs sandwiches?",
+  "Is cereal soup?",
+  "Is water wet?",
+  "Is Die Hard a Christmas movie?",
+  "Are cats secretly plotting world domination?",
+  "Should socks with sandals be illegal?",
+  "Is sleeping a sport?",
+  "Are memes the highest form of art?",
+  "Should naps be mandatory at work?",
+  "Is cake better than pie?",
+  "Should pineapple be banned from pizza forever?",
+  "Is ketchup a smoothie?",
+  "Are aliens already living on Earth?",
+  "Should Mondays be removed from the calendar?",
+  "Is cereal better with water instead of milk?",
+  "Should pizza crust be stuffed with more pizza?",
+  "Are dinosaurs cooler than dragons?",
+  "Is breakfast food acceptable for dinner?",
+  "Should everyone own at least one pet turtle?",
+];
+
+export function getRandomTopics(
+  count: number = 2,
+  partyMode: boolean = false
+): string[] {
+  const pool = partyMode ? PARTY_TOPIC_POOL : TOPIC_POOL;
+
+  const shuffled = [...pool].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
