@@ -1,5 +1,3 @@
-import { TOPIC_POOL } from "./topicPool";
-
 export interface CandidateProfile {
   fullName: string;
   age: number;
@@ -7,11 +5,6 @@ export interface CandidateProfile {
   electorate: string;
   background: string;
   profession: string;
-  keyPastActions: {
-    positive: [string, string];
-    controversial: string;
-  };
-  flaws: [string];
 }
 
 const FIRST_NAMES = [
@@ -143,56 +136,12 @@ const PROFESSIONS = [
   "Public School Principal",
 ];
 
-const FLAWS = [
-  "Accused of ducking media questions during a local crisis",
-  "Faced criticism over a past expenses claim",
-  "Recorded making an off-the-cuff gaffe at a town hall",
-  "Called out for slow action during a staffing dispute",
-  "Questioned over a close donor relationship",
-  "Seen as overly scripted in high-pressure interviews",
-];
-
-const POSITIVE_ACTIONS = [
-  "Secured funding to expand a local hospital wing",
-  "Negotiated a bipartisan package for small-business relief",
-  "Led a successful regional drought support initiative",
-  "Delivered upgrades for overcrowded public schools",
-  "Helped launch a local jobs and retraining program",
-  "Coordinated rapid community support after severe flooding",
-  "Pushed through red-tape cuts for family-owned businesses",
-  "Won support for safer roads in outer-suburban corridors",
-  "Expanded apprenticeship pathways for young workers",
-  "Brokered practical reform with crossbench support",
-];
-
-const CONTROVERSIAL_ACTIONS = [
-  "Backed a rushed policy rollout that caused administrative confusion",
-  "Was criticized for missing a key vote tied to constituent concerns",
-  "Defended a party decision that proved unpopular locally",
-  "Initially opposed a reform they later reversed on under pressure",
-  "Clashed publicly with local council leaders over planning decisions",
-  "Supported a budget cut that critics said hurt frontline services",
-];
-
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function pickOne<T>(items: readonly T[]): T {
   return items[Math.floor(Math.random() * items.length)] as T;
-}
-
-function pickDistinct<T>(items: readonly T[], count: number): T[] {
-  const pool = [...items];
-  const selected: T[] = [];
-
-  for (let i = 0; i < count && pool.length > 0; i++) {
-    const idx = Math.floor(Math.random() * pool.length);
-    selected.push(pool[idx] as T);
-    pool.splice(idx, 1);
-  }
-
-  return selected;
 }
 
 function generateName(usedNames: Set<string>): string {
@@ -223,18 +172,12 @@ function buildBackground(
 }
 
 function generateCandidate(
-  topics: string[],
+  _topics: string[],
   usedNames: Set<string>
 ): CandidateProfile {
   const fullName = generateName(usedNames);
   const profession = pickOne(PROFESSIONS);
   const electorate = pickOne(ELECTORATES);
-  const [positiveA, positiveB] = pickDistinct(POSITIVE_ACTIONS, 2) as [
-    string,
-    string
-  ];
-  const controversial = pickOne(CONTROVERSIAL_ACTIONS);
-  const flaw = pickOne(FLAWS);
 
   return {
     fullName,
@@ -243,17 +186,12 @@ function generateCandidate(
     electorate,
     background: buildBackground(fullName, profession, electorate),
     profession,
-    keyPastActions: {
-      positive: [positiveA, positiveB],
-      controversial,
-    },
-    flaws: [flaw],
   };
 }
 
 /**
  * Generates two balanced candidate profiles for a single game session.
- * Both candidates receive the same field shape and equivalent action counts.
+ * Both candidates receive the same field shape.
  */
 export function generateCandidatePair(
   topics: string[]
