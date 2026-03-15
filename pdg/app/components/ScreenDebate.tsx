@@ -34,6 +34,8 @@ interface ScreenDebateProps {
   onYield: () => void;
   setIsRecording: (value: boolean) => void;
   setMediaStream: (stream: MediaStream | null) => void;
+  voiceStatus?: "idle" | "connecting" | "connected" | "error";
+  voiceError?: string | null;
 }
 
 export default function ScreenDebate({
@@ -54,6 +56,8 @@ export default function ScreenDebate({
   onYield,
   setIsRecording: setIsRecordingGlobal,
   setMediaStream,
+  voiceStatus = "idle",
+  voiceError = null,
 }: ScreenDebateProps) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -69,6 +73,18 @@ export default function ScreenDebate({
   const myRemaining = currentPlayer === 1 ? p1TimeRemaining : p2TimeRemaining;
   const canObjection =
     !isCurrentPlayerActive && myRemaining > 15 && screen === "debate";
+  const voiceBadgeText = voiceError
+    ? "VOICE ERROR"
+    : voiceStatus === "connecting"
+      ? "VOICE CONNECTING"
+      : voiceStatus === "connected"
+        ? "VOICE LIVE"
+        : null;
+  const voiceBadgeColor = voiceError
+    ? "var(--red)"
+    : voiceStatus === "connected"
+      ? "var(--accent)"
+      : "var(--p2)";
 
   useEffect(() => {
     if (showObjectionVFX) {
@@ -535,6 +551,32 @@ export default function ScreenDebate({
               }}
             >
               🔴 RECORDING
+            </span>
+          </div>
+        )}
+
+        {voiceBadgeText && (
+          <div
+            style={{
+              marginTop: isRecording ? "6px" : "8px",
+              textAlign: "center",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                background: voiceBadgeColor,
+                color: "white",
+                padding: "6px 14px",
+                borderRadius: "24px",
+                fontWeight: "900",
+                fontSize: "clamp(10px, 2vw, 14px)",
+                fontFamily: "Titan One, cursive",
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+              }}
+            >
+              {voiceBadgeText}
             </span>
           </div>
         )}

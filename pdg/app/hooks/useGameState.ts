@@ -310,6 +310,18 @@ export function useGameState(gameCodeFromUrl?: string) {
         else setScreen("debate");
 
         setCurrentTopic(gs.topics[gs.currentRound - 1] || "");
+        if (gs.currentSpeaker === 1 || gs.currentSpeaker === 2) {
+          setCurrentSpeaker(gs.currentSpeaker);
+        }
+        if (typeof gs.p1Remaining === "number") {
+          setP1RoundTimeRemaining(gs.p1Remaining);
+        }
+        if (typeof gs.p2Remaining === "number") {
+          setP2RoundTimeRemaining(gs.p2Remaining);
+        }
+        if (typeof gs.roundStartTime === "number") {
+          setRoundStartTime(gs.roundStartTime);
+        }
 
         const rData = gs.rounds.find(
           (r: any) => r.roundNumber === gs.currentRound

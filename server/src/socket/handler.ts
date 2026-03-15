@@ -306,6 +306,8 @@ export function registerSocketHandlers(io: Server): void {
 
 function serializeGame(game: ReturnType<typeof getGame>) {
   if (!game) return null;
+  const ctx = getRoundContext(game.code);
+
   return {
     id: game.id,
     code: game.code,
@@ -321,5 +323,9 @@ function serializeGame(game: ReturnType<typeof getGame>) {
     topics: game.topics,
     currentRound: game.currentRound,
     debatePhase: game.debatePhase,
+    currentSpeaker: ctx?.timerState.activeFloor ?? null,
+    p1Remaining: ctx ? Math.round(ctx.timerState.p1Remaining / 1000) : null,
+    p2Remaining: ctx ? Math.round(ctx.timerState.p2Remaining / 1000) : null,
+    roundStartTime: ctx?.startTime ?? null,
   };
 }
