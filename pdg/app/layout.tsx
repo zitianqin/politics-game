@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ELECTION SHOWDOWN: Party Mode!",
   description: "Next.js translation",
+  icons: {
+    icon: "/speech.png",
+  },
+
 };
 
 export default function RootLayout({
