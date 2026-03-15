@@ -14,7 +14,7 @@ export default function LobbyPage({
   const router = useRouter();
 
   const [playerCount, setPlayerCount] = useState(0);
-  const [isHost] = useState(() => {
+  const [isHost, setIsHost] = useState(() => {
     if (typeof window === "undefined") return false;
     return sessionStorage.getItem("isHost") === "true";
   });
@@ -61,7 +61,13 @@ export default function LobbyPage({
       if (data.gameState) {
         setPlayerCount(data.gameState.players.length);
         const myId = sessionStorage.getItem("playerId");
+        const me = data.gameState.players.find((p: any) => p.id === myId);
         const opponent = data.gameState.players.find((p: any) => p.id !== myId);
+        if (me) {
+          const nextIsHost = me.slot === 1;
+          setIsHost(nextIsHost);
+          sessionStorage.setItem("isHost", String(nextIsHost));
+        }
         if (opponent?.displayName) {
           setOpponentName(opponent.displayName);
         }
