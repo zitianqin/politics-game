@@ -581,6 +581,21 @@ export default function ScreenDebate({
           <div ref={transcriptEndRef} />
         </div>
 
+        
+      </div>
+
+      {/* Bottom Action Bar */}
+      <div
+        style={{
+          padding: "8px 10px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "8px",
+          flexShrink: 0,
+        }}
+        className="sm:px-6! sm:py-4! sm:gap-3!"
+      > 
         {/* Recording indicator with waveform */}
         <span
           style={{
@@ -621,21 +636,8 @@ export default function ScreenDebate({
           />
           RECORDING
         </span>
-      </div>
-
-      {/* Bottom Action Bar */}
-      <div
-        style={{
-          padding: "8px 10px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "8px",
-          flexShrink: 0,
-        }}
-        className="sm:px-6! sm:py-4! sm:gap-3!"
-      >
-        {/* Objection Button */}
+        <div style={{ display: "flex", width: "100%", gap: "8px" }}>
+            {/* Objection Button */}
         <button
           onClick={handleObjection}
           disabled={!canObjection}
@@ -719,6 +721,9 @@ export default function ScreenDebate({
         >
           🔄 YIELD
         </button>
+
+        </div>
+        
       </div>
 
       <style>{`
