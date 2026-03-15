@@ -211,14 +211,14 @@ export default function RevealPage({
         </div>
       </motion.div>
 
-      <motion.h2
+      <motion.h1
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", bounce: 0.4 }}
-        className="text-5xl text-white font-['Titan_One'] drop-shadow-[4px_4px_0_rgba(0,0,0,1)] mb-6"
+        className="text-white font-['Titan_One'] mb-6 [-webkit-text-stroke:1px_black]"
       >
         CANDIDATE BRIEFING
-      </motion.h2>
+      </motion.h1>
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -305,14 +305,14 @@ export default function RevealPage({
         ))}
       </motion.div>
 
-      <motion.h2
+      <motion.h1
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", bounce: 0.5 }}
-        className="text-6xl text-white font-['Titan_One'] drop-shadow-[4px_4px_0_rgba(0,0,0,1)] mb-8"
+        className="text-white font-['Titan_One'] mb-6 [-webkit-text-stroke:1px_black]"
       >
         THE JURY (5 VOTERS)
-      </motion.h2>
+      </motion.h1>
 
       <motion.div
         initial={{ opacity: 0, y: 50 }}
