@@ -176,7 +176,7 @@ export default function RevealPage({
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-7xl flex justify-between items-stretch mb-6"
+        className="w-full max-w-7xl flex justify-between items-stretch mb-12"
       >
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center w-full h-full">
           <div className="bg-[#FFEB3B] px-4 sm:px-6 py-3 sm:py-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex items-center justify-center w-full sm:w-auto min-h-[70px]">
@@ -224,7 +224,7 @@ export default function RevealPage({
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10"
+        className="mb-18 w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10"
       >
         {[myCandidate, opponentCandidate].map((candidate, idx) => (
           <div
@@ -242,7 +242,7 @@ export default function RevealPage({
             </div>
 
             {candidate ? (
-              <div className="space-y-3 text-sm text-black font-['Nunito']">
+              <div className="text-sm text-black font-['Nunito']">
                 <div>
                   <p className="font-['Titan_One'] text-2xl leading-tight">
                     {candidate.fullName}
@@ -251,9 +251,9 @@ export default function RevealPage({
                     {candidate.age} • {candidate.profession} •{" "}
                     {candidate.electorate}
                   </p>
-                  <p className="inline-block bg-black text-white px-2 py-1 rounded text-lg font-black uppercase">
+                  <div className="inline-block bg-black text-white px-2 py-1 rounded text-lg font-black uppercase">
                     {candidate.partyName}
-                  </p>
+                  </div>
                 </div>
 
                 <p className="text-gray-800 text-lg">{candidate.background}</p>
