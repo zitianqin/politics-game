@@ -40,6 +40,10 @@ export default function ScreenLobby({
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    document.title = partyMode ? "PEERSUADE: Party Mode!!" : "PEERSUADE: Normal Mode";
+  }, [partyMode]);
+
   const MAX_NAME_LENGTH = 10;
 
   const saveName = (value: string) => {
