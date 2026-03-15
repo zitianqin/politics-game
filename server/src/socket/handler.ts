@@ -71,6 +71,17 @@ export function registerSocketHandlers(io: Server): void {
       }
     });
 
+    socket.on("game:partyMode", (data: { code: string; playerId: string; isPartyMode: boolean }) => {
+      const { code: rawCode, playerId, isPartyMode } = data;
+      const code = rawCode.toUpperCase();
+      const game = getGame(code);
+      if (!game) return;
+      if (game.hostId !== playerId) return;
+    
+      game.isPartyMode = isPartyMode;
+      io.to(code).emit("game:partyMode", { isPartyMode });
+    });
+
     socket.on(
       "player:setName",
       (data: { code: string; playerId: string; name: string }) => {
@@ -331,5 +342,6 @@ function serializeGame(game: ReturnType<typeof getGame>) {
     p1Remaining: ctx ? Math.round(ctx.timerState.p1Remaining / 1000) : null,
     p2Remaining: ctx ? Math.round(ctx.timerState.p2Remaining / 1000) : null,
     roundStartTime: ctx?.startTime ?? null,
+    isPartyMode: game.isPartyMode,
   };
 }
