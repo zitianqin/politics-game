@@ -1,4 +1,8 @@
-import { ScreenId } from "../lib/gameConstants";
+"use client";
+
+import { useEffect } from "react";
+import { ScreenId, formatScorecardName } from "../lib/gameConstants";
+import Confetti from "./Confetti";
 
 interface ScreenWinnerProps {
   screen: ScreenId;
@@ -6,6 +10,8 @@ interface ScreenWinnerProps {
   p1TotalVotes: number;
   p2TotalVotes: number;
   resetGame: () => void;
+  p1Name?: string;
+  p2Name?: string;
 }
 
 export default function ScreenWinner({
@@ -14,12 +20,21 @@ export default function ScreenWinner({
   p1TotalVotes,
   p2TotalVotes,
   resetGame,
+  p1Name = "Player 1",
+  p2Name = "Player 2",
 }: ScreenWinnerProps) {
+  useEffect(() => {
+    const audio = new Audio("/sound-effects/applause.mp3");
+    audio.play().catch(() => {});
+  }, []);
+
   return (
-    <div
-      id="screen-winner"
-      className={`screen ${screen === "winner" ? "active" : ""}`}
-    >
+    <>
+      <Confetti active={true} />
+      <div
+        id="screen-winner"
+        className={`screen ${screen === "winner" ? "active" : ""}`}
+      >
       <h2
         className="subtitle"
         style={{
@@ -64,7 +79,7 @@ export default function ScreenWinner({
             color: "var(--p1-dark)",
           }}
         >
-          P1: <span>{p1TotalVotes}</span>
+          {formatScorecardName(p1Name, 1)}: <span>{p1TotalVotes}</span>
         </p>
         <p
           style={{
@@ -73,7 +88,7 @@ export default function ScreenWinner({
             color: "var(--p2-dark)",
           }}
         >
-          P2: <span>{p2TotalVotes}</span>
+          {formatScorecardName(p2Name, 2)}: <span>{p2TotalVotes}</span>
         </p>
       </div>
 
@@ -81,5 +96,6 @@ export default function ScreenWinner({
         PLAY AGAIN
       </button>
     </div>
+    </>
   );
 }

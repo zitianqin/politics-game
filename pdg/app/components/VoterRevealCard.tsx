@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatScorecardName } from "../lib/gameConstants";
 
 interface VoterRevealCardProps {
   voterName: string;
@@ -38,8 +39,16 @@ export default function VoterRevealCard({
     return () => clearTimeout(timer);
   }, [isAnimating, delayMs]);
 
-  const candidateName = votedFor === "p1" ? p1Name : p2Name;
+  const candidateName = formatScorecardName(
+    votedFor === "p1" ? p1Name : p2Name,
+    votedFor === "p1" ? 1 : 2
+  );
   const voteColor = votedFor === "p1" ? "var(--p1)" : "var(--p2)";
+
+  // Replace generic candidate names with actual names in the rationale
+  const replacedRationale = rationale
+    .replace(/Candidate A/g, p1Name)
+    .replace(/Candidate B/g, p2Name);
 
   return (
     <div
@@ -68,7 +77,7 @@ export default function VoterRevealCard({
       </div>
 
       <div className="voter-rationale">
-        <p>{rationale}</p>
+        <p>{replacedRationale}</p>
       </div>
 
       <div className="voter-candidate" style={{ color: voteColor }}>

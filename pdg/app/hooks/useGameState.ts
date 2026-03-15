@@ -11,7 +11,7 @@ export interface TranscriptEntry {
   isObjection?: boolean;
 }
 
-export function useGameState() {
+export function useGameState(gameCodeFromUrl?: string) {
   const [screen, setScreen] = useState<ScreenId>("lobby");
   const [isHydrated, setIsHydrated] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
@@ -54,6 +54,8 @@ export function useGameState() {
   const [currentBarsHeight, setCurrentBarsHeight] = useState({ p1: 0, p2: 0 });
   const [isNextBtnVisible, setIsNextBtnVisible] = useState(false);
   const [judgingJoke, setJudgingJoke] = useState(JUDGING_JOKES[0]);
+  const [p1Name, setP1Name] = useState("Player 1");
+  const [p2Name, setP2Name] = useState("Player 2");
 
   // Voter Results State (for Results screen)
   const [voterResults, setVoterResults] = useState<
@@ -66,6 +68,8 @@ export function useGameState() {
     }>
   >([]);
   const [isInterimResults, setIsInterimResults] = useState(false);
+  const [p1Candidate, setP1Candidate] = useState<any>(null);
+  const [p2Candidate, setP2Candidate] = useState<any>(null);
 
   // Internal tracking
   const currentP1ArgRef = useRef("");
@@ -108,17 +112,20 @@ export function useGameState() {
     });
 
     // Debate phase begins
-    socket.on("round:debate", (data: { activePlayer: 1 | 2 }) => {
-      setCurrentSpeaker(data.activePlayer);
-      setP1RoundTimeRemaining(60);
-      setP2RoundTimeRemaining(60);
-      setLiveTranscript([]);
-      setRoundStartTime(Date.now());
-      audioChunksRef.current = [];
-      currentP1ArgRef.current = "";
-      currentP2ArgRef.current = "";
-      setScreen("debate");
-    });
+    socket.on(
+      "round:debate",
+      (data: { activePlayer: 1 | 2; startTime?: number }) => {
+        setCurrentSpeaker(data.activePlayer);
+        setP1RoundTimeRemaining(60);
+        setP2RoundTimeRemaining(60);
+        setLiveTranscript([]);
+        setRoundStartTime(data.startTime ?? Date.now());
+        audioChunksRef.current = [];
+        currentP1ArgRef.current = "";
+        currentP2ArgRef.current = "";
+        setScreen("debate");
+      }
+    );
 
     // Server timer ticks (every 500ms)
     socket.on(
@@ -169,33 +176,62 @@ export function useGameState() {
       (window as any)._judgingInterval = jokeInt;
     });
 
-    // Round results arrived from server
-    socket.on(
-      "round:results",
-      (data: { roundNumber: number; p1Score: number; p2Score: number }) => {
-        if ((window as any)._judgingInterval) {
-          clearInterval((window as any)._judgingInterval);
-        }
-        setP1RoundScore(data.p1Score);
-        setP2RoundScore(data.p2Score);
-        setScreen("reveal");
-        setIsNextBtnVisible(false);
-
-        // Animate bars
-        setTimeout(() => {
-          setCurrentBarsHeight((prev) => ({
-            p1: prev.p1 + data.p1Score / 5,
-            p2: prev.p2 + data.p2Score / 5,
-          }));
-          setP1TotalVotes((prev) => prev + data.p1Score);
-          setP2TotalVotes((prev) => prev + data.p2Score);
-        }, 500);
-
-        setTimeout(() => {
-          setIsNextBtnVisible(true);
-        }, 3000);
+    // Round results arrived from server (handles both 'round:results' and 'game:result' events)
+    const handleRoundResults = (data: {
+      roundNumber: number;
+      p1Score?: number;
+      p2Score?: number;
+      tally?: { p1: number; p2: number };
+      breakdown?: any[];
+    }) => {
+      if ((window as any)._judgingInterval) {
+        clearInterval((window as any)._judgingInterval);
       }
-    );
+
+      const p1Score = data.p1Score ?? data.tally?.p1 ?? 0;
+      const p2Score = data.p2Score ?? data.tally?.p2 ?? 0;
+
+      setP1RoundScore(p1Score);
+      setP2RoundScore(p2Score);
+      setScreen("results");
+      setIsNextBtnVisible(false);
+      setIsInterimResults(data.roundNumber < TOTAL_ROUNDS);
+
+      if (data.breakdown) {
+        console.log(
+          "Voted for:",
+          data.breakdown.map((v) => v.vote)
+        ); // Debug log
+
+        setVoterResults(
+          data.breakdown.map((v) => ({
+            name: v.voterName,
+            age: v.voterAge || 0,
+            location: v.voterLocation || "",
+            votedFor:
+              v.vote === "Candidate A" ? ("p1" as const) : ("p2" as const),
+            rationale: v.reason,
+          }))
+        );
+      }
+
+      // Animate bars (each vote = 40px height)
+      setTimeout(() => {
+        setCurrentBarsHeight({
+          p1: p1Score * 40,
+          p2: p2Score * 40,
+        });
+        setP1TotalVotes((prev) => prev + p1Score);
+        setP2TotalVotes((prev) => prev + p2Score);
+      }, 500);
+
+      setTimeout(() => {
+        setIsNextBtnVisible(true);
+      }, 3000);
+    };
+
+    socket.on("round:results", handleRoundResults);
+    socket.on("game:result", handleRoundResults);
 
     socket.on("game:reset", () => {
       setScreen("lobby");
@@ -203,9 +239,20 @@ export function useGameState() {
       setP1TotalVotes(0);
       setP2TotalVotes(0);
       setLiveTranscript([]);
+      setP1Name("Player 1");
+      setP2Name("Player 2");
     });
 
     socket.on("game:complete", () => {
+      setIsInterimResults(false);
+      setScreen("results");
+    });
+
+    socket.on("game:results_reveal", () => {
+      setScreen("results");
+    });
+
+    socket.on("game:winner_reveal", () => {
       setScreen("winner");
     });
 
@@ -217,15 +264,23 @@ export function useGameState() {
         text: string;
         timestamp: number;
         roundNumber: number;
+        isObjection?: boolean;
         isObjectionEnd?: boolean;
         inaudible?: boolean;
       }) => {
         if (data.inaudible) return; // skip silent segments
         const speakerNum: 1 | 2 = data.speaker === "player1" ? 1 : 2;
-        setLiveTranscript((prev) => [
-          ...prev,
-          { speaker: speakerNum, text: data.text, timestamp: data.timestamp },
-        ]);
+        setLiveTranscript((prev) =>
+          [
+            ...prev,
+            {
+              speaker: speakerNum,
+              text: data.text,
+              timestamp: data.timestamp,
+              isObjection: data.isObjection,
+            },
+          ].sort((a, b) => a.timestamp - b.timestamp)
+        );
       }
     );
 
@@ -238,8 +293,15 @@ export function useGameState() {
       setCurrentRound(gs.currentRound || 1);
 
       const myId = sessionStorage.getItem("playerId");
-      const me = gs.players.find((p: any) => p.id === myId);
+      const me = gs.players?.find((p: any) => p.id === myId);
       if (me) setCurrentPlayer(me.slot as 1 | 2);
+
+      const p1 = gs.players?.find((p: any) => p.slot === 1);
+      const p2 = gs.players?.find((p: any) => p.slot === 2);
+      if (p1?.candidate) setP1Candidate(p1.candidate);
+      if (p2?.candidate) setP2Candidate(p2.candidate);
+      if (p1?.displayName) setP1Name(p1.displayName);
+      if (p2?.displayName) setP2Name(p2.displayName);
 
       if (gs.status === "meet_voters") {
         setScreen("voter-grid");
@@ -253,7 +315,18 @@ export function useGameState() {
           (r: any) => r.roundNumber === gs.currentRound
         );
         if (rData && rData.transcript) {
-          setLiveTranscript(rData.transcript);
+          const mapped: TranscriptEntry[] = rData.transcript.map((t: any) => ({
+            speaker: t.speaker === "player1" ? 1 : 2,
+            text: t.text,
+            timestamp: t.timestamp,
+            isObjection: t.isObjection,
+          }));
+          setLiveTranscript(
+            mapped.sort(
+              (a: TranscriptEntry, b: TranscriptEntry) =>
+                a.timestamp - b.timestamp
+            )
+          );
         }
       } else if (gs.status === "judging") {
         setScreen("judging");
@@ -281,8 +354,12 @@ export function useGameState() {
     socket.on("game:reconnected", handleHydration);
     socket.on("game:state", handleHydration);
 
+    socket.on("game:bars_reveal", () => {
+      setScreen("reveal");
+    });
+
     // Request full state immediately on mount
-    const gameCode = sessionStorage.getItem("gameCode");
+    const gameCode = gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
     if (gameCode) {
       socket.emit("game:getState", { code: gameCode });
     }
@@ -296,6 +373,7 @@ export function useGameState() {
       socket.off("round:end");
       socket.off("judging:start");
       socket.off("round:results");
+      socket.off("game:result");
       socket.off("game:reset");
       socket.off("game:complete");
       socket.off("game:reconnected");
@@ -344,10 +422,11 @@ export function useGameState() {
         ? Math.round((Date.now() - roundStartTime) / 1000)
         : 0;
 
-      setLiveTranscript((prev) => [
-        ...prev,
-        { speaker, text, timestamp, isObjection },
-      ]);
+      setLiveTranscript((prev) =>
+        [...prev, { speaker, text, timestamp, isObjection }].sort(
+          (a, b) => a.timestamp - b.timestamp
+        )
+      );
 
       if (speaker === 1) {
         currentP1ArgRef.current += (currentP1ArgRef.current ? " " : "") + text;
@@ -359,21 +438,18 @@ export function useGameState() {
   );
 
   // Emit objection to server
-  const handleObjection = useCallback(
-    (objectingPlayer: 1 | 2) => {
-      const socket = getSocket();
-      const gameCode = sessionStorage.getItem("gameCode");
-      if (gameCode) {
-        socket.emit("objection:raised", {
-          code: gameCode,
-          byPlayer: objectingPlayer,
-        });
-        // Add objection marker to local transcript
-        addTranscriptEntry(objectingPlayer, "OBJECTION!", true);
-      }
-    },
-    [addTranscriptEntry]
-  );
+  const handleObjection = useCallback((objectingPlayer: 1 | 2) => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("objection:raised", {
+        code: gameCode,
+        byPlayer: objectingPlayer,
+      });
+      // We no longer add a local transcript entry here.
+      // The server will broadcast a transcript:update for the OBJECTION! marker.
+    }
+  }, []);
 
   // Emit yield to server
   const handleYield = useCallback(() => {
@@ -397,9 +473,33 @@ export function useGameState() {
   const startNextRound = useCallback(() => {
     // Always signal server to advance. Server will decide if it's new round or completion.
     const socket = getSocket();
-    const gameCode = sessionStorage.getItem("gameCode");
+    const gameCode = gameCodeFromUrl ?? sessionStorage.getItem("gameCode");
     if (gameCode) {
       socket.emit("round:advance", { code: gameCode });
+    }
+  }, [gameCodeFromUrl]);
+
+  const advanceToResults = useCallback(() => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("results:reveal", { code: gameCode });
+    }
+  }, []);
+
+  const advanceToBars = useCallback(() => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("results:bars", { code: gameCode });
+    }
+  }, []);
+
+  const advanceToWinner = useCallback(() => {
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    if (gameCode) {
+      socket.emit("results:complete", { code: gameCode });
     }
   }, []);
 
@@ -414,9 +514,9 @@ export function useGameState() {
   let winnerLabel = "";
   if (screen === "winner") {
     if (p1TotalVotes > p2TotalVotes) {
-      winnerLabel = "PLAYER 1 WINS!";
+      winnerLabel = `${p1Name.toUpperCase()} WINS!`;
     } else if (p2TotalVotes > p1TotalVotes) {
-      winnerLabel = "PLAYER 2 WINS!";
+      winnerLabel = `${p2Name.toUpperCase()} WINS!`;
     } else {
       winnerLabel = "IT'S A TIE!!";
     }
@@ -435,6 +535,8 @@ export function useGameState() {
     p2RoundScore,
     currentBarsHeight,
     isNextBtnVisible,
+    p1Name,
+    p2Name,
 
     // Debate state (server-driven)
     currentTopic,
@@ -479,5 +581,13 @@ export function useGameState() {
 
     // Sync state
     isHydrated,
+
+    // Navigation
+    setScreen,
+    advanceToResults,
+    advanceToBars,
+    advanceToWinner,
+    p1Candidate,
+    p2Candidate,
   };
 }

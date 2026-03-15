@@ -6,6 +6,7 @@ import ScreenDebate from "@/app/components/ScreenDebate";
 import ScreenJudging from "@/app/components/ScreenJudging";
 import ScreenReveal from "@/app/components/ScreenReveal";
 import ScreenWinner from "@/app/components/ScreenWinner";
+import ResultsScreen from "@/app/components/ResultsScreen";
 import { useGameState } from "@/app/hooks/useGameState";
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -37,6 +38,8 @@ export default function DebatePage({
     p2TotalVotes,
     currentBarsHeight,
     isNextBtnVisible,
+    p1Name,
+    p2Name,
     winnerLabel,
     handleObjection,
     handleYield,
@@ -46,7 +49,16 @@ export default function DebatePage({
     startNextRound,
     resetGame,
     isHydrated,
-  } = useGameState();
+    voterResults,
+    isInterimResults,
+    setScreen,
+    advanceToResults,
+    advanceToBars,
+    advanceToWinner,
+    p1Candidate,
+    p2Candidate,
+    roundStartTime,
+  } = useGameState(code);
 
   // Connect socket and signal reveal done on mount
   useEffect(() => {
@@ -62,7 +74,6 @@ export default function DebatePage({
 
   const router = useRouter();
 
-
   // Redirect to lobby if screen is lobby
   useEffect(() => {
     if (isHydrated && screen === "lobby") {
@@ -74,14 +85,22 @@ export default function DebatePage({
   const activePlayerTime =
     currentSpeaker === 1 ? p1RoundTimeRemaining : p2RoundTimeRemaining;
 
+  // Extract candidate full names for voting results display
+  const p1CandidateName = p1Candidate?.fullName || p1Name;
+  const p2CandidateName = p2Candidate?.fullName || p2Name;
+
   return (
     <>
-      <HUD
-        screen={screen}
-        displayP1Votes={p1TotalVotes}
-        displayP2Votes={p2TotalVotes}
-        timeLeft={activePlayerTime}
-      />
+      {screen !== "topic" && screen !== "results" && (
+        <HUD
+          screen={screen}
+          displayP1Votes={p1TotalVotes}
+          displayP2Votes={p2TotalVotes}
+          timeLeft={activePlayerTime}
+          p1Name={p1Name}
+          p2Name={p2Name}
+        />
+      )}
 
       {screen === "topic" && (
         <ScreenTopic
@@ -102,8 +121,11 @@ export default function DebatePage({
           p2TimeRemaining={p2RoundTimeRemaining}
           currentTopic={currentTopic}
           transcript={liveTranscript}
+          roundStartTime={roundStartTime}
           showObjectionVFX={showObjectionVFX}
           objectionBy={objectionBy}
+          p1Name={p1Name}
+          p2Name={p2Name}
           onObjection={() => handleObjection(currentPlayer)}
           onYield={handleYield}
           setIsRecording={setIsRecording}
@@ -123,7 +145,15 @@ export default function DebatePage({
           currentBarsHeight={currentBarsHeight}
           isNextBtnVisible={isNextBtnVisible}
           currentRound={currentRound}
-          startNextRound={startNextRound}
+          onNext={() => {
+            if (isInterimResults) {
+              startNextRound();
+            } else {
+              advanceToWinner();
+            }
+          }}
+          p1Name={p1CandidateName}
+          p2Name={p2CandidateName}
         />
       )}
 
@@ -134,6 +164,22 @@ export default function DebatePage({
           p1TotalVotes={p1TotalVotes}
           p2TotalVotes={p2TotalVotes}
           resetGame={resetGame}
+          p1Name={p1CandidateName}
+          p2Name={p2CandidateName}
+        />
+      )}
+
+      {screen === "results" && (
+        <ResultsScreen
+          currentRound={currentRound}
+          isInterim={isInterimResults}
+          voters={voterResults}
+          p1Name={p1CandidateName}
+          p2Name={p2CandidateName}
+          p1TotalVotes={p1TotalVotes}
+          p2TotalVotes={p2TotalVotes}
+          onContinue={advanceToBars}
+          isVisible={true}
         />
       )}
     </>

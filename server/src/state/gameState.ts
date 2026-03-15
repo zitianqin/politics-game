@@ -9,12 +9,14 @@ export interface Player {
   slot: 1 | 2;
   socketId: string | null;
   candidate: CandidateProfile | null;
+  displayName: string | null;
 }
 
 export interface TranscriptEntry {
   speaker: string;
   text: string;
   timestamp: number;
+  isObjection?: boolean;
   isObjectionEnd?: boolean;
   inaudible?: boolean;
 }
@@ -72,7 +74,7 @@ export function createGame(hostId: string): GameSession {
     status: "lobby",
     hostId,
     createdAt: new Date(),
-    players: [{ id: hostId, slot: 1, socketId: null, candidate: null }],
+    players: [{ id: hostId, slot: 1, socketId: null, candidate: null, displayName: null }],
     voters: selectVoters(),
     rounds: [],
     timerState: null,
@@ -103,6 +105,7 @@ export function joinGame(
     slot: 2,
     socketId: null,
     candidate: null,
+    displayName: null,
   });
   return { game };
 }
@@ -163,6 +166,7 @@ export function addTranscriptEntry(
   const round = game.rounds.find((r) => r.roundNumber === roundNumber);
   if (!round) return false;
   round.transcript.push(entry);
+  round.transcript.sort((a, b) => a.timestamp - b.timestamp);
   return true;
 }
 

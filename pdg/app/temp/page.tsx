@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { apiUrl } from "../lib/api";
 import { getSocket } from "../lib/socket";
 
 interface TranscriptLine {
@@ -54,7 +55,7 @@ export default function TempTranscriptTest() {
   }
 
   async function createTestGame() {
-    const res = await fetch("/api/game/create", { method: "POST" });
+    const res = await fetch(apiUrl("/api/game/create"), { method: "POST" });
     const data = await res.json();
     setGameCode(data.code);
     setPlayerId(data.playerId);
@@ -73,7 +74,10 @@ export default function TempTranscriptTest() {
 
     setStatus("Transcribing…");
     try {
-      const res = await fetch("/api/transcribe", { method: "POST", body: form });
+      const res = await fetch(apiUrl("/api/transcribe"), {
+        method: "POST",
+        body: form,
+      });
       const data = await res.json();
       if (!res.ok) {
         setStatus(`Error: ${data.error}`);
@@ -153,7 +157,9 @@ export default function TempTranscriptTest() {
 
       {/* Recording */}
       <section className="mb-8 space-y-3">
-        <h2 className="text-lg font-semibold text-yellow-400">2. Record & Transcribe</h2>
+        <h2 className="text-lg font-semibold text-yellow-400">
+          2. Record & Transcribe
+        </h2>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
@@ -203,15 +209,21 @@ export default function TempTranscriptTest() {
                 }`}
               >
                 <div className="flex gap-3 items-baseline">
-                  <span className="font-bold text-yellow-300">{line.speaker}</span>
+                  <span className="font-bold text-yellow-300">
+                    {line.speaker}
+                  </span>
                   <span className="text-gray-400 text-xs">
                     t={line.timestamp} | r{line.roundNumber}
                   </span>
                   {line.isObjectionEnd && (
-                    <span className="text-xs bg-red-700 px-1 rounded">OBJECTION END</span>
+                    <span className="text-xs bg-red-700 px-1 rounded">
+                      OBJECTION END
+                    </span>
                   )}
                   {line.inaudible && (
-                    <span className="text-xs bg-red-900 px-1 rounded">INAUDIBLE</span>
+                    <span className="text-xs bg-red-900 px-1 rounded">
+                      INAUDIBLE
+                    </span>
                   )}
                 </div>
                 <p className="mt-1 text-gray-100">{line.text}</p>

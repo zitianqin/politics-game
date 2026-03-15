@@ -14,6 +14,7 @@ export interface RoundContext {
   timerState: TimerState;
   prepIntervalId: ReturnType<typeof setInterval> | null;
   revealIntervalId: ReturnType<typeof setInterval> | null;
+  startTime: number | null;
 }
 
 const roundContexts = new Map<string, RoundContext>();
@@ -28,9 +29,14 @@ export function getRoundContext(code: string): RoundContext | undefined {
 export function startMeetVotersPhase(io: Server, game: GameSession): void {
   const code = game.code;
   game.status = "meet_voters";
-  
+
   const timerState = createTimerState();
-  const ctx: RoundContext = { timerState, prepIntervalId: null, revealIntervalId: null };
+  const ctx: RoundContext = {
+    timerState,
+    prepIntervalId: null,
+    revealIntervalId: null,
+    startTime: null,
+  };
   roundContexts.set(code, ctx);
 
   let countdown = 15;
@@ -71,6 +77,7 @@ export function startRound(
     timerState: createTimerState(),
     prepIntervalId: null,
     revealIntervalId: null,
+    startTime: null,
   };
   roundContexts.set(code, ctx);
 
@@ -116,11 +123,12 @@ function beginDebatePhase(io: Server, game: GameSession): void {
   if (!ctx) return;
 
   game.debatePhase = "debate";
+  ctx.startTime = Date.now();
 
   // P1 starts Round 1, P2 starts Round 2
   const activePlayer: 1 | 2 = game.currentRound === 1 ? 1 : 2;
 
-  io.to(code).emit("round:debate", { activePlayer });
+  io.to(code).emit("round:debate", { activePlayer, startTime: ctx.startTime });
 
   const onFloorChange = (newActive: 1 | 2, reason: string) => {
     io.to(code).emit("floor:change", { activePlayer: newActive, reason });
@@ -165,11 +173,24 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
   game.status = "judging";
   io.to(code).emit("judging:start", { roundNumber: game.currentRound });
 
-  const roundsSoFar = game.rounds.filter(
-    (r) => r.roundNumber <= game.currentRound
+  const currentRoundData = game.rounds.filter(
+    (r) => r.roundNumber === game.currentRound
   );
 
-  runVoterSimulation(game.voters, game.players, roundsSoFar, game.topics)
+  // Extract candidate names
+  const p1 = game.players.find((p) => p.slot === 1);
+  const p2 = game.players.find((p) => p.slot === 2);
+  const p1CandidateName = p1?.candidate?.fullName || "Player 1";
+  const p2CandidateName = p2?.candidate?.fullName || "Player 2";
+
+  runVoterSimulation(
+    game.voters,
+    game.players,
+    currentRoundData,
+    game.topics,
+    p1CandidateName,
+    p2CandidateName
+  )
     .then((result) => {
       game.status = "voting";
       io.to(code).emit("voting:start", {});
@@ -196,24 +217,26 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
         }, (i + 1) * VOTE_REVEAL_DELAY_MS);
       });
 
-      setTimeout(
-        () => {
-          game.status = "round_results";
-          io.to(code).emit("round:results", {
-            roundNumber: game.currentRound,
-            p1Score: result.p1Votes,
-            p2Score: result.p2Votes,
-            winner: result.winner,
-            tally: { p1: result.p1Votes, p2: result.p2Votes },
-            breakdown: result.votes.map((v) => ({
+      setTimeout(() => {
+        game.status = "round_results";
+        io.to(code).emit("round:results", {
+          roundNumber: game.currentRound,
+          p1Score: result.p1Votes,
+          p2Score: result.p2Votes,
+          winner: result.winner,
+          tally: { p1: result.p1Votes, p2: result.p2Votes },
+          breakdown: result.votes.map((v) => {
+            const profile = game.voters.find((vp) => vp.name === v.voterName);
+            return {
               voterName: v.voterName,
+              voterAge: profile?.age || 0,
+              voterLocation: profile?.location || "",
               vote: v.vote === 1 ? "Candidate A" : "Candidate B",
               reason: v.reason,
-            })),
-          });
-        },
-        (result.votes.length + 1) * VOTE_REVEAL_DELAY_MS
-      );
+            };
+          }),
+        });
+      }, (result.votes.length + 1) * VOTE_REVEAL_DELAY_MS);
     })
     .catch((err) => {
       console.error(`[judging] LLM voting failed for game ${code}:`, err);
@@ -225,7 +248,13 @@ export function startJudgingPhase(io: Server, game: GameSession): void {
         p2Score: 0,
         winner: 1,
         tally: { p1: 0, p2: 0 },
-        breakdown: [],
+        breakdown: game.voters.map((v) => ({
+          voterName: v.name,
+          voterAge: v.age,
+          voterLocation: v.location,
+          vote: "Candidate A", // fallback
+          reason: "Judging error",
+        })),
         error: "Voting failed — results are placeholder",
       });
     });
@@ -251,13 +280,40 @@ export function processObjection(
     });
   };
 
-  return timerHandleObjection(
+  const result = timerHandleObjection(
     io,
     game.code,
     ctx.timerState,
     byPlayer,
     onFloorChange
   );
+
+  if (result.success) {
+    const timestamp = ctx.startTime
+      ? Math.round((Date.now() - ctx.startTime) / 1000)
+      : 0;
+
+    const entry = {
+      speaker: `player${byPlayer}`,
+      text: "OBJECTION!",
+      timestamp,
+      isObjection: true, // Marker for UI
+    };
+
+    const round = game.rounds.find((r) => r.roundNumber === game.currentRound);
+    if (round) {
+      round.transcript.push(entry);
+      round.transcript.sort((a, b) => a.timestamp - b.timestamp);
+    }
+
+    // Broadcast the objection entry to all clients
+    io.to(game.code).emit("transcript:update", {
+      ...entry,
+      roundNumber: game.currentRound,
+    });
+  }
+
+  return result;
 }
 
 /**

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { votersData } from "../../lib/voterData";
 import PixelPortrait from "../../components/PixelPortrait";
 import { getSocket } from "../../lib/socket";
+import { apiUrl } from "../../lib/api";
 
 interface CandidateProfile {
   fullName: string;
@@ -50,11 +51,18 @@ export default function RevealPage({
     const meById = players.find((p) => p.id === playerId);
     const meBySlot = playerId
       ? undefined
-      : players.find((p) => p.slot === (sessionStorage.getItem("isHost") === "true" ? 1 : 2));
+      : players.find(
+          (p) =>
+            p.slot === (sessionStorage.getItem("isHost") === "true" ? 1 : 2),
+        );
     const me = meById ?? meBySlot;
 
-    const opponentById = playerId ? players.find((p) => p.id !== playerId) : undefined;
-    const opponentBySlot = me?.slot ? players.find((p) => p.slot !== me.slot) : undefined;
+    const opponentById = playerId
+      ? players.find((p) => p.id !== playerId)
+      : undefined;
+    const opponentBySlot = me?.slot
+      ? players.find((p) => p.slot !== me.slot)
+      : undefined;
     const opponent = opponentById ?? opponentBySlot;
 
     setMyCandidate(me?.candidate ?? null);
@@ -64,7 +72,7 @@ export default function RevealPage({
   useEffect(() => {
     setMounted(true);
 
-    fetch(`/api/game/${code}`)
+    fetch(apiUrl(`/api/game/${code}`))
       .then((res) => res.json())
       .then((data) => {
         if (data.voters) {
@@ -170,25 +178,34 @@ export default function RevealPage({
         animate={{ y: 0, opacity: 1 }}
         className="w-full max-w-7xl flex justify-between items-center mb-6"
       >
-        <div className="bg-[#FFEB3B] px-6 py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000]">
-          <h1 className="font-['Titan_One'] text-3xl text-black">
-            ROOM CODE: {code.toUpperCase()}
-          </h1>
-        </div>
-        <div className="bg-white px-6 py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000] flex items-center gap-4">
-          <h2 className="font-['Titan_One'] text-2xl text-red-600">
-            DEBATE STARTS IN: {countdown}s
-          </h2>
-          <button
-            onClick={() => {
-              const playerId = sessionStorage.getItem("playerId");
-              getSocket().emit("reveal:done", { code, playerId });
-            }}
-            disabled={isReady}
-            className={`${isReady ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"} text-white font-['Titan_One'] px-4 py-1 rounded-lg border-2 border-black shadow-[2px_2px_0_0_#000] transition-transform active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_0_#000] text-sm flex items-center gap-2`}
-          >
-            {isReady ? `WAITING... (${otherReadyCount}/2)` : "READY!"}
-          </button>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center w-full">
+          <div className="bg-[#FFEB3B] px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000] w-full sm:w-auto text-center">
+            <h1 className="font-['Titan_One'] text-xl sm:text-3xl text-black break-words">
+              ROOM CODE: {code.toUpperCase()}
+            </h1>
+          </div>
+
+          <div className="bg-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-4 border-black shadow-[4px_4px_0_0_#000] flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto text-center">
+            <h2 className="font-['Titan_One'] text-lg sm:text-2xl text-red-600">
+              DEBATE STARTS IN: {countdown}s
+            </h2>
+
+            <button
+              onClick={() => {
+                const playerId = sessionStorage.getItem("playerId");
+                getSocket().emit("reveal:done", { code, playerId });
+              }}
+              disabled={isReady}
+              className={`${isReady ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"} 
+              text-white font-['Titan_One'] px-4 py-2 rounded-lg border-2 border-black 
+              shadow-[2px_2px_0_0_#000] transition-transform 
+              active:translate-x-[1px] active:translate-y-[1px] 
+              active:shadow-[1px_1px_0_0_#000] text-sm flex items-center justify-center gap-2
+              w-full sm:w-auto`}
+            >
+              {isReady ? `WAITING... (${otherReadyCount}/2)` : "READY!"}
+            </button>
+          </div>
         </div>
       </motion.div>
 
@@ -227,7 +244,8 @@ export default function RevealPage({
                     {candidate.fullName}
                   </p>
                   <p className="font-bold text-gray-700">
-                    {candidate.age} • {candidate.profession} • {candidate.electorate}
+                    {candidate.age} • {candidate.profession} •{" "}
+                    {candidate.electorate}
                   </p>
                   <p className="inline-block mt-1 bg-black text-white px-2 py-1 rounded text-xs font-black uppercase">
                     {candidate.partyName}

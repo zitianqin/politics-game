@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import ScreenRoot from "./components/ScreenRoot";
+import { apiUrl } from "./lib/api";
 
 export default function Page() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function Page() {
     const gameCode = sessionStorage.getItem("gameCode");
     if (!playerId || !gameCode) return;
 
-    fetch("/api/game/reconnect", {
+    fetch(apiUrl("/api/game/reconnect"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: gameCode, playerId }),
@@ -44,10 +45,10 @@ export default function Page() {
       existingGame.status === "lobby"
         ? `/lobby/${existingGame.code}`
         : existingGame.status === "meet_voters"
-        ? `/reveal/${existingGame.code}`
-        : ["debate", "judging", "round_results"].includes(existingGame.status)
-        ? `/debate/${existingGame.code}`
-        : `/results/${existingGame.code}`;
+          ? `/reveal/${existingGame.code}`
+          : ["debate", "judging", "round_results"].includes(existingGame.status)
+            ? `/debate/${existingGame.code}`
+            : `/results/${existingGame.code}`;
     router.push(targetRoute);
   };
 
@@ -61,7 +62,9 @@ export default function Page() {
   const handleCreateGame = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/game/create", { method: "POST" });
+      const response = await fetch(apiUrl("/api/game/create"), {
+        method: "POST",
+      });
       if (!response.ok) throw new Error("Failed to create game");
       const data = await response.json();
 
@@ -85,7 +88,7 @@ export default function Page() {
 
     setIsLoading(true);
     try {
-      const response = await fetch("/api/game/join", {
+      const response = await fetch(apiUrl("/api/game/join"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: joinCode.trim().toUpperCase() }),

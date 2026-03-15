@@ -1,4 +1,7 @@
-import { ScreenId, TOTAL_ROUNDS } from "../lib/gameConstants";
+"use client";
+
+import { useEffect } from "react";
+import { ScreenId, TOTAL_ROUNDS, formatScorecardName } from "../lib/gameConstants";
 
 interface ScreenRevealProps {
   screen: ScreenId;
@@ -7,7 +10,9 @@ interface ScreenRevealProps {
   currentBarsHeight: { p1: number; p2: number };
   isNextBtnVisible: boolean;
   currentRound: number;
-  startNextRound: () => void;
+  onNext: () => void;
+  p1Name?: string;
+  p2Name?: string;
 }
 
 export default function ScreenReveal({
@@ -17,8 +22,15 @@ export default function ScreenReveal({
   currentBarsHeight,
   isNextBtnVisible,
   currentRound,
-  startNextRound,
+  onNext,
+  p1Name = "Player 1",
+  p2Name = "Player 2",
 }: ScreenRevealProps) {
+  useEffect(() => {
+    const audio = new Audio("/sound-effects/confetti.mp3");
+    audio.play().catch(() => {});
+  }, []);
+
   return (
     <div
       id="screen-reveal"
@@ -42,6 +54,18 @@ export default function ScreenReveal({
           >
             <div className="bar-score">+{p1Earned}</div>
           </div>
+          <div
+            className="apply-font"
+            style={{
+              marginTop: "8px",
+              fontSize: "1.1rem",
+              fontWeight: 800,
+              textAlign: "center",
+              color: "var(--dark)",
+            }}
+          >
+            {formatScorecardName(p1Name, 1)}
+          </div>
         </div>
 
         <div className="bar-wrapper">
@@ -57,16 +81,28 @@ export default function ScreenReveal({
           >
             <div className="bar-score">+{p2Earned}</div>
           </div>
+          <div
+            className="apply-font"
+            style={{
+              marginTop: "8px",
+              fontSize: "1.1rem",
+              fontWeight: 800,
+              textAlign: "center",
+              color: "var(--dark)",
+            }}
+          >
+            {formatScorecardName(p2Name, 2)}
+          </div>
         </div>
       </div>
 
       <button
         className="btn green-color"
-        onClick={startNextRound}
+        onClick={onNext}
         style={{
           marginTop: "40px",
-          opacity: isNextBtnVisible ? 1 : 0,
-          pointerEvents: isNextBtnVisible ? "auto" : "none",
+          opacity: "none",
+          pointerEvents: "auto",
           transition: "opacity 0.5s",
         }}
       >

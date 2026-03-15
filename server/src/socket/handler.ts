@@ -52,6 +52,7 @@ export function registerSocketHandlers(io: Server): void {
       io.to(code).emit("player:joined", {
         playerId: player.id,
         slot: player.slot,
+        displayName: player.displayName,
         playerCount: game.players.length,
       });
 
@@ -68,6 +69,26 @@ export function registerSocketHandlers(io: Server): void {
         socket.emit("game:state", { gameState: serializeGame(game) });
       }
     });
+
+    socket.on(
+      "player:setName",
+      (data: { code: string; playerId: string; name: string }) => {
+        const { code, playerId, name } = data;
+        const game = getGame(code);
+        if (!game) return;
+
+        const player = game.players.find((p) => p.id === playerId);
+        if (!player) return;
+
+        player.displayName = name.trim().slice(0, 10) || null;
+
+        io.to(code).emit("player:nameChanged", {
+          playerId: player.id,
+          slot: player.slot,
+          displayName: player.displayName,
+        });
+      }
+    );
 
     socket.on("game:start", (data: { code: string; playerId: string }) => {
       const { code: rawCode, playerId } = data;
@@ -111,6 +132,10 @@ export function registerSocketHandlers(io: Server): void {
         topics: game.topics,
         candidates: game.players.map((p) => p.candidate),
         voters: game.voters,
+        players: game.players.map((p) => ({
+          slot: p.slot,
+          displayName: p.displayName,
+        })),
       });
       startMeetVotersPhase(io, game);
     });
@@ -141,6 +166,26 @@ export function registerSocketHandlers(io: Server): void {
       }
     });
 
+    // Multi-stage reveal synchronization
+    socket.on("results:reveal", (data: { code: string }) => {
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
+      io.to(code).emit("game:results_reveal");
+    });
+
+    socket.on("results:bars", (data: { code: string }) => {
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
+      io.to(code).emit("game:bars_reveal");
+    });
+
+    socket.on("results:complete", (data: { code: string }) => {
+      const { code: rawCode } = data;
+      const code = rawCode.toUpperCase();
+      io.to(code).emit("game:winner_reveal");
+    });
+
+    // Reset game completely
     socket.on("game:reset", (data: { code: string }) => {
       const { code: rawCode } = data;
       const code = rawCode.toUpperCase();
@@ -269,6 +314,7 @@ function serializeGame(game: ReturnType<typeof getGame>) {
       id: p.id,
       slot: p.slot,
       candidate: p.candidate,
+      displayName: p.displayName,
     })),
     voters: game.voters,
     rounds: game.rounds,
