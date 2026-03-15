@@ -16,11 +16,7 @@ export default function ScreenRoot({
       id="screen-root"
       className={`screen ${screen === "lobby" ? "active" : ""}`}
     >
-      <h1 className="title-text bouncing">
-        ELECTION
-        <br />
-        SHOWDOWN
-      </h1>
+      <img src="/title.png" alt="Election Showdown" style={{ maxWidth: "680px", width: "90%", height: "auto" }} />
 
       {/* <div className="character-select">
         <div
