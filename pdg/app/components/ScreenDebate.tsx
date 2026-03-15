@@ -336,129 +336,83 @@ export default function ScreenDebate({
         </div>
       )}
 
-      {/* Top HUD Bar — hidden on mobile */}
-      <div
-        className="hidden sm:flex"
-        style={{
-          padding: "12px 24px",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "20px",
-        }}
-      >
-        <div
-          className="flex"
-          style={{
-            background: "var(--p2)",
-            border: "4px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 20px",
-            textAlign: "center",
-            boxShadow: "4px 4px 0 var(--dark)",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "Titan One, cursive",
-              fontSize: "28px",
-              fontWeight: "900",
-              color: "white",
-              textTransform: "uppercase",
-              letterSpacing: "2px",
-            }}
-          >
-            ROUND {currentRound}
-          </div>
-        </div>
-
-        <div
-          style={{
-            background: activePlayer === 1 ? "var(--p1)" : "var(--p2)",
-            border: "4px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 20px",
-            boxShadow: "4px 4px 0 var(--dark)",
-            animation: "pulse 1.5s infinite",
-            transition: "background 0.3s",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "Titan One, cursive",
-              fontSize: "18px",
-              color: "white",
-              textShadow: "2px 2px 0 var(--dark)",
-              textTransform: "uppercase",
-            }}
-          >
-            <img
-              src={activePlayer === 1 ? "/P1.png" : "/P2.png"}
-              alt={`P${activePlayer}`}
-              style={{
-                width: "22px",
-                height: "22px",
-                objectFit: "cover",
-                borderRadius: "4px",
-                verticalAlign: "middle",
-                marginRight: "6px",
-              }}
-            />
-            {activePlayer === 1 ? p1Name : p2Name} SPEAKING
-          </div>
-        </div>
-      </div>
-
       {/* Topic Banner */}
       <div
         style={{
           background: "linear-gradient(90deg, var(--accent), var(--p2))",
-          border: "4px solid var(--dark)",
-          borderTop: "none",
-          padding: "8px 16px",
-          marginTop: "48px",
+          borderBlock: "4px solid var(--dark)",
+          padding: "6px 12px",
           textAlign: "center",
           boxShadow: "0 4px 0 var(--dark)",
+          flexShrink: 0,
         }}
+        className=""
       >
-        <div
-          id="topic-text"
+        <h2
+          className="titan"
           style={{
-            fontSize: "clamp(13px, 3vw, 22px)",
-            fontFamily: "Titan One, cursive",
-            fontWeight: "900",
+            fontSize: "clamp(16px, 4vw, 22px)",
             color: "white",
-            textShadow: "3px 3px 0 var(--dark)",
-            WebkitTextStroke: "1px var(--dark)",
-            margin: "0",
-            lineHeight: "1.3",
+            textShadow:
+              "2px 2px 0 var(--dark), -2px 2px 0 var(--dark), 2px -2px 0 var(--dark), -2px -2px 0 var(--dark)",
           }}
         >
-          &ldquo;{currentTopic}&rdquo;
-        </div>
+          TOPIC: {currentTopic}
+        </h2>
+      </div>
+
+      {/* Mobile-only Timer Bars */}
+      <div className="flex md:hidden flex-col gap-1 p-2">
+        <TimerBar
+          playerLabel={p1Name}
+          playerEmoji=" P1 "
+          remaining={p1TimeRemaining}
+          total={60}
+          isActive={activePlayer === 1}
+          colorVar="var(--p1)"
+        />
+        <TimerBar
+          playerLabel={p2Name}
+          playerEmoji=" P2 "
+          remaining={p2TimeRemaining}
+          total={60}
+          isActive={activePlayer === 2}
+          colorVar="var(--p2)"
+        />
       </div>
 
       {/* Container: Stacks vertically on mobile (P1 - P2 - Transcript), columns on desktop (P1 - Transcript - P2) */}
-      <div
-        style={{
-          gap: "8px",
-          minHeight: 0,
-        }}
-        className="flex flex-1 flex-col md:flex-row sm:gap-4!"
-      >
-        {/* Player 1 Timer */}
+      <div className="gap-2 flex flex-1 flex-col md:flex-row sm:gap-2! min-h-0 p-2 md:p-0 md:pb-2">
+        {/* Player 1 Panel (Desktop) */}
         <div
+          className="hidden md:flex flex-col items-center justify-center gap-4 p-4"
           style={{
-            padding: "6px 12px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-            flex: 0,
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.4))",
+            flex: "0 0 220px",
+            borderRight: "4px solid var(--dark)",
+            boxShadow: "inset -4px 0 0 var(--dark)",
           }}
-          className="order-1 sm:px-0 sm:py-0"
         >
+          <div
+            style={{
+              width: "80px",
+              height: "80px",
+              borderRadius: "8px",
+              background: "var(--p1)",
+              border: "4px solid var(--dark)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "bold",
+              fontSize: "24px",
+            }}
+          >
+            P1
+          </div>
           <TimerBar
             playerLabel={p1Name}
-            playerEmoji="/P1.png"
+            playerEmoji=" P1 "
             remaining={p1TimeRemaining}
             total={60}
             isActive={activePlayer === 1}
@@ -466,187 +420,139 @@ export default function ScreenDebate({
           />
         </div>
 
-        {/* Main Transcript Area */}
+        {/* Transcript (Middle) */}
         <div
+          id="transcript-container"
+          className="flex-1 flex flex-col min-h-0"
           style={{
-            display: "flex",
-            flexDirection: "column",
-            padding: "8px 10px",
-            minHeight: 0,
-            height: "clamp(120px, 35vw, 180px)",
-            flex: 1,
+            background: "rgba(0,0,0,0.3)",
+            borderRadius: "12px",
+            border: "4px solid var(--dark)",
+            overflow: "hidden",
           }}
-          className="order-3 md:order-2 sm:flex-1! sm:h-auto! sm:p-4!"
+        >
+          <div
+            id="transcript-scroll-area"
+            className="flex-1 overflow-y-auto p-3 space-y-3"
+          >
+            {transcript.map((entry, index) => (
+              <div
+                key={index}
+                className={`flex flex-col ${
+                  entry.speaker === 1 ? "items-start" : "items-end"
+                }`}
+              >
+                <div
+                  className="transcript-bubble"
+                  style={{
+                    background:
+                      entry.speaker === 1
+                        ? "linear-gradient(to bottom, var(--p1), var(--p1-dark))"
+                        : "linear-gradient(to bottom, var(--p2), var(--p2-dark))",
+                    color: entry.speaker === 1 ? "var(--dark)" : "white",
+                    border: "3px solid var(--dark)",
+                    borderRadius: "12px",
+                    padding: "6px 12px",
+                    maxWidth: "90%",
+                    boxShadow: "4px 4px 0 var(--dark)",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: "Nunito, sans-serif",
+                      fontWeight: 900,
+                      fontSize: "16px",
+                    }}
+                  >
+                    {entry.text}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <div ref={transcriptEndRef} />
+          </div>
+          <div
+            className="flex items-center justify-center p-2"
+            style={{
+              borderTop: "4px solid var(--dark)",
+              background: "rgba(0,0,0,0.2)",
+            }}
+          >
+            {isRecording ? (
+              <div className="flex items-center gap-2">
+                <div
+                  style={{
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "50%",
+                    background: "var(--red)",
+                    animation: "pulse 1s infinite",
+                  }}
+                />
+                <span
+                  className="font-bold text-white"
+                  style={{
+                    fontFamily: "Titan One, cursive",
+                    letterSpacing: "1px",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Recording
+                </span>
+                <canvas
+                  ref={waveformCanvasRef}
+                  width="50"
+                  height="18"
+                  style={{ marginLeft: "8px" }}
+                />
+              </div>
+            ) : (
+              <span
+                className="font-bold"
+                style={{
+                  fontFamily: "Titan One, cursive",
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.5)",
+                }}
+              >
+                {isCurrentPlayerActive ? "Prepare to Speak..." : "Listening..."}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Player 2 Panel (Desktop) */}
+        <div
+          className="hidden md:flex flex-col items-center justify-center gap-4 p-4"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.4))",
+            flex: "0 0 220px",
+            borderLeft: "4px solid var(--dark)",
+            boxShadow: "inset 4px 0 0 var(--dark)",
+          }}
         >
           <div
             style={{
-              background: "rgba(255, 255, 255, 0.98)",
+              width: "80px",
+              height: "80px",
+              borderRadius: "8px",
+              background: "var(--p2)",
               border: "4px solid var(--dark)",
-              borderRadius: "12px",
-              padding: "10px 12px",
-              flex: 1,
-              overflowY: "auto",
-              boxShadow: "6px 6px 0 var(--dark)",
-              fontFamily: "Nunito, sans-serif",
-              fontSize: "clamp(11px, 2.5vw, 18px)",
-              fontWeight: "700",
-              lineHeight: "1.5",
-              whiteSpace: "pre-wrap",
-              wordWrap: "break-word",
-              color: "var(--dark)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "bold",
+              fontSize: "24px",
             }}
-            className="sm:p-5! sm:text-lg! sm:rounded-2xl! sm:border-[6px]! sm:shadow-[8px_8px_0_var(--dark)]!"
           >
-            {transcript.length === 0 ? (
-              <span
-                style={{
-                  color: "#999",
-                  fontStyle: "italic",
-                  fontSize: "14px",
-                  alignSelf: "center",
-                  marginTop: "auto",
-                  marginBottom: "auto",
-                }}
-              >
-                Waiting for debate to start...
-              </span>
-            ) : (
-              transcript.map((entry, i) => {
-                const isP1 = entry.speaker === 1;
-                const label = isP1
-                  ? formatScorecardName(p1Name, 1)
-                  : formatScorecardName(p2Name, 2);
-                const color = isP1 ? "var(--p1)" : "var(--p2)";
-                const ts = entry.timestamp;
-                const mins = Math.floor(ts / 60)
-                  .toString()
-                  .padStart(2, "0");
-                const secs = (ts % 60).toString().padStart(2, "0");
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      borderLeft: `5px solid ${color}`,
-                      paddingLeft: "12px",
-                      paddingTop: "4px",
-                      paddingBottom: "4px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        marginBottom: "2px",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "Titan One, cursive",
-                          fontSize: "14px",
-                          color,
-                          fontWeight: "900",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        <img
-                          src={isP1 ? "/P1.png" : "/P2.png"}
-                          alt={isP1 ? "P1" : "P2"}
-                          style={{
-                            width: "16px",
-                            height: "16px",
-                            objectFit: "cover",
-                            borderRadius: "3px",
-                          }}
-                        />
-                        {label}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: "monospace",
-                          fontSize: "11px",
-                          color: "#888",
-                        }}
-                      >
-                        {mins}:{secs}
-                      </span>
-                      {entry.isObjection && (
-                        <span
-                          style={{
-                            fontFamily: "Titan One, cursive",
-                            fontSize: "11px",
-                            color: "var(--red)",
-                            fontWeight: "900",
-                            letterSpacing: "1px",
-                          }}
-                        >
-                          ⚖️ OBJECTION
-                        </span>
-                      )}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "Nunito, sans-serif",
-                        fontSize: "16px",
-                        fontWeight: "700",
-                        color: "var(--dark)",
-                        lineHeight: "1.5",
-                      }}
-                    >
-                      {entry.text}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            <div ref={transcriptEndRef} />
+            P2
           </div>
-
-          {/* Recording indicator */}
-          {isRecording && (
-            <div
-              style={{
-                marginTop: "6px",
-                textAlign: "center",
-                animation: "pulse 1s infinite",
-              }}
-            >
-              <span
-                style={{
-                  display: "inline-block",
-                  background: "var(--p2)",
-                  color: "white",
-                  padding: "6px 14px",
-                  borderRadius: "24px",
-                  fontWeight: "900",
-                  fontSize: "clamp(10px, 2vw, 14px)",
-                  fontFamily: "Titan One, cursive",
-                  textTransform: "uppercase",
-                  letterSpacing: "1px",
-                }}
-              >
-                🔴 RECORDING
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Player 2 Timer */}
-        <div
-          style={{
-            padding: "6px 12px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-            flex: 0,
-          }}
-          className="order-2 md:order-3 sm:px-0 sm:py-0"
-        >
           <TimerBar
             playerLabel={p2Name}
-            playerEmoji="/P2.png"
+            playerEmoji=" P2 "
             remaining={p2TimeRemaining}
             total={60}
             isActive={activePlayer === 2}
@@ -658,167 +564,117 @@ export default function ScreenDebate({
       {/* Bottom Action Bar */}
       <div
         style={{
-          padding: "8px 10px",
+          padding: "6px 8px",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           gap: "8px",
           flexShrink: 0,
+          background: "var(--dark)",
+          borderTop: "4px solid rgba(255,255,255,0.2)",
         }}
-        className="sm:px-6! sm:py-4! sm:gap-3!"
       >
-        {/* Recording indicator with waveform */}
-        <span
+        {/* Objection Button */}
+        <button
+          onClick={handleObjection}
+          disabled={!canObjection}
+          className="flex-1"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            background: "var(--p2)",
-            color: "white",
-            padding: "6px 20px",
-            borderRadius: "24px",
-            fontWeight: "900",
-            fontSize: "clamp(10px, 2vw, 14px)",
             fontFamily: "Titan One, cursive",
+            fontSize: "clamp(18px, 4vw, 24px)",
+            background: "var(--accent)",
+            color: "var(--dark)",
+            border: "4px solid var(--dark)",
+            borderRadius: "12px",
+            padding: "12px 20px",
+            cursor: "pointer",
+            transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
             textTransform: "uppercase",
-            letterSpacing: "1px",
-            lineHeight: 1,
+            boxShadow: "4px 4px 0px var(--dark)",
+            opacity: canObjection ? 1 : 0.5,
+          }}
+          onMouseDown={(e) => {
+            if (canObjection) {
+              e.currentTarget.style.transform = "translate(4px, 4px)";
+              e.currentTarget.style.boxShadow = "0px 0px 0px var(--dark)";
+            }
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = "";
+            e.currentTarget.style.boxShadow = "4px 4px 0px var(--dark)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "";
+            e.currentTarget.style.boxShadow = "4px 4px 0px var(--dark)";
           }}
         >
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "white",
-              flexShrink: 0,
-              animation: "pulse 1.2s ease-in-out infinite",
-            }}
-          />
-          <canvas
-            ref={waveformCanvasRef}
-            style={{
-              width: "50px",
-              height: "18px",
-              flexShrink: 0,
-              display: "block",
-            }}
-          />
-          RECORDING
-        </span>
-        <div style={{ display: "flex", width: "100%", gap: "8px" }}>
-          {/* Objection Button */}
-          <button
-            onClick={handleObjection}
-            disabled={!canObjection}
-            style={{
-              background: canObjection ? "var(--red)" : "#999",
-              color: canObjection ? "black" : "rgba(0, 0, 0, 0.5)",
-              border: "3px solid var(--dark)",
-              borderRadius: "12px",
-              padding: "10px 8px",
-              fontFamily: "Titan One, cursive",
-              fontSize: "clamp(11px, 2.8vw, 20px)",
-              fontWeight: "900",
-              textTransform: "uppercase",
-              cursor: canObjection ? "pointer" : "not-allowed",
-              boxShadow: canObjection ? "5px 5px 0 var(--dark)" : "none",
-              transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-              opacity: canObjection ? 1 : 0.5,
-              letterSpacing: "1px",
-              flex: 1,
-            }}
-            onMouseDown={(e) => {
-              if (canObjection) {
-                (e.target as HTMLButtonElement).style.transform =
-                  "translate(4px, 4px)";
-                (e.target as HTMLButtonElement).style.boxShadow =
-                  "2px 2px 0 var(--dark)";
-              }
-            }}
-            onMouseUp={(e) => {
-              if (canObjection) {
-                (e.target as HTMLButtonElement).style.transform =
-                  "translate(0, 0)";
-                (e.target as HTMLButtonElement).style.boxShadow =
-                  "5px 5px 0 var(--dark)";
-              }
-            }}
-          >
-            ⚖️ OBJECTION!
-            {!canObjection && myRemaining <= 15 && myRemaining > 0 && (
-              <div style={{ fontSize: "9px", opacity: 0.7 }}>NEED &gt;15s</div>
-            )}
-          </button>
+          Objection!
+          <br />
+          <span style={{ fontSize: "clamp(10px, 2vw, 12px)" }}>
+            (Cost: 15s)
+          </span>
+        </button>
 
-          {/* Yield Button */}
-          <button
-            onClick={onYield}
-            disabled={!isCurrentPlayerActive}
-            style={{
-              background: isCurrentPlayerActive ? "var(--p1)" : "#999",
-              color: "var(--dark)",
-              border: "3px solid var(--dark)",
-              borderRadius: "12px",
-              padding: "10px 8px",
-              fontFamily: "Titan One, cursive",
-              fontSize: "clamp(11px, 2.8vw, 20px)",
-              fontWeight: "900",
-              textTransform: "uppercase",
-              cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
-              boxShadow: isCurrentPlayerActive
-                ? "5px 5px 0 var(--dark)"
-                : "none",
-              transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-              opacity: isCurrentPlayerActive ? 1 : 0.5,
-              letterSpacing: "1px",
-              flex: 1,
-            }}
-            onMouseDown={(e) => {
-              if (isCurrentPlayerActive) {
-                (e.target as HTMLButtonElement).style.transform =
-                  "translate(4px, 4px)";
-                (e.target as HTMLButtonElement).style.boxShadow =
-                  "2px 2px 0 var(--dark)";
-              }
-            }}
-            onMouseUp={(e) => {
-              if (isCurrentPlayerActive) {
-                (e.target as HTMLButtonElement).style.transform =
-                  "translate(0, 0)";
-                (e.target as HTMLButtonElement).style.boxShadow =
-                  "5px 5px 0 var(--dark)";
-              }
-            }}
-          >
-            🔄 YIELD
-          </button>
-        </div>
+        {/* Yield Button */}
+        <button
+          onClick={onYield}
+          disabled={!isCurrentPlayerActive}
+          className="flex-1"
+          style={{
+            fontFamily: "Titan One, cursive",
+            fontSize: "clamp(18px, 4vw, 24px)",
+            background: isCurrentPlayerActive ? "var(--green)" : "#555",
+            color: "var(--dark)",
+            border: "4px solid var(--dark)",
+            borderRadius: "12px",
+            padding: "12px 20px",
+            cursor: "pointer",
+            transition:
+              "transform 0.1s, box-shadow 0.1s, background-color 0.2s",
+            textTransform: "uppercase",
+            boxShadow: "4px 4px 0px var(--dark)",
+            opacity: isCurrentPlayerActive ? 1 : 0.5,
+          }}
+          onMouseDown={(e) => {
+            if (isCurrentPlayerActive) {
+              e.currentTarget.style.transform = "translate(4px, 4px)";
+              e.currentTarget.style.boxShadow = "0px 0px 0px var(--dark)";
+            }
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = "";
+            e.currentTarget.style.boxShadow = "4px 4px 0px var(--dark)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "";
+            e.currentTarget.style.boxShadow = "4px 4px 0px var(--dark)";
+          }}
+        >
+          Yield Floor
+        </button>
       </div>
 
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
         @keyframes screenShake {
-          0%, 100% { transform: translateX(0) translateY(0); }
-          10% { transform: translateX(-8px) translateY(-4px); }
-          20% { transform: translateX(8px) translateY(2px); }
-          30% { transform: translateX(-6px) translateY(-2px); }
-          40% { transform: translateX(6px) translateY(4px); }
-          50% { transform: translateX(-4px) translateY(-2px); }
-          60% { transform: translateX(4px) translateY(2px); }
-          70% { transform: translateX(-2px) translateY(-1px); }
-          80% { transform: translateX(2px) translateY(1px); }
-          90% { transform: translateX(-1px) translateY(0); }
+          0% { transform: translate(0, 0) rotate(0deg); }
+          10% { transform: translate(-2px, -3px) rotate(-1deg); }
+          20% { transform: translate(2px, 3px) rotate(1deg); }
+          30% { transform: translate(-2px, 2px) rotate(0deg); }
+          40% { transform: translate(2px, -2px) rotate(1deg); }
+          50% { transform: translate(-2px, 3px) rotate(-1deg); }
+          60% { transform: translate(2px, 2px) rotate(0deg); }
+          70% { transform: translate(-2px, -3px) rotate(1deg); }
+          80% { transform: translate(2px, -2px) rotate(-1deg); }
+          90% { transform: translate(-2px, 3px) rotate(0deg); }
+          100% { transform: translate(0, 0) rotate(0deg); }
         }
         @keyframes objectionSlam {
-          0% { transform: scale(0) rotate(-10deg); opacity: 0; }
-          50% { transform: scale(1.3) rotate(5deg); opacity: 1; }
-          70% { transform: scale(0.95) rotate(-2deg); }
-          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          from { transform: scale(3) rotate(-10deg); opacity: 0; }
+          to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
         }
       `}</style>
     </div>

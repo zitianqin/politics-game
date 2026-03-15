@@ -9,7 +9,7 @@ export interface TimerState {
 }
 
 const TICK_INTERVAL = 500; // ms
-const TIME_PER_PLAYER = 60_000; // 60s in ms
+const TIME_PER_PLAYER = 6000000; // 60s in ms
 const OBJECTION_COST = 15_000; // 15s in ms
 
 export function createTimerState(): TimerState {

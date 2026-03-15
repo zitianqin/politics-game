@@ -34,7 +34,7 @@ export default function TimerBar({
 
   return (
     <div
-      className="timer-bar-container flex flex-row lg:flex-col lg:items-start items-center gap-3 lg:gap-3 p-2 lg:p-6 rounded-lg transition-colors"
+      className="timer-bar-container flex flex-row lg:flex-col lg:items-start items-center gap-3 lg:gap-2 p-2 lg:p-4 rounded-lg transition-colors"
       style={{
         background: isActive ? "rgba(255,255,255,0.15)" : "transparent",
       }}
@@ -43,7 +43,7 @@ export default function TimerBar({
       <div
         style={{
           fontFamily: "Titan One, cursive",
-          fontSize: "clamp(16px, 2vw, 24px)",
+          fontSize: "18px",
           color: "white",
           textShadow: "2px 2px 0 var(--dark)",
           minWidth: "80px",
@@ -57,8 +57,8 @@ export default function TimerBar({
           src={playerEmoji}
           alt={playerLabel}
           style={{
-            width: "clamp(24px, 3vw, 40px)",
-            height: "clamp(24px, 3vw, 40px)",
+            width: "28px",
+            height: "28px",
             objectFit: "cover",
             borderRadius: "6px",
             animation: isActive
@@ -72,14 +72,14 @@ export default function TimerBar({
       {/* Bar track */}
       <div
         style={{
-          height: "clamp(24px, 2vh, 40px)",
+          height: "24px",
           background: "rgba(0,0,0,0.3)",
           borderRadius: "12px",
           border: "3px solid var(--dark)",
           overflow: "hidden",
           position: "relative",
         }}
-        className="flex-1 lg:flex-none lg:w-full"
+        className="flex-1 lg:w-full"
       >
         {/* Bar fill */}
         <div
@@ -87,7 +87,7 @@ export default function TimerBar({
             height: "100%",
             width: `${widthPercent}%`,
             background: barColor,
-            borderRadius: "9px",
+            borderRadius: "9px 0 0 9px",
             transition: "width 0.5s linear, background 0.5s ease",
             boxShadow: isActive ? `0 0 10px ${barColor}` : "none",
           }}
@@ -98,7 +98,7 @@ export default function TimerBar({
       <div
         style={{
           fontFamily: "Titan One, cursive",
-          fontSize: "clamp(18px, 2.5vw, 28px)",
+          fontSize: "22px",
           color: barColor,
           textShadow: "2px 2px 0 var(--dark)",
           minWidth: "60px",
