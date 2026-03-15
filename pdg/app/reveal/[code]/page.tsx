@@ -179,14 +179,14 @@ export default function RevealPage({
         className="w-full max-w-7xl flex justify-between items-stretch mb-12"
       >
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center w-full h-full">
-          <div className="bg-[#FFEB3B] px-4 sm:px-6 py-3 sm:py-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex items-center justify-center w-full sm:w-auto min-h-[70px]">
-            <h2 className="font-['Titan_One'] text-xl sm:text-3xl text-black break-words text-center">
+          <div className="bg-[#FFEB3B] px-4 sm:px-6 sm:py-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex items-center justify-center w-full sm:w-auto min-h-[90px] h-full">
+            <h2 className="font-['Titan_One'] text-black break-words text-center">
               ROOM CODE: {code.toUpperCase()}
             </h2>
           </div>
 
-          <div className="bg-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto min-h-[70px]">
-            <h2 className="font-['Titan_One'] text-lg sm:text-2xl text-red-600 text-center sm:text-left whitespace-nowrap">
+          <div className="bg-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto min-h-[90px] h-full">
+            <h2 className="font-['Titan_One'] text-black text-center sm:text-left whitespace-nowrap">
               ⏰ STARTS IN: {countdown}s
             </h2>
 
@@ -201,7 +201,7 @@ export default function RevealPage({
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-green-500 hover:bg-green-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_#000]"
               } 
-              text-black font-['Titan_One'] px-6 py-3 rounded-lg border-3 border-black 
+              text-black font-['Titan_One'] px-6 rounded-lg border-3 border-black 
               shadow-[4px_4px_0_0_#000] transition-all text-base sm:text-lg
               flex items-center justify-center gap-2 whitespace-nowrap sm:h-full min-h-[50px]`}
             >
