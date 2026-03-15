@@ -78,22 +78,22 @@ export default function ScreenDebate({
   const voiceBadgeText = voiceError
     ? "VOICE ERROR"
     : voiceStatus === "connecting"
-      ? "VOICE CONNECTING"
-      : voiceStatus === "connected"
-        ? "VOICE LIVE"
-        : null;
+    ? "VOICE CONNECTING"
+    : voiceStatus === "connected"
+    ? "VOICE LIVE"
+    : null;
   const voiceBadgeColor = voiceError
     ? "var(--red)"
     : voiceStatus === "connected"
-      ? "var(--accent)"
-      : "var(--p2)";
+    ? "var(--accent)"
+    : "var(--p2)";
 
   useEffect(() => {
     if (showObjectionVFX) {
       setScreenShake(true);
       try {
         const audio = new Audio(
-          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=",
+          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="
         );
         audio.volume = 0.5;
         audio.play().catch(() => {});
@@ -163,7 +163,7 @@ export default function ScreenDebate({
             audioBlob,
             recordingStartTimeRef.current,
             turnRound,
-            turnTopic,
+            turnTopic
           );
         };
 
@@ -178,7 +178,7 @@ export default function ScreenDebate({
         console.error("Failed to access microphone:", error);
       }
     },
-    [setIsRecordingGlobal, setMediaStream],
+    [setIsRecordingGlobal, setMediaStream]
   );
 
   // Start/stop recording based on active player.
@@ -249,7 +249,7 @@ export default function ScreenDebate({
         const x = i * (barWidth + gap);
         const y = (h - barHeight) / 2;
 
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "#ff4c4c";
         ctx.beginPath();
         ctx.roundRect(x, y, barWidth, barHeight, 2);
         ctx.fill();
@@ -269,7 +269,7 @@ export default function ScreenDebate({
     audioBlob: Blob,
     startTime: number,
     roundNumber: number,
-    topic: string,
+    topic: string
   ) => {
     try {
       const gameCode = sessionStorage.getItem("gameCode") ?? "";
@@ -337,14 +337,14 @@ export default function ScreenDebate({
           <div
             style={{
               fontFamily: "Titan One, cursive",
-              fontSize: "clamp(60px, 15vw, 120px)",
+              fontSize: "clamp(70px, 20vw, 150px)",
               color: "var(--red)",
-              WebkitTextStroke: "4px var(--dark)",
               textShadow:
                 "8px 8px 0 var(--dark), 0 0 40px rgba(255, 76, 76, 0.6)",
               animation: "objectionSlam 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
               textTransform: "uppercase",
               letterSpacing: "8px",
+              fontWeight: "900",
             }}
           >
             OBJECTION!
@@ -352,119 +352,37 @@ export default function ScreenDebate({
         </div>
       )}
 
-      {/* Top HUD Bar — hidden on mobile */}
-      <div
-        className="hidden sm:flex"
-        style={{
-          padding: "12px 24px",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "20px",
-        }}
-      >
-        <div
-          className="flex"
-          style={{
-            background: "var(--p2)",
-            border: "4px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 20px",
-            textAlign: "center",
-            boxShadow: "4px 4px 0 var(--dark)",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "Titan One, cursive",
-              fontSize: "28px",
-              fontWeight: "900",
-              color: "white",
-              textTransform: "uppercase",
-              letterSpacing: "2px",
-            }}
-          >
-            ROUND {currentRound}
-          </div>
-        </div>
-
-        <div
-          style={{
-            background: activePlayer === 1 ? "var(--p1)" : "var(--p2)",
-            border: "4px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 20px",
-            boxShadow: "4px 4px 0 var(--dark)",
-            animation: "pulse 1.5s infinite",
-            transition: "background 0.3s",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "Titan One, cursive",
-              fontSize: "18px",
-              color: "white",
-              textShadow: "2px 2px 0 var(--dark)",
-              textTransform: "uppercase",
-            }}
-          >
-            <img
-              src={activePlayer === 1 ? "/P1.png" : "/P2.png"}
-              alt={`P${activePlayer}`}
-              style={{
-                width: "22px",
-                height: "22px",
-                objectFit: "cover",
-                borderRadius: "4px",
-                verticalAlign: "middle",
-                marginRight: "6px",
-              }}
-            />
-            {activePlayer === 1 ? p1Name : p2Name} SPEAKING
-          </div>
-        </div>
-      </div>
-
       {/* Topic Banner */}
       <div
         style={{
-          background: "linear-gradient(90deg, var(--accent), var(--p2))",
-          border: "4px solid var(--dark)",
-          borderTop: "none",
-          padding: "8px 16px",
+          background: "var(--accent)",
+          borderBottom: "6px solid var(--dark)",
+          padding: "20px 30px",
           textAlign: "center",
-          boxShadow: "0 4px 0 var(--dark)",
+          boxShadow: "0 6px 0 var(--dark)",
+          flexShrink: 0,
         }}
+        className="max-w-3xl rounded-2xl md:mt-8 mt-28 mx-2"
       >
-        <div
-          id="topic-text"
+        <h2
+          className="titan"
           style={{
-            fontSize: "clamp(13px, 3vw, 22px)",
-            fontFamily: "Titan One, cursive",
-            fontWeight: "900",
-            color: "white",
-            textShadow: "3px 3px 0 var(--dark)",
-            WebkitTextStroke: "1px var(--dark)",
-            margin: "0",
-            lineHeight: "1.3",
+            fontSize: "clamp(18px, 5vw, 28px)",
+            color: "var(--dark)",
+            margin: 0,
+            letterSpacing: "1px",
+            fontWeight: 900,
           }}
         >
-          &ldquo;{currentTopic}&rdquo;
-        </div>
+          TOPIC: {currentTopic}
+        </h2>
       </div>
 
-      {/* Per-Player Timer Bars — below topic on mobile */}
-      <div
-        style={{
-          padding: "6px 12px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "4px",
-        }}
-        className="sm:px-6 sm:py-2"
-      >
+      {/* Mobile-only Timer Bars */}
+      <div className="flex md:hidden flex-col gap-2 p-3">
         <TimerBar
           playerLabel={p1Name}
-          playerEmoji="/P1.png"
+          playerSrc="/P1.png"
           remaining={p1TimeRemaining}
           total={60}
           isActive={activePlayer === 1}
@@ -472,7 +390,7 @@ export default function ScreenDebate({
         />
         <TimerBar
           playerLabel={p2Name}
-          playerEmoji="/P2.png"
+          playerSrc="/P2.png"
           remaining={p2TimeRemaining}
           total={60}
           isActive={activePlayer === 2}
@@ -480,198 +398,153 @@ export default function ScreenDebate({
         />
       </div>
 
-      {/* Main Transcript Area */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          padding: "8px 10px",
-          minHeight: 0,
-          height: "clamp(120px, 35vw, 180px)",
-        }}
-        className="sm:flex-1! sm:h-auto! sm:p-4!"
-      >
+      {/* Container: Stacks vertically on mobile (P1 - P2 - Transcript), columns on desktop (P1 - Transcript - P2) */}
+      <div className="gap-3 flex flex-1 flex-col md:flex-row sm:gap-3! min-h-0 p-3 md:p-0 md:pb-3 items-center">
+        {/* Player 1 Panel (Desktop) */}
         <div
+          className="hidden md:flex flex-col items-center justify-start gap-4 p-6"
           style={{
-            background: "rgba(255, 255, 255, 0.98)",
-            border: "4px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 12px",
-            flex: 1,
-            overflowY: "auto",
-            boxShadow: "6px 6px 0 var(--dark)",
-            fontFamily: "Nunito, sans-serif",
-            fontSize: "clamp(11px, 2.5vw, 18px)",
-            fontWeight: "700",
-            lineHeight: "1.5",
-            whiteSpace: "pre-wrap",
-            wordWrap: "break-word",
-            color: "var(--dark)",
+            flex: "0 0 240px",
+            borderRadius: "8px 0 0 8px",
           }}
-          className="sm:p-5! sm:text-lg! sm:rounded-2xl! sm:border-[6px]! sm:shadow-[8px_8px_0_var(--dark)]!"
         >
-          {transcript.length === 0 ? (
-            <span
-              style={{
-                color: "#999",
-                fontStyle: "italic",
-                fontSize: "14px",
-                alignSelf: "center",
-                marginTop: "auto",
-                marginBottom: "auto",
-              }}
-            >
-              Waiting for debate to start...
-            </span>
-          ) : (
-            transcript.map((entry, i) => {
-              const isP1 = entry.speaker === 1;
-              const label = isP1
-                ? formatScorecardName(p1Name, 1)
-                : formatScorecardName(p2Name, 2);
-              const color = isP1 ? "var(--p1)" : "var(--p2)";
-              const ts = entry.timestamp;
-              const mins = Math.floor(ts / 60)
-                .toString()
-                .padStart(2, "0");
-              const secs = (ts % 60).toString().padStart(2, "0");
-              return (
+          <TimerBar
+            playerLabel={p1Name}
+            playerSrc="/P1.png"
+            remaining={p1TimeRemaining}
+            total={60}
+            isActive={activePlayer === 1}
+            colorVar="var(--p1)"
+          />
+        </div>
+
+        {/* Main Transcript (Middle) */}
+        <div
+          id="transcript-container"
+          className="flex-1 flex flex-col min-w-3xl h-150"
+          style={{
+            background: "white",
+            borderRadius: "16px",
+            border: "6px solid var(--dark)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            id="transcript-scroll-area"
+            className="flex-1 overflow-y-auto p-4 space-y-4"
+          >
+            {transcript.map((entry, index) => (
+              <div
+                key={index}
+                className={`flex flex-col ${
+                  entry.speaker === 1 ? "items-start" : "items-end"
+                }`}
+              >
                 <div
-                  key={i}
+                  className="transcript-bubble"
                   style={{
-                    borderLeft: `5px solid ${color}`,
-                    paddingLeft: "12px",
-                    paddingTop: "4px",
-                    paddingBottom: "4px",
+                    background: entry.speaker === 1 ? "var(--p1)" : "var(--p2)",
+                    color: entry.speaker === 1 ? "var(--dark)" : "white",
+                    border: "4px solid var(--dark)",
+                    borderRadius: "14px",
+                    padding: "12px 16px",
+                    maxWidth: "90%",
+                    boxShadow: "6px 6px 0 var(--dark)",
                   }}
                 >
-                  <div
+                  <p
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginBottom: "2px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: "Titan One, cursive",
-                        fontSize: "14px",
-                        color,
-                        fontWeight: "900",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <img
-                        src={isP1 ? "/P1.png" : "/P2.png"}
-                        alt={isP1 ? "P1" : "P2"}
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          objectFit: "cover",
-                          borderRadius: "3px",
-                        }}
-                      />
-                      {label}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "monospace",
-                        fontSize: "11px",
-                        color: "#888",
-                      }}
-                    >
-                      {mins}:{secs}
-                    </span>
-                    {entry.isObjection && (
-                      <span
-                        style={{
-                          fontFamily: "Titan One, cursive",
-                          fontSize: "11px",
-                          color: "var(--red)",
-                          fontWeight: "900",
-                          letterSpacing: "1px",
-                        }}
-                      >
-                        ⚖️ OBJECTION
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    style={{
+                      margin: 0,
                       fontFamily: "Nunito, sans-serif",
-                      fontSize: "16px",
-                      fontWeight: "700",
-                      color: "var(--dark)",
-                      lineHeight: "1.5",
+                      fontWeight: 900,
+                      fontSize: "20px",
+                      lineHeight: 1.4,
                     }}
                   >
                     {entry.text}
-                  </div>
+                  </p>
                 </div>
-              );
-            })
-          )}
-          <div ref={transcriptEndRef} />
+              </div>
+            ))}
+            <div ref={transcriptEndRef} />
+          </div>
+          <div
+            className="flex items-center justify-center p-4"
+            style={{
+              borderTop: "4px solid var(--dark)",
+              background: "rgba(0,0,0,0.25)",
+            }}
+          >
+            {isRecording ? (
+              <div className="flex items-center gap-3">
+                <div
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    borderRadius: "50%",
+                    background: "var(--red)",
+                    animation: "pulse 1s infinite",
+                  }}
+                />
+                Recording
+                <canvas
+                  ref={waveformCanvasRef}
+                  style={{
+                    width: "60px",
+                    height: "20px",
+                    marginLeft: "12px",
+                  }}
+                />
+              </div>
+            ) : (
+              <span
+                className="font-bold"
+                style={{
+                  fontFamily: "Titan One, cursive",
+                  letterSpacing: "1px",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.8)",
+                  fontSize: "13px",
+                }}
+              >
+                {isCurrentPlayerActive
+                  ? "🎤 PREPARE TO SPEAK..."
+                  : "👂 LISTENING..."}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Player 2 Panel (Desktop) */}
+        <div
+          className="hidden md:flex flex-col items-center justify-start gap-4 p-6"
+          style={{
+            flex: "0 0 240px",
+            borderRadius: "0 8px 8px 0",
+          }}
+        >
+          <TimerBar
+            playerLabel={p2Name}
+            playerSrc="/P2.png"
+            remaining={p2TimeRemaining}
+            total={60}
+            isActive={activePlayer === 2}
+            colorVar="var(--p2)"
+          />
         </div>
       </div>
 
       {/* Bottom Action Bar */}
       <div
         style={{
-          padding: "8px 10px",
+          padding: "12px 16px",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          gap: "8px",
+          gap: "12px",
           flexShrink: 0,
+          flexWrap: "wrap",
         }}
-        className="sm:px-6! sm:py-4! sm:gap-3!"
       >
-        {isRecording && (
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              background: "var(--p2)",
-              color: "white",
-              padding: "6px 20px",
-              borderRadius: "24px",
-              fontWeight: "900",
-              fontSize: "clamp(10px, 2vw, 14px)",
-              fontFamily: "Titan One, cursive",
-              textTransform: "uppercase",
-              letterSpacing: "1px",
-              lineHeight: 1,
-            }}
-          >
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "white",
-                flexShrink: 0,
-                animation: "pulse 1.2s ease-in-out infinite",
-              }}
-            />
-            <canvas
-              ref={waveformCanvasRef}
-              style={{
-                width: "50px",
-                height: "18px",
-                flexShrink: 0,
-                display: "block",
-              }}
-            />
-            RECORDING
-          </span>
-        )}
-
         {voiceBadgeText && (
           <span
             style={{
@@ -679,47 +552,65 @@ export default function ScreenDebate({
               alignItems: "center",
               justifyContent: "center",
               background: voiceBadgeColor,
-              color: "white",
-              padding: "6px 14px",
-              borderRadius: "24px",
+              color:
+                voiceStatus === "error"
+                  ? "white"
+                  : voiceStatus === "connected"
+                  ? "var(--dark)"
+                  : "white",
+              padding: "10px 20px",
+              borderRadius: "28px",
               fontWeight: "900",
-              fontSize: "clamp(10px, 2vw, 14px)",
+              fontSize: "clamp(11px, 2.5vw, 13px)",
               fontFamily: "Titan One, cursive",
               textTransform: "uppercase",
-              letterSpacing: "1px",
+              letterSpacing: "1.5px",
               lineHeight: 1,
+              border: "3px solid var(--dark)",
+              boxShadow: "4px 4px 0 var(--dark)",
+              WebkitTextStroke: "0.5px rgba(0, 0, 0, 0.2)",
             }}
           >
             {voiceBadgeText}
           </span>
         )}
 
-        <div style={{ display: "flex", width: "100%", gap: "8px" }}>
+        <div
+          style={{ display: "flex", flex: 1, gap: "12px", minHeight: "44px" }}
+        >
           {/* Objection Button */}
           <button
             onClick={handleObjection}
             disabled={!canObjection}
             style={{
-              background: canObjection ? "var(--red)" : "#999",
-              color: canObjection ? "black" : "rgba(0, 0, 0, 0.5)",
-              border: "3px solid var(--dark)",
-              borderRadius: "12px",
-              padding: "10px 8px",
+              background: canObjection ? "var(--red)" : "#ccc",
+              color: canObjection ? "white" : "rgba(0, 0, 0, 0.4)",
+              border: "4px solid var(--dark)",
+              borderRadius: "14px",
+              padding: "12px 16px",
               fontFamily: "Titan One, cursive",
-              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontSize: "clamp(13px, 3vw, 18px)",
               fontWeight: "900",
               textTransform: "uppercase",
               cursor: canObjection ? "pointer" : "not-allowed",
-              boxShadow: canObjection ? "5px 5px 0 var(--dark)" : "none",
+              boxShadow: canObjection
+                ? "6px 6px 0 var(--dark)"
+                : "2px 2px 0 rgba(0, 0, 0, 0.2)",
               transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-              opacity: canObjection ? 1 : 0.5,
+              opacity: canObjection ? 1 : 0.7,
               letterSpacing: "1px",
               flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
+              minHeight: "44px",
             }}
             onMouseDown={(e) => {
               if (canObjection) {
                 (e.target as HTMLButtonElement).style.transform =
-                  "translate(4px, 4px)";
+                  "translate(5px, 5px)";
                 (e.target as HTMLButtonElement).style.boxShadow =
                   "2px 2px 0 var(--dark)";
               }
@@ -729,43 +620,51 @@ export default function ScreenDebate({
                 (e.target as HTMLButtonElement).style.transform =
                   "translate(0, 0)";
                 (e.target as HTMLButtonElement).style.boxShadow =
-                  "5px 5px 0 var(--dark)";
+                  "6px 6px 0 var(--dark)";
               }
             }}
           >
             ⚖️ OBJECTION!
             {!canObjection && myRemaining <= 15 && myRemaining > 0 && (
-              <div style={{ fontSize: "9px", opacity: 0.7 }}>NEED &gt;15s</div>
+              <span>NEED &gt;15s</span>
             )}
           </button>
-          
+
           {/* Yield Button */}
           <button
             onClick={onYield}
             disabled={!isCurrentPlayerActive}
             style={{
-              background: isCurrentPlayerActive ? "var(--p1)" : "#999",
-              color: "var(--dark)",
-              border: "3px solid var(--dark)",
-              borderRadius: "12px",
-              padding: "10px 8px",
+              background: isCurrentPlayerActive ? "var(--p1)" : "#ccc",
+              color: isCurrentPlayerActive
+                ? "var(--dark)"
+                : "rgba(0, 0, 0, 0.4)",
+              border: "4px solid var(--dark)",
+              borderRadius: "14px",
+              padding: "12px 16px",
               fontFamily: "Titan One, cursive",
-              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontSize: "clamp(13px, 3vw, 18px)",
               fontWeight: "900",
               textTransform: "uppercase",
               cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
               boxShadow: isCurrentPlayerActive
-                ? "5px 5px 0 var(--dark)"
-                : "none",
+                ? "6px 6px 0 var(--dark)"
+                : "2px 2px 0 rgba(0, 0, 0, 0.2)",
               transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-              opacity: isCurrentPlayerActive ? 1 : 0.5,
+              opacity: isCurrentPlayerActive ? 1 : 0.7,
               letterSpacing: "1px",
               flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
+              minHeight: "44px",
             }}
             onMouseDown={(e) => {
               if (isCurrentPlayerActive) {
                 (e.target as HTMLButtonElement).style.transform =
-                  "translate(4px, 4px)";
+                  "translate(5px, 5px)";
                 (e.target as HTMLButtonElement).style.boxShadow =
                   "2px 2px 0 var(--dark)";
               }
@@ -775,37 +674,37 @@ export default function ScreenDebate({
                 (e.target as HTMLButtonElement).style.transform =
                   "translate(0, 0)";
                 (e.target as HTMLButtonElement).style.boxShadow =
-                  "5px 5px 0 var(--dark)";
+                  "6px 6px 0 var(--dark)";
               }
             }}
           >
-            🔄 YIELD
+            YIELD FLOOR
           </button>
         </div>
       </div>
 
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
         @keyframes screenShake {
-          0%, 100% { transform: translateX(0) translateY(0); }
-          10% { transform: translateX(-8px) translateY(-4px); }
-          20% { transform: translateX(8px) translateY(2px); }
-          30% { transform: translateX(-6px) translateY(-2px); }
-          40% { transform: translateX(6px) translateY(4px); }
-          50% { transform: translateX(-4px) translateY(-2px); }
-          60% { transform: translateX(4px) translateY(2px); }
-          70% { transform: translateX(-2px) translateY(-1px); }
-          80% { transform: translateX(2px) translateY(1px); }
-          90% { transform: translateX(-1px) translateY(0); }
+          0% { transform: translate(0, 0) rotate(0deg); }
+          10% { transform: translate(-2px, -3px) rotate(-1deg); }
+          20% { transform: translate(2px, 3px) rotate(1deg); }
+          30% { transform: translate(-2px, 2px) rotate(0deg); }
+          40% { transform: translate(2px, -2px) rotate(1deg); }
+          50% { transform: translate(-2px, 3px) rotate(-1deg); }
+          60% { transform: translate(2px, 2px) rotate(0deg); }
+          70% { transform: translate(-2px, -3px) rotate(1deg); }
+          80% { transform: translate(2px, -2px) rotate(-1deg); }
+          90% { transform: translate(-2px, 3px) rotate(0deg); }
+          100% { transform: translate(0, 0) rotate(0deg); }
         }
         @keyframes objectionSlam {
-          0% { transform: scale(0) rotate(-10deg); opacity: 0; }
-          50% { transform: scale(1.3) rotate(5deg); opacity: 1; }
-          70% { transform: scale(0.95) rotate(-2deg); }
-          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          from { transform: scale(3) rotate(-10deg); opacity: 0; }
+          to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
         }
       `}</style>
     </div>
