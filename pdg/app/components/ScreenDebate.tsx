@@ -59,6 +59,8 @@ export default function ScreenDebate({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number>(0);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const waveformCanvasRef = useRef<HTMLCanvasElement>(null);
   // Ref-based flag: set before getUserMedia resolves so stopRecording() can
   // cancel an in-flight startRecording() before it ever opens the mic.
   const shouldRecordRef = useRef(false);
@@ -96,6 +98,7 @@ export default function ScreenDebate({
   // closures. Safe to call multiple times (idempotent).
   const stopRecording = useCallback(() => {
     shouldRecordRef.current = false;
+    mediaStreamRef.current = null;
     if (mediaRecorderRef.current) {
       try {
         mediaRecorderRef.current.stop();
@@ -150,6 +153,7 @@ export default function ScreenDebate({
 
         mediaRecorder.start();
         mediaRecorderRef.current = mediaRecorder;
+        mediaStreamRef.current = stream;
         setIsRecording(true);
         setIsRecordingGlobal(true);
         setMediaStream(stream);
@@ -179,6 +183,71 @@ export default function ScreenDebate({
     startRecording,
     stopRecording,
   ]);
+
+  // Waveform visualization when recording
+  useEffect(() => {
+    if (!isRecording || !mediaStreamRef.current || !waveformCanvasRef.current)
+      return;
+    const stream = mediaStreamRef.current;
+    const canvas = waveformCanvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.8;
+    source.connect(analyser);
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    let animationId: number;
+    const draw = () => {
+      animationId = requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(dataArray);
+
+      const w = 50;
+      const h = 18;
+      const barCount = 8;
+      const barWidth = 5;
+      const gap = (w - barCount * barWidth) / (barCount - 1);
+
+      ctx.clearRect(0, 0, w, h);
+
+      for (let i = 0; i < barCount; i++) {
+        const dataIndex = Math.floor((i / barCount) * bufferLength);
+        const value = dataArray[dataIndex] ?? 0;
+        const barHeight = Math.max(3, (value / 255) * h * 0.9);
+        const x = i * (barWidth + gap);
+        const y = (h - barHeight) / 2;
+
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.roundRect(x, y, barWidth, barHeight, 2);
+        ctx.fill();
+      }
+    };
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animationId);
+      source.disconnect();
+      audioContext.close();
+    };
+  }, [isRecording]);
 
   const sendAudioForTranscription = async (
     audioBlob: Blob,
@@ -214,7 +283,8 @@ export default function ScreenDebate({
 
   const handleObjection = () => {
     if (canObjection) {
-      const src = OBJECTION_SOUNDS[Math.floor(Math.random() * OBJECTION_SOUNDS.length)];
+      const src =
+        OBJECTION_SOUNDS[Math.floor(Math.random() * OBJECTION_SOUNDS.length)];
       new Audio(src).play();
       onObjection();
     }
@@ -511,33 +581,46 @@ export default function ScreenDebate({
           <div ref={transcriptEndRef} />
         </div>
 
-        {/* Recording indicator */}
-        {isRecording && (
-          <div
+        {/* Recording indicator with waveform */}
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            background: "var(--p2)",
+            color: "white",
+            padding: "6px 20px",
+            borderRadius: "24px",
+            fontWeight: "900",
+            fontSize: "clamp(10px, 2vw, 14px)",
+            fontFamily: "Titan One, cursive",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            lineHeight: 1,
+          }}
+        >
+          <span
             style={{
-              marginTop: "6px",
-              textAlign: "center",
-              animation: "pulse 1s infinite",
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "white",
+              flexShrink: 0,
+              animation: "pulse 1.2s ease-in-out infinite",
             }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                background: "var(--p2)",
-                color: "white",
-                padding: "6px 14px",
-                borderRadius: "24px",
-                fontWeight: "900",
-                fontSize: "clamp(10px, 2vw, 14px)",
-                fontFamily: "Titan One, cursive",
-                textTransform: "uppercase",
-                letterSpacing: "1px",
-              }}
-            >
-              🔴 RECORDING
-            </span>
-          </div>
-        )}
+          />
+          <canvas
+            ref={waveformCanvasRef}
+            style={{
+              width: "50px",
+              height: "18px",
+              flexShrink: 0,
+              display: "block",
+            }}
+          />
+          RECORDING
+        </span>
       </div>
 
       {/* Bottom Action Bar */}
