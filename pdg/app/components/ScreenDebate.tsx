@@ -391,7 +391,18 @@ export default function ScreenDebate({
               textTransform: "uppercase",
             }}
           >
-            <img src={activePlayer === 1 ? "/P1.png" : "/P2.png"} alt={`P${activePlayer}`} style={{ width: "22px", height: "22px", objectFit: "cover", borderRadius: "4px", verticalAlign: "middle", marginRight: "6px" }} />
+            <img
+              src={activePlayer === 1 ? "/P1.png" : "/P2.png"}
+              alt={`P${activePlayer}`}
+              style={{
+                width: "22px",
+                height: "22px",
+                objectFit: "cover",
+                borderRadius: "4px",
+                verticalAlign: "middle",
+                marginRight: "6px",
+              }}
+            />
             {activePlayer === 1 ? p1Name : p2Name} SPEAKING
           </div>
         </div>
@@ -537,7 +548,16 @@ export default function ScreenDebate({
                         gap: "4px",
                       }}
                     >
-                      <img src={isP1 ? "/P1.png" : "/P2.png"} alt={isP1 ? "P1" : "P2"} style={{ width: "16px", height: "16px", objectFit: "cover", borderRadius: "3px" }} />
+                      <img
+                        src={isP1 ? "/P1.png" : "/P2.png"}
+                        alt={isP1 ? "P1" : "P2"}
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          objectFit: "cover",
+                          borderRadius: "3px",
+                        }}
+                      />
                       {label}
                     </span>
                     <span
@@ -635,91 +655,50 @@ export default function ScreenDebate({
           RECORDING
         </span>
         <div style={{ display: "flex", width: "100%", gap: "8px" }}>
-            {/* Objection Button */}
-        <button
-          onClick={handleObjection}
-          disabled={!canObjection}
-          style={{
-            background: canObjection ? "var(--red)" : "#999",
-            color: canObjection ? "black" : "rgba(0, 0, 0, 0.5)",
-            border: "3px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 8px",
-            fontFamily: "Titan One, cursive",
-            fontSize: "clamp(11px, 2.8vw, 20px)",
-            fontWeight: "900",
-            textTransform: "uppercase",
-            cursor: canObjection ? "pointer" : "not-allowed",
-            boxShadow: canObjection ? "5px 5px 0 var(--dark)" : "none",
-            transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-            opacity: canObjection ? 1 : 0.5,
-            letterSpacing: "1px",
-            flex: 1,
-          }}
-          onMouseDown={(e) => {
-            if (canObjection) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(4px, 4px)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "2px 2px 0 var(--dark)";
-            }
-          }}
-          onMouseUp={(e) => {
-            if (canObjection) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(0, 0)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "5px 5px 0 var(--dark)";
-            }
-          }}
-        >
-          ⚖️ OBJECTION!
-          {!canObjection && myRemaining <= 15 && myRemaining > 0 && (
-            <div style={{ fontSize: "9px", opacity: 0.7 }}>NEED &gt;15s</div>
-          )}
-        </button>
-
-        {/* Yield Button */}
-        <button
-          onClick={onYield}
-          disabled={!isCurrentPlayerActive}
-          style={{
-            background: isCurrentPlayerActive ? "var(--p1)" : "#999",
-            color: "var(--dark)",
-            border: "3px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 8px",
-            fontFamily: "Titan One, cursive",
-            fontSize: "clamp(11px, 2.8vw, 20px)",
-            fontWeight: "900",
-            textTransform: "uppercase",
-            cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
-            boxShadow: isCurrentPlayerActive ? "5px 5px 0 var(--dark)" : "none",
-            transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-            opacity: isCurrentPlayerActive ? 1 : 0.5,
-            letterSpacing: "1px",
-            flex: 1,
-          }}
-          onMouseDown={(e) => {
-            if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(4px, 4px)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "2px 2px 0 var(--dark)";
-            }
-          }}
-          onMouseUp={(e) => {
-            if (isCurrentPlayerActive) {
-              (e.target as HTMLButtonElement).style.transform =
-                "translate(0, 0)";
-              (e.target as HTMLButtonElement).style.boxShadow =
-                "5px 5px 0 var(--dark)";
-            }
-          }}
-        >
-          🔄 YIELD
-        </button>
-
+          {/* Objection Button */}
+          <button
+            onClick={handleObjection}
+            disabled={!canObjection}
+            style={{
+              background: canObjection ? "var(--red)" : "#999",
+              color: canObjection ? "black" : "rgba(0, 0, 0, 0.5)",
+              border: "3px solid var(--dark)",
+              borderRadius: "12px",
+              padding: "10px 8px",
+              fontFamily: "Titan One, cursive",
+              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontWeight: "900",
+              textTransform: "uppercase",
+              cursor: canObjection ? "pointer" : "not-allowed",
+              boxShadow: canObjection ? "5px 5px 0 var(--dark)" : "none",
+              transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
+              opacity: canObjection ? 1 : 0.5,
+              letterSpacing: "1px",
+              flex: 1,
+            }}
+            onMouseDown={(e) => {
+              if (canObjection) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(4px, 4px)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "2px 2px 0 var(--dark)";
+              }
+            }}
+            onMouseUp={(e) => {
+              if (canObjection) {
+                (e.target as HTMLButtonElement).style.transform =
+                  "translate(0, 0)";
+                (e.target as HTMLButtonElement).style.boxShadow =
+                  "5px 5px 0 var(--dark)";
+              }
+            }}
+          >
+            ⚖️ OBJECTION!
+            {!canObjection && myRemaining <= 15 && myRemaining > 0 && (
+              <div style={{ fontSize: "9px", opacity: 0.7 }}>NEED &gt;15s</div>
+            )}
+          </button>
+          
           {/* Yield Button */}
           <button
             onClick={onYield}
