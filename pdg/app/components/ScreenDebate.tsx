@@ -12,6 +12,15 @@ const OBJECTION_SOUNDS = [
   "/sound-effects/punch.mp3",
   "/sound-effects/alert.mp3",
 ];
+
+const REACTION_EMOJIS = ["👍", "❤️", "😂", "🔥", "👏", "💀"];
+
+interface EmojiReaction {
+  id: string;
+  emoji: string;
+  startTime: number;
+}
+
 import { TranscriptEntry } from "../hooks/useGameState";
 import TimerBar from "./TimerBar";
 import { apiUrl } from "../lib/api";
@@ -36,6 +45,7 @@ interface ScreenDebateProps {
   setMediaStream: (stream: MediaStream | null) => void;
   voiceStatus?: "idle" | "connecting" | "connected" | "error";
   voiceError?: string | null;
+  partyMode?: boolean;
 }
 
 export default function ScreenDebate({
@@ -58,6 +68,7 @@ export default function ScreenDebate({
   setMediaStream,
   voiceStatus = "idle",
   voiceError = null,
+  partyMode = false,
 }: ScreenDebateProps) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -70,6 +81,10 @@ export default function ScreenDebate({
   const shouldRecordRef = useRef(false);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const [screenShake, setScreenShake] = useState(false);
+  const [emojiReactions, setEmojiReactions] = useState<EmojiReaction[]>([]);
+  const reactionCounterRef = useRef(0);
+  const reactionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const SPECTATOR_COUNT = 3; // Mock spectator count
 
   const isCurrentPlayerActive = activePlayer === currentPlayer;
   const myRemaining = currentPlayer === 1 ? p1TimeRemaining : p2TimeRemaining;
@@ -102,6 +117,46 @@ export default function ScreenDebate({
       return () => clearTimeout(timer);
     }
   }, [showObjectionVFX]);
+
+  // Spawn emoji reactions when someone is speaking
+  useEffect(() => {
+    if (!isCurrentPlayerActive || screen !== "debate" || !partyMode) {
+      if (reactionIntervalRef.current) {
+        clearInterval(reactionIntervalRef.current);
+        reactionIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Start spawning reactions every 1s while this player is speaking
+    reactionIntervalRef.current = setInterval(() => {
+      const newReaction: EmojiReaction = {
+        id: `reaction-${reactionCounterRef.current++}`,
+        emoji:
+          REACTION_EMOJIS[Math.floor(Math.random() * REACTION_EMOJIS.length)],
+        startTime: Date.now(),
+      };
+      setEmojiReactions((prev) => [...prev, newReaction]);
+    }, 2000);
+
+    return () => {
+      if (reactionIntervalRef.current) {
+        clearInterval(reactionIntervalRef.current);
+        reactionIntervalRef.current = null;
+      }
+    };
+  }, [isCurrentPlayerActive, screen, partyMode]);
+
+  // Clean up old reactions
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      setEmojiReactions((prev) =>
+        prev.filter((reaction) => Date.now() - reaction.startTime < 3000)
+      );
+    }, 100);
+
+    return () => clearInterval(cleanupInterval);
+  }, []);
 
   // Auto-scroll to bottom when transcript grows
   useEffect(() => {
@@ -361,9 +416,30 @@ export default function ScreenDebate({
           textAlign: "center",
           boxShadow: "0 6px 0 var(--dark)",
           flexShrink: 0,
+          border: "2px solid var(--dark)",
         }}
-        className="max-w-3xl rounded-2xl md:mt-8 mt-28 mx-2"
+        className="flex items-center max-w-3xl rounded-2xl md:mt-8 mt-28 mx-2 justify-between"
       >
+        {/* Spectator Badge */}
+        {partyMode ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "rgba(255, 255, 255, 0.3)",
+              padding: "8px 16px",
+              borderRadius: "20px",
+              border: "2px solid var(--dark)",
+              fontWeight: "900",
+              fontSize: "14px",
+            }}
+          >
+            <span style={{ fontSize: "18px" }}>👁️</span>
+            <span style={{ color: "var(--dark)" }}>{SPECTATOR_COUNT}</span>
+          </div>
+        ) : null}
+
         <h2
           className="titan"
           style={{
@@ -372,10 +448,14 @@ export default function ScreenDebate({
             margin: 0,
             letterSpacing: "1px",
             fontWeight: 900,
+            flex: 1,
           }}
         >
           TOPIC: {currentTopic}
         </h2>
+
+        {/* Spacer for balance */}
+        {partyMode ? <div style={{ width: "100px" }} /> : null}
       </div>
 
       {/* Mobile-only Timer Bars */}
@@ -406,6 +486,7 @@ export default function ScreenDebate({
           style={{
             flex: "0 0 240px",
             borderRadius: "8px 0 0 8px",
+            position: "relative",
           }}
         >
           <TimerBar
@@ -416,12 +497,59 @@ export default function ScreenDebate({
             isActive={activePlayer === 1}
             colorVar="var(--p1)"
           />
+
+          {/* Emoji Reactions for Player 1 */}
+          {activePlayer === 1 && partyMode && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                pointerEvents: "none",
+                overflow: "hidden",
+              }}
+            >
+              {emojiReactions.map((reaction) => {
+                const elapsed = Date.now() - reaction.startTime;
+                const progress = Math.min(elapsed / 3000, 1);
+                const startX = Math.random() * 80 - 40;
+                const startY = Math.random() * 80 - 40;
+                const endX = startX + (Math.random() * 60 - 30);
+                const endY = startY - 150;
+
+                return (
+                  <div
+                    key={reaction.id}
+                    style={{
+                      position: "absolute",
+                      left: `calc(50% + ${
+                        startX + (endX - startX) * progress
+                      }px)`,
+                      top: `calc(50% + ${
+                        startY + (endY - startY) * progress
+                      }px)`,
+                      fontSize: "56px",
+                      opacity: Math.max(0, 1 - progress * 1.5),
+                      transform: `translate(-50%, -50%) scale(${
+                        1 - progress * 0.3
+                      })`,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {reaction.emoji}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Main Transcript (Middle) */}
         <div
           id="transcript-container"
-          className="flex-1 flex flex-col min-w-3xl h-150"
+          className="flex-1 flex flex-col w-3xl h-150"
           style={{
             background: "white",
             borderRadius: "16px",
@@ -503,7 +631,7 @@ export default function ScreenDebate({
                   fontFamily: "Titan One, cursive",
                   letterSpacing: "1px",
                   textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.8)",
+                  color: "black",
                   fontSize: "13px",
                 }}
               >
@@ -521,6 +649,7 @@ export default function ScreenDebate({
           style={{
             flex: "0 0 240px",
             borderRadius: "0 8px 8px 0",
+            position: "relative",
           }}
         >
           <TimerBar
@@ -531,6 +660,53 @@ export default function ScreenDebate({
             isActive={activePlayer === 2}
             colorVar="var(--p2)"
           />
+
+          {/* Emoji Reactions for Player 2 */}
+          {activePlayer === 2 && partyMode && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                pointerEvents: "none",
+                overflow: "hidden",
+              }}
+            >
+              {emojiReactions.map((reaction) => {
+                const elapsed = Date.now() - reaction.startTime;
+                const progress = Math.min(elapsed / 3000, 1);
+                const startX = Math.random() * 80 - 40;
+                const startY = Math.random() * 80 - 40;
+                const endX = startX + (Math.random() * 60 - 30);
+                const endY = startY - 150;
+
+                return (
+                  <div
+                    key={reaction.id}
+                    style={{
+                      position: "absolute",
+                      left: `calc(50% + ${
+                        startX + (endX - startX) * progress
+                      }px)`,
+                      top: `calc(50% + ${
+                        startY + (endY - startY) * progress
+                      }px)`,
+                      fontSize: "56px",
+                      opacity: Math.max(0, 1 - progress * 1.5),
+                      transform: `translate(-50%, -50%) scale(${
+                        1 - progress * 0.3
+                      })`,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {reaction.emoji}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -545,7 +721,7 @@ export default function ScreenDebate({
           flexWrap: "wrap",
         }}
       >
-        {voiceBadgeText && (
+        {/* {voiceBadgeText && (
           <span
             style={{
               display: "inline-flex",
@@ -573,7 +749,7 @@ export default function ScreenDebate({
           >
             {voiceBadgeText}
           </span>
-        )}
+        )} */}
 
         <div
           style={{ display: "flex", flex: 1, gap: "12px", minHeight: "44px" }}
