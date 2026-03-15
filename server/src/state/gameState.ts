@@ -50,6 +50,7 @@ export interface GameSession {
   currentRound: number;
   debatePhase: "idle" | "prep" | "debate" | "ended";
   revealReady: string[];
+  isPartyMode: boolean;
 }
 
 const games = new Map<string, GameSession>();
@@ -84,6 +85,7 @@ export function createGame(hostId: string): GameSession {
     currentRound: 0,
     debatePhase: "idle",
     revealReady: [],
+    isPartyMode: false,
   };
   games.set(code, game);
   return game;
@@ -215,6 +217,7 @@ export function resetGameSession(code: string): GameSession | null {
   game.players.forEach((player) => {
     player.candidate = null;
   });
+  game.isPartyMode = false;
 
   return game;
 }

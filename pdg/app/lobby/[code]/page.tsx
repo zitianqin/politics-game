@@ -14,6 +14,7 @@ export default function LobbyPage({
   const router = useRouter();
 
   const [playerCount, setPlayerCount] = useState(0);
+  const [partyMode, setPartyModeLocal] = useState(false);
   const [isHost, setIsHost] = useState(() => {
     if (typeof window === "undefined") return false;
     return sessionStorage.getItem("isHost") === "true";
@@ -53,6 +54,10 @@ export default function LobbyPage({
       }
     };
 
+    socket.on("game:partyMode", (data: { isPartyMode: boolean }) => {
+      setPartyModeLocal(data.isPartyMode);
+    });
+
     socket.on("game:state", (data: { gameState: any }) => {
       console.log(
         "Received game:state in lobby:",
@@ -60,6 +65,9 @@ export default function LobbyPage({
       );
       if (data.gameState) {
         setPlayerCount(data.gameState.players.length);
+        if (typeof data.gameState.isPartyMode === "boolean") {
+          setPartyModeLocal(data.gameState.isPartyMode);
+        }
         const myId = sessionStorage.getItem("playerId");
         const me = data.gameState.players.find((p: any) => p.id === myId);
         const opponent = data.gameState.players.find((p: any) => p.id !== myId);
@@ -121,6 +129,7 @@ export default function LobbyPage({
 
     return () => {
       socket.off("connect");
+      socket.off("game:partyMode");
       socket.off("game:state");
       socket.off("player:joined");
       socket.off("player:nameChanged");
@@ -143,6 +152,13 @@ export default function LobbyPage({
     getSocket().emit("player:setName", { code, playerId, name });
   };
 
+  const setPartyMode = (value: boolean) => {
+    setPartyModeLocal(value);
+    const playerId = sessionStorage.getItem("playerId");
+    if (playerId) {
+      getSocket().emit("game:partyMode", { code, playerId, isPartyMode: value });
+    }
+  };
 
   return (
     <ScreenLobby
@@ -153,6 +169,8 @@ export default function LobbyPage({
       opponentName={opponentName}
       startGame={handleStart}
       onNameChange={handleNameChange}
+      partyMode={partyMode}
+      setPartyMode={setPartyMode}
     />
   );
 }

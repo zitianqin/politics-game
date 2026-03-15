@@ -24,6 +24,8 @@ export function useGameState(gameCodeFromUrl?: string) {
   const [p1TotalVotes, setP1TotalVotes] = useState(0);
   const [p2TotalVotes, setP2TotalVotes] = useState(0);
 
+  const [partyMode, setPartyModeState] = useState(false);
+
   // Server-driven debate state
   const [currentTopic, setCurrentTopic] = useState("");
   const [currentSpeaker, setCurrentSpeaker] = useState<1 | 2>(1);
@@ -97,6 +99,11 @@ export function useGameState(gameCodeFromUrl?: string) {
     if (socketListenersAttached.current) return;
     const socket = getSocket();
     socketListenersAttached.current = true;
+
+    // Set tab name to party mode/normal mode
+    socket.on("game:partyMode", (data: { isPartyMode: boolean }) => {
+      setPartyModeState(data.isPartyMode);
+    });
 
     // Round start: set topic, show topic screen
     socket.on("round:start", (data: { roundNumber: number; topic: string }) => {
@@ -302,6 +309,7 @@ export function useGameState(gameCodeFromUrl?: string) {
       if (p2?.candidate) setP2Candidate(p2.candidate);
       if (p1?.displayName) setP1Name(p1.displayName);
       if (p2?.displayName) setP2Name(p2.displayName);
+      if (typeof gs.isPartyMode === "boolean") setPartyModeState(gs.isPartyMode);
 
       if (gs.status === "meet_voters") {
         setScreen("voter-grid");
@@ -377,6 +385,7 @@ export function useGameState(gameCodeFromUrl?: string) {
     }
 
     return () => {
+      socket.off("game:partyMode");
       socket.off("round:start");
       socket.off("round:prep");
       socket.off("round:debate");
@@ -422,6 +431,16 @@ export function useGameState(gameCodeFromUrl?: string) {
   const startMeetVoters = useCallback(() => {
     signalRevealDone();
   }, [signalRevealDone]);
+
+  const setPartyMode = useCallback((value: boolean) => {
+    setPartyModeState(value);
+    const socket = getSocket();
+    const gameCode = sessionStorage.getItem("gameCode");
+    const playerId = sessionStorage.getItem("playerId");
+    if (gameCode && playerId) {
+      socket.emit("game:partyMode", { code: gameCode, playerId, isPartyMode: value });
+    }
+  }, []);
 
   // ──────────────────────────────
   // Debate methods (emit to server)
@@ -539,6 +558,8 @@ export function useGameState(gameCodeFromUrl?: string) {
     screen,
     currentRound,
     currentPlayer,
+    partyMode,
+    setPartyMode,
 
     // Voting state
     p1TotalVotes,
