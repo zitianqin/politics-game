@@ -2,7 +2,7 @@
 
 interface TimerBarProps {
   playerLabel: string;
-  playerEmoji: string;
+  playerSrc: string;
   remaining: number; // seconds
   total: number; // seconds
   isActive: boolean;
@@ -11,7 +11,7 @@ interface TimerBarProps {
 
 export default function TimerBar({
   playerLabel,
-  playerEmoji,
+  playerSrc,
   remaining,
   total,
   isActive,
@@ -34,62 +34,83 @@ export default function TimerBar({
 
   return (
     <div
-      className="timer-bar-container flex flex-row lg:flex-col lg:items-start items-center gap-3 lg:gap-2 p-2 lg:p-4 rounded-lg transition-colors"
+      className="timer-bar-container flex flex-row lg:flex-col lg:items-start items-center gap-4 lg:gap-3 p-3 lg:p-4 rounded-lg transition-colors w-full"
       style={{
-        background: isActive ? "rgba(255,255,255,0.15)" : "transparent",
+        background: isActive ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.15)",
+        border: isActive
+          ? "3px solid var(--accent)"
+          : "2px solid rgba(255,255,255,0.3)",
+        boxShadow: isActive
+          ? "0 0 12px rgba(255, 213, 0, 0.4)"
+          : "inset 2px 2px 4px rgba(0, 0, 0, 0.3)",
       }}
     >
       {/* Player label */}
       <div
         style={{
           fontFamily: "Titan One, cursive",
-          fontSize: "18px",
+          fontSize: "clamp(15px, 2.5vw, 18px)",
           color: "white",
-          textShadow: "2px 2px 0 var(--dark)",
-          minWidth: "80px",
+          textShadow: "3px 3px 0 var(--dark)",
+          WebkitTextStroke: "1px var(--dark)",
+          minWidth: "100px",
           display: "flex",
           alignItems: "center",
-          gap: "6px",
+          gap: "8px",
         }}
         className="lg:w-full lg:justify-center"
       >
         <img
-          src={playerEmoji}
+          src={playerSrc}
           alt={playerLabel}
           style={{
-            width: "28px",
-            height: "28px",
+            width: "32px",
+            height: "32px",
             objectFit: "cover",
             borderRadius: "6px",
+            border: "2px solid white",
             animation: isActive
               ? "avatarBounce 0.7s ease-in-out infinite"
               : "none",
           }}
         />
-        {playerLabel}
+        <span>{playerLabel}</span>
       </div>
 
       {/* Bar track */}
       <div
         style={{
-          height: "24px",
-          background: "rgba(0,0,0,0.3)",
-          borderRadius: "12px",
+          height: "28px",
+          width: "200px",
+          background: "rgba(0,0,0,0.4)",
+          borderRadius: "14px",
           border: "3px solid var(--dark)",
           overflow: "hidden",
           position: "relative",
+          boxShadow: "inset 2px 2px 4px rgba(0, 0, 0, 0.5)",
+          flexShrink: 0,
+          display: "flex",
         }}
-        className="flex-1 lg:w-full"
       >
-        {/* Bar fill */}
+        {/* Time passed (dark) */}
+        <div
+          style={{
+            height: "100%",
+            width: `${100 - widthPercent}%`,
+            background: "rgba(0, 0, 0, 0.6)",
+            transition: "width 0.5s linear",
+          }}
+        />
+        {/* Time remaining (colored) */}
         <div
           style={{
             height: "100%",
             width: `${widthPercent}%`,
             background: barColor,
-            borderRadius: "9px 0 0 9px",
             transition: "width 0.5s linear, background 0.5s ease",
-            boxShadow: isActive ? `0 0 10px ${barColor}` : "none",
+            boxShadow: isActive
+              ? `inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 16px ${barColor}`
+              : "inset 0 1px 3px rgba(0, 0, 0, 0.2)",
           }}
         />
       </div>
@@ -98,12 +119,14 @@ export default function TimerBar({
       <div
         style={{
           fontFamily: "Titan One, cursive",
-          fontSize: "22px",
+          fontSize: "clamp(18px, 3vw, 24px)",
           color: barColor,
-          textShadow: "2px 2px 0 var(--dark)",
-          minWidth: "60px",
+          textShadow: "3px 3px 0 var(--dark)",
+          WebkitTextStroke: "1px var(--dark)",
+          minWidth: "70px",
           textAlign: "right",
           transition: "color 0.5s ease",
+          fontWeight: "900",
         }}
         className="lg:text-center lg:w-full"
       >
@@ -114,12 +137,13 @@ export default function TimerBar({
       {isActive && (
         <div
           style={{
-            width: "12px",
-            height: "12px",
+            width: "14px",
+            height: "14px",
             borderRadius: "50%",
             background: barColor,
             animation: "pulse 1s infinite",
-            boxShadow: `0 0 8px ${barColor}`,
+            boxShadow: `0 0 12px ${barColor}, inset 0 0 4px rgba(0, 0, 0, 0.3)`,
+            border: "2px solid var(--dark)",
           }}
           className="lg:hidden"
         />
@@ -127,7 +151,7 @@ export default function TimerBar({
       <style>{`
         @keyframes avatarBounce {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
+          50% { transform: translateY(-6px); }
         }
       `}</style>
     </div>

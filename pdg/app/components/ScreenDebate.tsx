@@ -249,7 +249,7 @@ export default function ScreenDebate({
         const x = i * (barWidth + gap);
         const y = (h - barHeight) / 2;
 
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "#ff4c4c";
         ctx.beginPath();
         ctx.roundRect(x, y, barWidth, barHeight, 2);
         ctx.fill();
@@ -337,14 +337,14 @@ export default function ScreenDebate({
           <div
             style={{
               fontFamily: "Titan One, cursive",
-              fontSize: "clamp(60px, 15vw, 120px)",
+              fontSize: "clamp(70px, 20vw, 150px)",
               color: "var(--red)",
-              WebkitTextStroke: "4px var(--dark)",
               textShadow:
                 "8px 8px 0 var(--dark), 0 0 40px rgba(255, 76, 76, 0.6)",
               animation: "objectionSlam 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
               textTransform: "uppercase",
               letterSpacing: "8px",
+              fontWeight: "900",
             }}
           >
             OBJECTION!
@@ -355,22 +355,23 @@ export default function ScreenDebate({
       {/* Topic Banner */}
       <div
         style={{
-          background: "linear-gradient(90deg, var(--accent), var(--p2))",
-          borderBlock: "4px solid var(--dark)",
-          padding: "6px 12px",
+          background: "var(--accent)",
+          borderBottom: "6px solid var(--dark)",
+          padding: "20px 30px",
           textAlign: "center",
-          boxShadow: "0 4px 0 var(--dark)",
+          boxShadow: "0 6px 0 var(--dark)",
           flexShrink: 0,
         }}
-        className=""
+        className="max-w-3xl rounded-2xl md:mt-8 mt-28 mx-2"
       >
         <h2
           className="titan"
           style={{
-            fontSize: "clamp(16px, 4vw, 22px)",
-            color: "white",
-            textShadow:
-              "2px 2px 0 var(--dark), -2px 2px 0 var(--dark), 2px -2px 0 var(--dark), -2px -2px 0 var(--dark)",
+            fontSize: "clamp(18px, 5vw, 28px)",
+            color: "var(--dark)",
+            margin: 0,
+            letterSpacing: "1px",
+            fontWeight: 900,
           }}
         >
           TOPIC: {currentTopic}
@@ -378,10 +379,10 @@ export default function ScreenDebate({
       </div>
 
       {/* Mobile-only Timer Bars */}
-      <div className="flex md:hidden flex-col gap-1 p-2">
+      <div className="flex md:hidden flex-col gap-2 p-3">
         <TimerBar
           playerLabel={p1Name}
-          playerEmoji=" P1 "
+          playerSrc="/P1.png"
           remaining={p1TimeRemaining}
           total={60}
           isActive={activePlayer === 1}
@@ -389,7 +390,7 @@ export default function ScreenDebate({
         />
         <TimerBar
           playerLabel={p2Name}
-          playerEmoji=" P2 "
+          playerSrc="/P2.png"
           remaining={p2TimeRemaining}
           total={60}
           isActive={activePlayer === 2}
@@ -398,37 +399,18 @@ export default function ScreenDebate({
       </div>
 
       {/* Container: Stacks vertically on mobile (P1 - P2 - Transcript), columns on desktop (P1 - Transcript - P2) */}
-      <div className="gap-2 flex flex-1 flex-col md:flex-row sm:gap-2! min-h-0 p-2 md:p-0 md:pb-2">
+      <div className="gap-3 flex flex-1 flex-col md:flex-row sm:gap-3! min-h-0 p-3 md:p-0 md:pb-3 items-center">
         {/* Player 1 Panel (Desktop) */}
         <div
-          className="hidden md:flex flex-col items-center justify-center gap-4 p-4"
+          className="hidden md:flex flex-col items-center justify-start gap-4 p-6"
           style={{
-            background:
-              "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.4))",
-            flex: "0 0 220px",
-            borderRight: "4px solid var(--dark)",
-            boxShadow: "inset -4px 0 0 var(--dark)",
+            flex: "0 0 240px",
+            borderRadius: "8px 0 0 8px",
           }}
         >
-          <div
-            style={{
-              width: "80px",
-              height: "80px",
-              borderRadius: "8px",
-              background: "var(--p1)",
-              border: "4px solid var(--dark)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: "bold",
-              fontSize: "24px",
-            }}
-          >
-            P1
-          </div>
           <TimerBar
             playerLabel={p1Name}
-            playerEmoji=" P1 "
+            playerSrc="/P1.png"
             remaining={p1TimeRemaining}
             total={60}
             isActive={activePlayer === 1}
@@ -436,20 +418,20 @@ export default function ScreenDebate({
           />
         </div>
 
-        {/* Transcript (Middle) */}
+        {/* Main Transcript (Middle) */}
         <div
           id="transcript-container"
-          className="flex-1 flex flex-col min-h-0"
+          className="flex-1 flex flex-col min-w-3xl h-150"
           style={{
-            background: "rgba(0,0,0,0.3)",
-            borderRadius: "12px",
-            border: "4px solid var(--dark)",
+            background: "white",
+            borderRadius: "16px",
+            border: "6px solid var(--dark)",
             overflow: "hidden",
           }}
         >
           <div
             id="transcript-scroll-area"
-            className="flex-1 overflow-y-auto p-3 space-y-3"
+            className="flex-1 overflow-y-auto p-4 space-y-4"
           >
             {transcript.map((entry, index) => (
               <div
@@ -461,16 +443,13 @@ export default function ScreenDebate({
                 <div
                   className="transcript-bubble"
                   style={{
-                    background:
-                      entry.speaker === 1
-                        ? "linear-gradient(to bottom, var(--p1), var(--p1-dark))"
-                        : "linear-gradient(to bottom, var(--p2), var(--p2-dark))",
+                    background: entry.speaker === 1 ? "var(--p1)" : "var(--p2)",
                     color: entry.speaker === 1 ? "var(--dark)" : "white",
-                    border: "3px solid var(--dark)",
-                    borderRadius: "12px",
-                    padding: "6px 12px",
+                    border: "4px solid var(--dark)",
+                    borderRadius: "14px",
+                    padding: "12px 16px",
                     maxWidth: "90%",
-                    boxShadow: "4px 4px 0 var(--dark)",
+                    boxShadow: "6px 6px 0 var(--dark)",
                   }}
                 >
                   <p
@@ -478,7 +457,8 @@ export default function ScreenDebate({
                       margin: 0,
                       fontFamily: "Nunito, sans-serif",
                       fontWeight: 900,
-                      fontSize: "16px",
+                      fontSize: "20px",
+                      lineHeight: 1.4,
                     }}
                   >
                     {entry.text}
@@ -489,38 +469,31 @@ export default function ScreenDebate({
             <div ref={transcriptEndRef} />
           </div>
           <div
-            className="flex items-center justify-center p-2"
+            className="flex items-center justify-center p-4"
             style={{
               borderTop: "4px solid var(--dark)",
-              background: "rgba(0,0,0,0.2)",
+              background: "rgba(0,0,0,0.25)",
             }}
           >
             {isRecording ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <div
                   style={{
-                    width: "12px",
-                    height: "12px",
+                    width: "14px",
+                    height: "14px",
                     borderRadius: "50%",
                     background: "var(--red)",
                     animation: "pulse 1s infinite",
                   }}
                 />
-                <span
-                  className="font-bold text-white"
-                  style={{
-                    fontFamily: "Titan One, cursive",
-                    letterSpacing: "1px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Recording
-                </span>
+                Recording
                 <canvas
                   ref={waveformCanvasRef}
-                  width="50"
-                  height="18"
-                  style={{ marginLeft: "8px" }}
+                  style={{
+                    width: "60px",
+                    height: "20px",
+                    marginLeft: "12px",
+                  }}
                 />
               </div>
             ) : (
@@ -530,10 +503,13 @@ export default function ScreenDebate({
                   fontFamily: "Titan One, cursive",
                   letterSpacing: "1px",
                   textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.5)",
+                  color: "rgba(255,255,255,0.8)",
+                  fontSize: "13px",
                 }}
               >
-                {isCurrentPlayerActive ? "Prepare to Speak..." : "Listening..."}
+                {isCurrentPlayerActive
+                  ? "🎤 PREPARE TO SPEAK..."
+                  : "👂 LISTENING..."}
               </span>
             )}
           </div>
@@ -541,34 +517,15 @@ export default function ScreenDebate({
 
         {/* Player 2 Panel (Desktop) */}
         <div
-          className="hidden md:flex flex-col items-center justify-center gap-4 p-4"
+          className="hidden md:flex flex-col items-center justify-start gap-4 p-6"
           style={{
-            background:
-              "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.4))",
-            flex: "0 0 220px",
-            borderLeft: "4px solid var(--dark)",
-            boxShadow: "inset 4px 0 0 var(--dark)",
+            flex: "0 0 240px",
+            borderRadius: "0 8px 8px 0",
           }}
         >
-          <div
-            style={{
-              width: "80px",
-              height: "80px",
-              borderRadius: "8px",
-              background: "var(--p2)",
-              border: "4px solid var(--dark)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: "bold",
-              fontSize: "24px",
-            }}
-          >
-            P2
-          </div>
           <TimerBar
             playerLabel={p2Name}
-            playerEmoji=" P2 "
+            playerSrc="/P2.png"
             remaining={p2TimeRemaining}
             total={60}
             isActive={activePlayer === 2}
@@ -580,57 +537,14 @@ export default function ScreenDebate({
       {/* Bottom Action Bar */}
       <div
         style={{
-          padding: "6px 8px",
+          padding: "12px 16px",
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          gap: "12px",
           flexShrink: 0,
-          background: "var(--dark)",
-          borderTop: "4px solid rgba(255,255,255,0.2)",
+          flexWrap: "wrap",
         }}
       >
-        {isRecording && (
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              background: "var(--p2)",
-              color: "white",
-              padding: "6px 20px",
-              borderRadius: "24px",
-              fontWeight: "900",
-              fontSize: "clamp(10px, 2vw, 14px)",
-              fontFamily: "Titan One, cursive",
-              textTransform: "uppercase",
-              letterSpacing: "1px",
-              lineHeight: 1,
-            }}
-          >
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "white",
-                flexShrink: 0,
-                animation: "pulse 1.2s ease-in-out infinite",
-              }}
-            />
-            <canvas
-              ref={waveformCanvasRef}
-              style={{
-                width: "50px",
-                height: "18px",
-                flexShrink: 0,
-                display: "block",
-              }}
-            />
-            RECORDING
-          </span>
-        )}
-
         {voiceBadgeText && (
           <span
             style={{
@@ -638,47 +552,65 @@ export default function ScreenDebate({
               alignItems: "center",
               justifyContent: "center",
               background: voiceBadgeColor,
-              color: "white",
-              padding: "6px 14px",
-              borderRadius: "24px",
+              color:
+                voiceStatus === "error"
+                  ? "white"
+                  : voiceStatus === "connected"
+                  ? "var(--dark)"
+                  : "white",
+              padding: "10px 20px",
+              borderRadius: "28px",
               fontWeight: "900",
-              fontSize: "clamp(10px, 2vw, 14px)",
+              fontSize: "clamp(11px, 2.5vw, 13px)",
               fontFamily: "Titan One, cursive",
               textTransform: "uppercase",
-              letterSpacing: "1px",
+              letterSpacing: "1.5px",
               lineHeight: 1,
+              border: "3px solid var(--dark)",
+              boxShadow: "4px 4px 0 var(--dark)",
+              WebkitTextStroke: "0.5px rgba(0, 0, 0, 0.2)",
             }}
           >
             {voiceBadgeText}
           </span>
         )}
 
-        <div style={{ display: "flex", width: "100%", gap: "8px" }}>
+        <div
+          style={{ display: "flex", flex: 1, gap: "12px", minHeight: "44px" }}
+        >
           {/* Objection Button */}
           <button
             onClick={handleObjection}
             disabled={!canObjection}
             style={{
-              background: canObjection ? "var(--red)" : "#999",
-              color: canObjection ? "black" : "rgba(0, 0, 0, 0.5)",
-              border: "3px solid var(--dark)",
-              borderRadius: "12px",
-              padding: "10px 8px",
+              background: canObjection ? "var(--red)" : "#ccc",
+              color: canObjection ? "white" : "rgba(0, 0, 0, 0.4)",
+              border: "4px solid var(--dark)",
+              borderRadius: "14px",
+              padding: "12px 16px",
               fontFamily: "Titan One, cursive",
-              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontSize: "clamp(13px, 3vw, 18px)",
               fontWeight: "900",
               textTransform: "uppercase",
               cursor: canObjection ? "pointer" : "not-allowed",
-              boxShadow: canObjection ? "5px 5px 0 var(--dark)" : "none",
+              boxShadow: canObjection
+                ? "6px 6px 0 var(--dark)"
+                : "2px 2px 0 rgba(0, 0, 0, 0.2)",
               transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-              opacity: canObjection ? 1 : 0.5,
+              opacity: canObjection ? 1 : 0.7,
               letterSpacing: "1px",
               flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
+              minHeight: "44px",
             }}
             onMouseDown={(e) => {
               if (canObjection) {
                 (e.target as HTMLButtonElement).style.transform =
-                  "translate(4px, 4px)";
+                  "translate(5px, 5px)";
                 (e.target as HTMLButtonElement).style.boxShadow =
                   "2px 2px 0 var(--dark)";
               }
@@ -688,13 +620,13 @@ export default function ScreenDebate({
                 (e.target as HTMLButtonElement).style.transform =
                   "translate(0, 0)";
                 (e.target as HTMLButtonElement).style.boxShadow =
-                  "5px 5px 0 var(--dark)";
+                  "6px 6px 0 var(--dark)";
               }
             }}
           >
             ⚖️ OBJECTION!
             {!canObjection && myRemaining <= 15 && myRemaining > 0 && (
-              <div style={{ fontSize: "9px", opacity: 0.7 }}>NEED &gt;15s</div>
+              <span>NEED &gt;15s</span>
             )}
           </button>
 
@@ -703,28 +635,36 @@ export default function ScreenDebate({
             onClick={onYield}
             disabled={!isCurrentPlayerActive}
             style={{
-              background: isCurrentPlayerActive ? "var(--p1)" : "#999",
-              color: "var(--dark)",
-              border: "3px solid var(--dark)",
-              borderRadius: "12px",
-              padding: "10px 8px",
+              background: isCurrentPlayerActive ? "var(--p1)" : "#ccc",
+              color: isCurrentPlayerActive
+                ? "var(--dark)"
+                : "rgba(0, 0, 0, 0.4)",
+              border: "4px solid var(--dark)",
+              borderRadius: "14px",
+              padding: "12px 16px",
               fontFamily: "Titan One, cursive",
-              fontSize: "clamp(11px, 2.8vw, 20px)",
+              fontSize: "clamp(13px, 3vw, 18px)",
               fontWeight: "900",
               textTransform: "uppercase",
               cursor: isCurrentPlayerActive ? "pointer" : "not-allowed",
               boxShadow: isCurrentPlayerActive
-                ? "5px 5px 0 var(--dark)"
-                : "none",
+                ? "6px 6px 0 var(--dark)"
+                : "2px 2px 0 rgba(0, 0, 0, 0.2)",
               transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
-              opacity: isCurrentPlayerActive ? 1 : 0.5,
+              opacity: isCurrentPlayerActive ? 1 : 0.7,
               letterSpacing: "1px",
               flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
+              minHeight: "44px",
             }}
             onMouseDown={(e) => {
               if (isCurrentPlayerActive) {
                 (e.target as HTMLButtonElement).style.transform =
-                  "translate(4px, 4px)";
+                  "translate(5px, 5px)";
                 (e.target as HTMLButtonElement).style.boxShadow =
                   "2px 2px 0 var(--dark)";
               }
@@ -734,11 +674,11 @@ export default function ScreenDebate({
                 (e.target as HTMLButtonElement).style.transform =
                   "translate(0, 0)";
                 (e.target as HTMLButtonElement).style.boxShadow =
-                  "5px 5px 0 var(--dark)";
+                  "6px 6px 0 var(--dark)";
               }
             }}
           >
-            🔄 YIELD
+            YIELD FLOOR
           </button>
         </div>
       </div>
