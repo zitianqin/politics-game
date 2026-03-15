@@ -46,6 +46,7 @@ interface ScreenDebateProps {
   voiceStatus?: "idle" | "connecting" | "connected" | "error";
   voiceError?: string | null;
   partyMode?: boolean;
+  onTogglePartyMode?: () => void;
 }
 
 export default function ScreenDebate({
@@ -59,7 +60,6 @@ export default function ScreenDebate({
   transcript,
   roundStartTime,
   showObjectionVFX,
-  objectionBy,
   p1Name = "Player 1",
   p2Name = "Player 2",
   onObjection,
@@ -69,6 +69,7 @@ export default function ScreenDebate({
   voiceStatus = "idle",
   voiceError = null,
   partyMode = false,
+  onTogglePartyMode,
 }: ScreenDebateProps) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);

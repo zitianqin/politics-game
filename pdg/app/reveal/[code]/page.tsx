@@ -38,6 +38,7 @@ export default function RevealPage({
     useState<CandidateProfile | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [otherReadyCount, setOtherReadyCount] = useState(0);
+  const [partyMode, setPartyMode] = useState(false);
 
   const applyCandidatesFromPlayers = (players: GamePlayer[]) => {
     const playerId = sessionStorage.getItem("playerId");
@@ -76,6 +77,11 @@ export default function RevealPage({
           );
         }
 
+        // Extract partyMode from API response as fallback
+        if (typeof data.partyMode === "boolean") {
+          setPartyMode(data.partyMode);
+        }
+
         const playerId = sessionStorage.getItem("playerId");
         const players: GamePlayer[] = Array.isArray(data.players)
           ? (data.players as GamePlayer[])
@@ -106,7 +112,8 @@ export default function RevealPage({
 
     const onRevealEnd = () => {
       setCountdown(0);
-      router.push(`/debate/${code}`);
+      const query = partyMode ? "?partyMode=true" : "";
+      router.push(`/debate/${code}${query}`);
     };
 
     const onRevealReady = (data: { playerId: string; readyCount: number }) => {
@@ -124,10 +131,17 @@ export default function RevealPage({
       }
     };
 
+    const onGameStarted = (data: { partyMode?: boolean }) => {
+      if (typeof data.partyMode === "boolean") {
+        setPartyMode(data.partyMode);
+      }
+    };
+
     socket.on("reveal:timer", onRevealTimer);
     socket.on("reveal:end", onRevealEnd);
     socket.on("reveal:ready", onRevealReady);
     socket.on("game:state", onGameState);
+    socket.on("game:started", onGameStarted);
 
     // Initial sync if refreshing mid-reveal
     socket.on("game:reconnected", (data: { gameState: any }) => {
@@ -154,15 +168,17 @@ export default function RevealPage({
       socket.off("reveal:end", onRevealEnd);
       socket.off("reveal:ready", onRevealReady);
       socket.off("game:state", onGameState);
+      socket.off("game:started", onGameStarted);
       socket.off("game:reconnected");
     };
   }, [code, router]);
 
   useEffect(() => {
     if (countdown === 0) {
-      router.push(`/debate/${code}`);
+      const query = partyMode ? "?partyMode=true" : "";
+      router.push(`/debate/${code}${query}`);
     }
-  }, [countdown, code, router]);
+  }, [countdown, code, router, partyMode]);
 
   return (
     <div className="min-h-screen bg-[#6149D2] bg-[radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:20px_20px] flex flex-col items-center p-8 overflow-y-auto font-sans">

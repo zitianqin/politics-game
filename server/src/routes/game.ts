@@ -1,6 +1,11 @@
 import { Router, Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { createGame, getGame, joinGame, reconnectPlayer } from "../state/gameState";
+import {
+  createGame,
+  getGame,
+  joinGame,
+  reconnectPlayer,
+} from "../state/gameState";
 
 const router: Router = Router();
 
@@ -19,7 +24,9 @@ router.post("/join", (req: Request, res: Response) => {
   const { code } = req.body;
 
   if (!code || typeof code !== "string" || code.trim().length !== 6) {
-    res.status(400).json({ error: "Invalid game code format. Must be 6 characters." });
+    res
+      .status(400)
+      .json({ error: "Invalid game code format. Must be 6 characters." });
     return;
   }
 
@@ -76,6 +83,7 @@ router.get("/:code", (req: Request, res: Response) => {
     id: game.id,
     code: game.code,
     status: game.status,
+    partyMode: game.partyMode,
     players: game.players.map((p) => ({
       id: p.id,
       slot: p.slot,
