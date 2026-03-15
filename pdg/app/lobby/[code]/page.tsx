@@ -130,12 +130,11 @@ export default function LobbyPage({
     };
   }, [code, router]);
 
-  const handleStart = () => {
+  const handleStart = (partyMode: boolean) => {
     const playerId = sessionStorage.getItem("playerId");
     if (!playerId || hasMic === false) return;
-    console.log("Start game clicked");
     setIsStarting(true);
-    getSocket().emit("game:start", { code, playerId });
+    getSocket().emit("game:start", { code, playerId, partyMode });
   };
 
   const handleNameChange = (name: string) => {
@@ -143,6 +142,7 @@ export default function LobbyPage({
     if (!playerId) return;
     getSocket().emit("player:setName", { code, playerId, name });
   };
+
 
   return (
     <ScreenLobby

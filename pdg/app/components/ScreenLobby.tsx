@@ -7,7 +7,7 @@ interface ScreenLobbyProps {
   isHost: boolean;
   playersConnected: number;
   opponentName: string;
-  startGame: () => void;
+  startGame: (partyMode: boolean) => void;
   onNameChange: (name: string) => void;
 }
 
@@ -465,7 +465,7 @@ export default function ScreenLobby({
 
       {isHost && (
         <button
-          onClick={startGame}
+          onClick={() => startGame(partyMode)}
           disabled={!bothPlayersConnected}
           className="btn w-full max-w-xs sm:max-w-sm text-lg sm:text-xl py-3 sm:py-4"
           onMouseDown={(e) => {

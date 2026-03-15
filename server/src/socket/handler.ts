@@ -17,6 +17,7 @@ import {
   getRoundContext,
 } from "./roundManager";
 import { generateCandidatePair } from "../lib/candidateGenerator";
+import { getRandomTopics } from "../lib/topicPool";
 
 export function registerSocketHandlers(io: Server): void {
   io.on("connection", (socket: Socket) => {
@@ -90,8 +91,8 @@ export function registerSocketHandlers(io: Server): void {
       }
     );
 
-    socket.on("game:start", (data: { code: string; playerId: string }) => {
-      const { code: rawCode, playerId } = data;
+    socket.on("game:start", (data: { code: string; playerId: string; partyMode?: boolean }) => {
+      const { code: rawCode, playerId, partyMode } = data;
       const code = rawCode.toUpperCase();
       const game = getGame(code);
 
@@ -114,6 +115,9 @@ export function registerSocketHandlers(io: Server): void {
         socket.emit("error", { message: "Game already started" });
         return;
       }
+
+      game.partyMode = partyMode ?? false;
+      game.topics = getRandomTopics(2, game.partyMode);
 
       const [candidate1, candidate2] = generateCandidatePair(game.topics);
       const player1 = game.players.find((p) => p.slot === 1);

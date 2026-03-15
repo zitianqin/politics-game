@@ -38,6 +38,7 @@ export interface TimerState {
 export interface GameSession {
   id: string;
   code: string;
+  partyMode: boolean;
   status: "lobby" | "meet_voters" | "debate" | "judging" | "round_results" | "voting" | "complete";
   hostId: string;
   createdAt: Date;
@@ -73,6 +74,7 @@ export function createGame(hostId: string): GameSession {
     code,
     status: "lobby",
     hostId,
+    partyMode: false,
     createdAt: new Date(),
     players: [{ id: hostId, slot: 1, socketId: null, candidate: null, displayName: null }],
     voters: selectVoters(),
@@ -207,7 +209,7 @@ export function resetGameSession(code: string): GameSession | null {
   game.currentRound = 0;
   game.rounds = [];
   game.revealReady = [];
-  game.topics = getRandomTopics(2, false);
+  game.topics = getRandomTopics(2, game.partyMode);
   game.debatePhase = "idle";
   game.timerState = null;
   game.players.forEach((player) => {
