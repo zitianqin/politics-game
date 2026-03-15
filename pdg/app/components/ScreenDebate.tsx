@@ -321,7 +321,7 @@ export default function ScreenDebate({
               textTransform: "uppercase",
             }}
           >
-            {activePlayer === 1 ? "🦄" : "🦖"}{" "}
+            <img src={activePlayer === 1 ? "/P1.png" : "/P2.png"} alt={`P${activePlayer}`} style={{ width: "22px", height: "22px", objectFit: "cover", borderRadius: "4px", verticalAlign: "middle", marginRight: "6px" }} />
             {activePlayer === 1 ? p1Name : p2Name} SPEAKING
           </div>
         </div>
@@ -367,7 +367,7 @@ export default function ScreenDebate({
       >
         <TimerBar
           playerLabel={p1Name}
-          playerEmoji="🦄"
+          playerEmoji="/P1.png"
           remaining={p1TimeRemaining}
           total={60}
           isActive={activePlayer === 1}
@@ -375,7 +375,7 @@ export default function ScreenDebate({
         />
         <TimerBar
           playerLabel={p2Name}
-          playerEmoji="🦖"
+          playerEmoji="/P2.png"
           remaining={p2TimeRemaining}
           total={60}
           isActive={activePlayer === 2}
@@ -430,8 +430,8 @@ export default function ScreenDebate({
             transcript.map((entry, i) => {
               const isP1 = entry.speaker === 1;
               const label = isP1
-                ? `🦄 ${formatScorecardName(p1Name, 1)}`
-                : `🦖 ${formatScorecardName(p2Name, 2)}`;
+                ? formatScorecardName(p1Name, 1)
+                : formatScorecardName(p2Name, 2);
               const color = isP1 ? "var(--p1)" : "var(--p2)";
               const ts = entry.timestamp;
               const mins = Math.floor(ts / 60)
@@ -462,8 +462,12 @@ export default function ScreenDebate({
                         fontSize: "14px",
                         color,
                         fontWeight: "900",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
                       }}
                     >
+                      <img src={isP1 ? "/P1.png" : "/P2.png"} alt={isP1 ? "P1" : "P2"} style={{ width: "16px", height: "16px", objectFit: "cover", borderRadius: "3px" }} />
                       {label}
                     </span>
                     <span
