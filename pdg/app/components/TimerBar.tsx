@@ -34,22 +34,16 @@ export default function TimerBar({
 
   return (
     <div
-      className="timer-bar-container"
+      className="timer-bar-container flex flex-row lg:flex-col lg:items-start items-center gap-3 lg:gap-3 p-2 lg:p-6 rounded-lg transition-colors"
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        padding: "8px 16px",
         background: isActive ? "rgba(255,255,255,0.15)" : "transparent",
-        borderRadius: "12px",
-        transition: "background 0.3s",
       }}
     >
       {/* Player label */}
       <div
         style={{
           fontFamily: "Titan One, cursive",
-          fontSize: "18px",
+          fontSize: "clamp(16px, 2vw, 24px)",
           color: "white",
           textShadow: "2px 2px 0 var(--dark)",
           minWidth: "80px",
@@ -57,16 +51,19 @@ export default function TimerBar({
           alignItems: "center",
           gap: "6px",
         }}
+        className="lg:w-full lg:justify-center"
       >
         <img
           src={playerEmoji}
           alt={playerLabel}
           style={{
-            width: "28px",
-            height: "28px",
+            width: "clamp(24px, 3vw, 40px)",
+            height: "clamp(24px, 3vw, 40px)",
             objectFit: "cover",
             borderRadius: "6px",
-            animation: isActive ? "avatarBounce 0.7s ease-in-out infinite" : "none",
+            animation: isActive
+              ? "avatarBounce 0.7s ease-in-out infinite"
+              : "none",
           }}
         />
         {playerLabel}
@@ -75,14 +72,14 @@ export default function TimerBar({
       {/* Bar track */}
       <div
         style={{
-          flex: 1,
-          height: "24px",
+          height: "clamp(24px, 2vh, 40px)",
           background: "rgba(0,0,0,0.3)",
           borderRadius: "12px",
           border: "3px solid var(--dark)",
           overflow: "hidden",
           position: "relative",
         }}
+        className="flex-1 lg:flex-none lg:w-full"
       >
         {/* Bar fill */}
         <div
@@ -101,13 +98,14 @@ export default function TimerBar({
       <div
         style={{
           fontFamily: "Titan One, cursive",
-          fontSize: "22px",
+          fontSize: "clamp(18px, 2.5vw, 28px)",
           color: barColor,
           textShadow: "2px 2px 0 var(--dark)",
           minWidth: "60px",
           textAlign: "right",
           transition: "color 0.5s ease",
         }}
+        className="lg:text-center lg:w-full"
       >
         {timeStr}
       </div>
@@ -123,6 +121,7 @@ export default function TimerBar({
             animation: "pulse 1s infinite",
             boxShadow: `0 0 8px ${barColor}`,
           }}
+          className="lg:hidden"
         />
       )}
       <style>{`

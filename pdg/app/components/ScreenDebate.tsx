@@ -75,7 +75,7 @@ export default function ScreenDebate({
       setScreenShake(true);
       try {
         const audio = new Audio(
-          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=",
+          "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="
         );
         audio.volume = 0.5;
         audio.play().catch(() => {});
@@ -144,7 +144,7 @@ export default function ScreenDebate({
             audioBlob,
             recordingStartTimeRef.current,
             turnRound,
-            turnTopic,
+            turnTopic
           );
         };
 
@@ -158,7 +158,7 @@ export default function ScreenDebate({
         console.error("Failed to access microphone:", error);
       }
     },
-    [setIsRecordingGlobal, setMediaStream],
+    [setIsRecordingGlobal, setMediaStream]
   );
 
   // Start/stop recording based on active player.
@@ -184,7 +184,7 @@ export default function ScreenDebate({
     audioBlob: Blob,
     startTime: number,
     roundNumber: number,
-    topic: string,
+    topic: string
   ) => {
     try {
       const gameCode = sessionStorage.getItem("gameCode") ?? "";
@@ -214,7 +214,8 @@ export default function ScreenDebate({
 
   const handleObjection = () => {
     if (canObjection) {
-      const src = OBJECTION_SOUNDS[Math.floor(Math.random() * OBJECTION_SOUNDS.length)];
+      const src =
+        OBJECTION_SOUNDS[Math.floor(Math.random() * OBJECTION_SOUNDS.length)];
       new Audio(src).play();
       onObjection();
     }
@@ -321,7 +322,18 @@ export default function ScreenDebate({
               textTransform: "uppercase",
             }}
           >
-            <img src={activePlayer === 1 ? "/P1.png" : "/P2.png"} alt={`P${activePlayer}`} style={{ width: "22px", height: "22px", objectFit: "cover", borderRadius: "4px", verticalAlign: "middle", marginRight: "6px" }} />
+            <img
+              src={activePlayer === 1 ? "/P1.png" : "/P2.png"}
+              alt={`P${activePlayer}`}
+              style={{
+                width: "22px",
+                height: "22px",
+                objectFit: "cover",
+                borderRadius: "4px",
+                verticalAlign: "middle",
+                marginRight: "6px",
+              }}
+            />
             {activePlayer === 1 ? p1Name : p2Name} SPEAKING
           </div>
         </div>
@@ -334,6 +346,7 @@ export default function ScreenDebate({
           border: "4px solid var(--dark)",
           borderTop: "none",
           padding: "8px 16px",
+          marginTop: "48px",
           textAlign: "center",
           boxShadow: "0 4px 0 var(--dark)",
         }}
@@ -355,189 +368,222 @@ export default function ScreenDebate({
         </div>
       </div>
 
-      {/* Per-Player Timer Bars — below topic on mobile */}
+      {/* Container: Stacks vertically on mobile (P1 - P2 - Transcript), columns on desktop (P1 - Transcript - P2) */}
       <div
         style={{
-          padding: "6px 12px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "4px",
-        }}
-        className="sm:px-6 sm:py-2"
-      >
-        <TimerBar
-          playerLabel={p1Name}
-          playerEmoji="/P1.png"
-          remaining={p1TimeRemaining}
-          total={60}
-          isActive={activePlayer === 1}
-          colorVar="var(--p1)"
-        />
-        <TimerBar
-          playerLabel={p2Name}
-          playerEmoji="/P2.png"
-          remaining={p2TimeRemaining}
-          total={60}
-          isActive={activePlayer === 2}
-          colorVar="var(--p2)"
-        />
-      </div>
-
-      {/* Main Transcript Area */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          padding: "8px 10px",
+          gap: "8px",
           minHeight: 0,
-          height: "clamp(120px, 35vw, 180px)",
         }}
-        className="sm:flex-1! sm:h-auto! sm:p-4!"
+        className="flex flex-1 flex-col md:flex-row sm:gap-4!"
       >
+        {/* Player 1 Timer */}
         <div
           style={{
-            background: "rgba(255, 255, 255, 0.98)",
-            border: "4px solid var(--dark)",
-            borderRadius: "12px",
-            padding: "10px 12px",
-            flex: 1,
-            overflowY: "auto",
-            boxShadow: "6px 6px 0 var(--dark)",
-            fontFamily: "Nunito, sans-serif",
-            fontSize: "clamp(11px, 2.5vw, 18px)",
-            fontWeight: "700",
-            lineHeight: "1.5",
-            whiteSpace: "pre-wrap",
-            wordWrap: "break-word",
-            color: "var(--dark)",
+            padding: "6px 12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+            flex: 0,
           }}
-          className="sm:p-5! sm:text-lg! sm:rounded-2xl! sm:border-[6px]! sm:shadow-[8px_8px_0_var(--dark)]!"
+          className="order-1 sm:px-0 sm:py-0"
         >
-          {transcript.length === 0 ? (
-            <span
-              style={{
-                color: "#999",
-                fontStyle: "italic",
-                fontSize: "14px",
-                alignSelf: "center",
-                marginTop: "auto",
-                marginBottom: "auto",
-              }}
-            >
-              Waiting for debate to start...
-            </span>
-          ) : (
-            transcript.map((entry, i) => {
-              const isP1 = entry.speaker === 1;
-              const label = isP1
-                ? formatScorecardName(p1Name, 1)
-                : formatScorecardName(p2Name, 2);
-              const color = isP1 ? "var(--p1)" : "var(--p2)";
-              const ts = entry.timestamp;
-              const mins = Math.floor(ts / 60)
-                .toString()
-                .padStart(2, "0");
-              const secs = (ts % 60).toString().padStart(2, "0");
-              return (
-                <div
-                  key={i}
-                  style={{
-                    borderLeft: `5px solid ${color}`,
-                    paddingLeft: "12px",
-                    paddingTop: "4px",
-                    paddingBottom: "4px",
-                  }}
-                >
+          <TimerBar
+            playerLabel={p1Name}
+            playerEmoji="/P1.png"
+            remaining={p1TimeRemaining}
+            total={60}
+            isActive={activePlayer === 1}
+            colorVar="var(--p1)"
+          />
+        </div>
+
+        {/* Main Transcript Area */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            padding: "8px 10px",
+            minHeight: 0,
+            height: "clamp(120px, 35vw, 180px)",
+            flex: 1,
+          }}
+          className="order-3 md:order-2 sm:flex-1! sm:h-auto! sm:p-4!"
+        >
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.98)",
+              border: "4px solid var(--dark)",
+              borderRadius: "12px",
+              padding: "10px 12px",
+              flex: 1,
+              overflowY: "auto",
+              boxShadow: "6px 6px 0 var(--dark)",
+              fontFamily: "Nunito, sans-serif",
+              fontSize: "clamp(11px, 2.5vw, 18px)",
+              fontWeight: "700",
+              lineHeight: "1.5",
+              whiteSpace: "pre-wrap",
+              wordWrap: "break-word",
+              color: "var(--dark)",
+            }}
+            className="sm:p-5! sm:text-lg! sm:rounded-2xl! sm:border-[6px]! sm:shadow-[8px_8px_0_var(--dark)]!"
+          >
+            {transcript.length === 0 ? (
+              <span
+                style={{
+                  color: "#999",
+                  fontStyle: "italic",
+                  fontSize: "14px",
+                  alignSelf: "center",
+                  marginTop: "auto",
+                  marginBottom: "auto",
+                }}
+              >
+                Waiting for debate to start...
+              </span>
+            ) : (
+              transcript.map((entry, i) => {
+                const isP1 = entry.speaker === 1;
+                const label = isP1
+                  ? formatScorecardName(p1Name, 1)
+                  : formatScorecardName(p2Name, 2);
+                const color = isP1 ? "var(--p1)" : "var(--p2)";
+                const ts = entry.timestamp;
+                const mins = Math.floor(ts / 60)
+                  .toString()
+                  .padStart(2, "0");
+                const secs = (ts % 60).toString().padStart(2, "0");
+                return (
                   <div
+                    key={i}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginBottom: "2px",
+                      borderLeft: `5px solid ${color}`,
+                      paddingLeft: "12px",
+                      paddingTop: "4px",
+                      paddingBottom: "4px",
                     }}
                   >
-                    <span
+                    <div
                       style={{
-                        fontFamily: "Titan One, cursive",
-                        fontSize: "14px",
-                        color,
-                        fontWeight: "900",
                         display: "flex",
                         alignItems: "center",
-                        gap: "4px",
+                        gap: "8px",
+                        marginBottom: "2px",
                       }}
                     >
-                      <img src={isP1 ? "/P1.png" : "/P2.png"} alt={isP1 ? "P1" : "P2"} style={{ width: "16px", height: "16px", objectFit: "cover", borderRadius: "3px" }} />
-                      {label}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "monospace",
-                        fontSize: "11px",
-                        color: "#888",
-                      }}
-                    >
-                      {mins}:{secs}
-                    </span>
-                    {entry.isObjection && (
                       <span
                         style={{
                           fontFamily: "Titan One, cursive",
-                          fontSize: "11px",
-                          color: "var(--red)",
+                          fontSize: "14px",
+                          color,
                           fontWeight: "900",
-                          letterSpacing: "1px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
                         }}
                       >
-                        ⚖️ OBJECTION
+                        <img
+                          src={isP1 ? "/P1.png" : "/P2.png"}
+                          alt={isP1 ? "P1" : "P2"}
+                          style={{
+                            width: "16px",
+                            height: "16px",
+                            objectFit: "cover",
+                            borderRadius: "3px",
+                          }}
+                        />
+                        {label}
                       </span>
-                    )}
+                      <span
+                        style={{
+                          fontFamily: "monospace",
+                          fontSize: "11px",
+                          color: "#888",
+                        }}
+                      >
+                        {mins}:{secs}
+                      </span>
+                      {entry.isObjection && (
+                        <span
+                          style={{
+                            fontFamily: "Titan One, cursive",
+                            fontSize: "11px",
+                            color: "var(--red)",
+                            fontWeight: "900",
+                            letterSpacing: "1px",
+                          }}
+                        >
+                          ⚖️ OBJECTION
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "Nunito, sans-serif",
+                        fontSize: "16px",
+                        fontWeight: "700",
+                        color: "var(--dark)",
+                        lineHeight: "1.5",
+                      }}
+                    >
+                      {entry.text}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      fontFamily: "Nunito, sans-serif",
-                      fontSize: "16px",
-                      fontWeight: "700",
-                      color: "var(--dark)",
-                      lineHeight: "1.5",
-                    }}
-                  >
-                    {entry.text}
-                  </div>
-                </div>
-              );
-            })
-          )}
-          <div ref={transcriptEndRef} />
-        </div>
+                );
+              })
+            )}
+            <div ref={transcriptEndRef} />
+          </div>
 
-        {/* Recording indicator */}
-        {isRecording && (
-          <div
-            style={{
-              marginTop: "6px",
-              textAlign: "center",
-              animation: "pulse 1s infinite",
-            }}
-          >
-            <span
+          {/* Recording indicator */}
+          {isRecording && (
+            <div
               style={{
-                display: "inline-block",
-                background: "var(--p2)",
-                color: "white",
-                padding: "6px 14px",
-                borderRadius: "24px",
-                fontWeight: "900",
-                fontSize: "clamp(10px, 2vw, 14px)",
-                fontFamily: "Titan One, cursive",
-                textTransform: "uppercase",
-                letterSpacing: "1px",
+                marginTop: "6px",
+                textAlign: "center",
+                animation: "pulse 1s infinite",
               }}
             >
-              🔴 RECORDING
-            </span>
-          </div>
-        )}
+              <span
+                style={{
+                  display: "inline-block",
+                  background: "var(--p2)",
+                  color: "white",
+                  padding: "6px 14px",
+                  borderRadius: "24px",
+                  fontWeight: "900",
+                  fontSize: "clamp(10px, 2vw, 14px)",
+                  fontFamily: "Titan One, cursive",
+                  textTransform: "uppercase",
+                  letterSpacing: "1px",
+                }}
+              >
+                🔴 RECORDING
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Player 2 Timer */}
+        <div
+          style={{
+            padding: "6px 12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+            flex: 0,
+          }}
+          className="order-2 md:order-3 sm:px-0 sm:py-0"
+        >
+          <TimerBar
+            playerLabel={p2Name}
+            playerEmoji="/P2.png"
+            remaining={p2TimeRemaining}
+            total={60}
+            isActive={activePlayer === 2}
+            colorVar="var(--p2)"
+          />
+        </div>
       </div>
 
       {/* Bottom Action Bar */}
@@ -572,6 +618,11 @@ export default function ScreenDebate({
             opacity: canObjection ? 1 : 0.5,
             letterSpacing: "1px",
             flex: 1,
+            minHeight: "60px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           onMouseDown={(e) => {
             if (canObjection) {
@@ -627,12 +678,16 @@ export default function ScreenDebate({
               isCurrentPlayerActive && !isRecording
                 ? "8px 8px 0 var(--dark)"
                 : isCurrentPlayerActive && isRecording
-                  ? "8px 8px 0 var(--p2)"
-                  : "none",
+                ? "8px 8px 0 var(--p2)"
+                : "none",
             transition: "transform 0.1s, box-shadow 0.1s, opacity 0.2s",
             opacity: isCurrentPlayerActive ? 1 : 0.5,
             letterSpacing: "1px",
             flex: 1,
+            minHeight: "60px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           onMouseDown={(e) => {
             if (isCurrentPlayerActive) {
@@ -675,6 +730,10 @@ export default function ScreenDebate({
             opacity: isCurrentPlayerActive ? 1 : 0.5,
             letterSpacing: "1px",
             flex: 1,
+            minHeight: "60px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           onMouseDown={(e) => {
             if (isCurrentPlayerActive) {
