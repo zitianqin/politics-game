@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import http from "node:http";
 import { Server } from "socket.io";
+import agoraRouter from "./routes/agora";
 import gameRouter from "./routes/game";
 import { createTranscribeRouter } from "./routes/transcribe";
 import { registerSocketHandlers } from "./socket/handler";
@@ -21,6 +22,7 @@ const io = new Server(server, {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+app.use("/api/agora", agoraRouter);
 app.use("/api/game", gameRouter);
 app.use("/api/transcribe", createTranscribeRouter(io));
 

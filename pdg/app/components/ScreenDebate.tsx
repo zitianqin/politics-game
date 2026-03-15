@@ -34,6 +34,8 @@ interface ScreenDebateProps {
   onYield: () => void;
   setIsRecording: (value: boolean) => void;
   setMediaStream: (stream: MediaStream | null) => void;
+  voiceStatus?: "idle" | "connecting" | "connected" | "error";
+  voiceError?: string | null;
 }
 
 export default function ScreenDebate({
@@ -54,6 +56,8 @@ export default function ScreenDebate({
   onYield,
   setIsRecording: setIsRecordingGlobal,
   setMediaStream,
+  voiceStatus = "idle",
+  voiceError = null,
 }: ScreenDebateProps) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -71,6 +75,18 @@ export default function ScreenDebate({
   const myRemaining = currentPlayer === 1 ? p1TimeRemaining : p2TimeRemaining;
   const canObjection =
     !isCurrentPlayerActive && myRemaining > 15 && screen === "debate";
+  const voiceBadgeText = voiceError
+    ? "VOICE ERROR"
+    : voiceStatus === "connecting"
+      ? "VOICE CONNECTING"
+      : voiceStatus === "connected"
+        ? "VOICE LIVE"
+        : null;
+  const voiceBadgeColor = voiceError
+    ? "var(--red)"
+    : voiceStatus === "connected"
+      ? "var(--accent)"
+      : "var(--p2)";
 
   useEffect(() => {
     if (showObjectionVFX) {
@@ -614,46 +630,70 @@ export default function ScreenDebate({
         }}
         className="sm:px-6! sm:py-4! sm:gap-3!"
       >
-        {/* Recording indicator with waveform */}
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            background: "var(--p2)",
-            color: "white",
-            padding: "6px 20px",
-            borderRadius: "24px",
-            fontWeight: "900",
-            fontSize: "clamp(10px, 2vw, 14px)",
-            fontFamily: "Titan One, cursive",
-            textTransform: "uppercase",
-            letterSpacing: "1px",
-            lineHeight: 1,
-          }}
-        >
+        {isRecording && (
           <span
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "white",
-              flexShrink: 0,
-              animation: "pulse 1.2s ease-in-out infinite",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              background: "var(--p2)",
+              color: "white",
+              padding: "6px 20px",
+              borderRadius: "24px",
+              fontWeight: "900",
+              fontSize: "clamp(10px, 2vw, 14px)",
+              fontFamily: "Titan One, cursive",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              lineHeight: 1,
             }}
-          />
-          <canvas
-            ref={waveformCanvasRef}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "white",
+                flexShrink: 0,
+                animation: "pulse 1.2s ease-in-out infinite",
+              }}
+            />
+            <canvas
+              ref={waveformCanvasRef}
+              style={{
+                width: "50px",
+                height: "18px",
+                flexShrink: 0,
+                display: "block",
+              }}
+            />
+            RECORDING
+          </span>
+        )}
+
+        {voiceBadgeText && (
+          <span
             style={{
-              width: "50px",
-              height: "18px",
-              flexShrink: 0,
-              display: "block",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: voiceBadgeColor,
+              color: "white",
+              padding: "6px 14px",
+              borderRadius: "24px",
+              fontWeight: "900",
+              fontSize: "clamp(10px, 2vw, 14px)",
+              fontFamily: "Titan One, cursive",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              lineHeight: 1,
             }}
-          />
-          RECORDING
-        </span>
+          >
+            {voiceBadgeText}
+          </span>
+        )}
+
         <div style={{ display: "flex", width: "100%", gap: "8px" }}>
           {/* Objection Button */}
           <button
