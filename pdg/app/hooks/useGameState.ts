@@ -514,9 +514,9 @@ export function useGameState(gameCodeFromUrl?: string) {
   let winnerLabel = "";
   if (screen === "winner") {
     if (p1TotalVotes > p2TotalVotes) {
-      winnerLabel = `🦄 ${p1Name.toUpperCase()} WINS!`;
+      winnerLabel = `${p1Name.toUpperCase()} WINS!`;
     } else if (p2TotalVotes > p1TotalVotes) {
-      winnerLabel = `🦖 ${p2Name.toUpperCase()} WINS!`;
+      winnerLabel = `${p2Name.toUpperCase()} WINS!`;
     } else {
       winnerLabel = "IT'S A TIE!!";
     }
