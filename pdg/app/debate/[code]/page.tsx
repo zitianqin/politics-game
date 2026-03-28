@@ -15,10 +15,13 @@ import { getSocket } from "@/app/lib/socket";
 
 export default function DebatePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ code: string }>;
+  searchParams: Promise<{ partyMode?: string }>;
 }) {
   const { code } = use(params);
+  const { partyMode } = use(searchParams);
 
   const {
     screen,
@@ -74,6 +77,15 @@ export default function DebatePage({
   }, [code]);
 
   const router = useRouter();
+
+  // Toggle partyMode and update URL
+  const handleTogglePartyMode = () => {
+    const currentMode = partyMode === "true" || partyMode === "1";
+    const newMode = !currentMode;
+    const params = new URLSearchParams();
+    params.set("partyMode", newMode.toString());
+    router.push(`/debate/${code}?${params.toString()}`);
+  };
 
   // Redirect to lobby if screen is lobby
   useEffect(() => {
@@ -141,6 +153,8 @@ export default function DebatePage({
           setMediaStream={setMediaStream}
           voiceStatus={voiceStatus}
           voiceError={voiceError}
+          partyMode={partyMode === "true" || partyMode === "1"}
+          onTogglePartyMode={handleTogglePartyMode}
         />
       )}
 

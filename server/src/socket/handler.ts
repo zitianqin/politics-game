@@ -71,16 +71,19 @@ export function registerSocketHandlers(io: Server): void {
       }
     });
 
-    socket.on("game:partyMode", (data: { code: string; playerId: string; isPartyMode: boolean }) => {
-      const { code: rawCode, playerId, isPartyMode } = data;
-      const code = rawCode.toUpperCase();
-      const game = getGame(code);
-      if (!game) return;
-      if (game.hostId !== playerId) return;
-    
-      game.isPartyMode = isPartyMode;
-      io.to(code).emit("game:partyMode", { isPartyMode });
-    });
+    socket.on(
+      "game:partyMode",
+      (data: { code: string; playerId: string; isPartyMode: boolean }) => {
+        const { code: rawCode, playerId, isPartyMode } = data;
+        const code = rawCode.toUpperCase();
+        const game = getGame(code);
+        if (!game) return;
+        if (game.hostId !== playerId) return;
+
+        game.isPartyMode = isPartyMode;
+        io.to(code).emit("game:partyMode", { isPartyMode });
+      }
+    );
 
     socket.on(
       "player:setName",
@@ -102,58 +105,62 @@ export function registerSocketHandlers(io: Server): void {
       }
     );
 
-    socket.on("game:start", (data: { code: string; playerId: string; partyMode?: boolean }) => {
-      const { code: rawCode, playerId, partyMode } = data;
-      const code = rawCode.toUpperCase();
-      const game = getGame(code);
+    socket.on(
+      "game:start",
+      (data: { code: string; playerId: string; partyMode?: boolean }) => {
+        const { code: rawCode, playerId, partyMode } = data;
+        const code = rawCode.toUpperCase();
+        const game = getGame(code);
 
-      if (!game) {
-        socket.emit("error", { message: "Game not found" });
-        return;
+        if (!game) {
+          socket.emit("error", { message: "Game not found" });
+          return;
+        }
+
+        if (game.hostId !== playerId) {
+          socket.emit("error", { message: "Only the host can start the game" });
+          return;
+        }
+
+        if (game.players.length < 2) {
+          socket.emit("error", { message: "Need 2 players to start" });
+          return;
+        }
+
+        if (game.status !== "lobby") {
+          socket.emit("error", { message: "Game already started" });
+          return;
+        }
+
+        game.partyMode = partyMode ?? false;
+        game.topics = getRandomTopics(2, game.partyMode);
+
+        const [candidate1, candidate2] = generateCandidatePair(game.topics);
+        const player1 = game.players.find((p) => p.slot === 1);
+        const player2 = game.players.find((p) => p.slot === 2);
+
+        if (!player1 || !player2) {
+          socket.emit("error", { message: "Game missing players" });
+          return;
+        }
+
+        player1.candidate = candidate1;
+        player2.candidate = candidate2;
+
+        io.to(code).emit("game:started", {
+          code,
+          topics: game.topics,
+          candidates: game.players.map((p) => p.candidate),
+          voters: game.voters,
+          players: game.players.map((p) => ({
+            slot: p.slot,
+            displayName: p.displayName,
+          })),
+          partyMode: game.partyMode,
+        });
+        startMeetVotersPhase(io, game);
       }
-
-      if (game.hostId !== playerId) {
-        socket.emit("error", { message: "Only the host can start the game" });
-        return;
-      }
-
-      if (game.players.length < 2) {
-        socket.emit("error", { message: "Need 2 players to start" });
-        return;
-      }
-
-      if (game.status !== "lobby") {
-        socket.emit("error", { message: "Game already started" });
-        return;
-      }
-
-      game.partyMode = partyMode ?? false;
-      game.topics = getRandomTopics(2, game.partyMode);
-
-      const [candidate1, candidate2] = generateCandidatePair(game.topics);
-      const player1 = game.players.find((p) => p.slot === 1);
-      const player2 = game.players.find((p) => p.slot === 2);
-
-      if (!player1 || !player2) {
-        socket.emit("error", { message: "Game missing players" });
-        return;
-      }
-
-      player1.candidate = candidate1;
-      player2.candidate = candidate2;
-
-      io.to(code).emit("game:started", {
-        code,
-        topics: game.topics,
-        candidates: game.players.map((p) => p.candidate),
-        voters: game.voters,
-        players: game.players.map((p) => ({
-          slot: p.slot,
-          displayName: p.displayName,
-        })),
-      });
-      startMeetVotersPhase(io, game);
-    });
+    );
 
     socket.on("reveal:done", (data: { code: string; playerId?: string }) => {
       const { code: rawCode } = data;
@@ -169,7 +176,10 @@ export function registerSocketHandlers(io: Server): void {
 
       if (pId && !game.revealReady.includes(pId)) {
         game.revealReady.push(pId);
-        io.to(code).emit("reveal:ready", { playerId: pId, readyCount: game.revealReady.length });
+        io.to(code).emit("reveal:ready", {
+          playerId: pId,
+          readyCount: game.revealReady.length,
+        });
       }
 
       const ctx = getRoundContext(code);
@@ -213,23 +223,20 @@ export function registerSocketHandlers(io: Server): void {
     });
 
     // Player raises an objection
-    socket.on(
-      "objection:raised",
-      (data: { code: string; byPlayer: 1 | 2 }) => {
-        const { code: rawCode, byPlayer } = data;
-        const code = rawCode.toUpperCase();
-        const game = getGame(code);
-        if (!game) {
-          socket.emit("error", { message: "Game not found" });
-          return;
-        }
-
-        const result = processObjection(io, game, byPlayer);
-        if (!result.success) {
-          socket.emit("objection:rejected", { reason: result.reason });
-        }
+    socket.on("objection:raised", (data: { code: string; byPlayer: 1 | 2 }) => {
+      const { code: rawCode, byPlayer } = data;
+      const code = rawCode.toUpperCase();
+      const game = getGame(code);
+      if (!game) {
+        socket.emit("error", { message: "Game not found" });
+        return;
       }
-    );
+
+      const result = processObjection(io, game, byPlayer);
+      if (!result.success) {
+        socket.emit("objection:rejected", { reason: result.reason });
+      }
+    });
 
     // Player voluntarily yields the floor
     socket.on("floor:yield", (data: { code: string; byPlayer: 1 | 2 }) => {
